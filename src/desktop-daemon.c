@@ -33,7 +33,6 @@ void add_to_category(const char *name, struct ddaemon *d) {
 
     /* create category - it does not exist yet */
     if (d->category == NULL) {
-        report_value(R_DEBUG, "Category not found - creating a new one", name, R_STRING);
         c = malloc(sizeof(struct dcategory));
         if (!c)
             report(R_FATAL, "Unable to allocate enough memory for new category");
@@ -99,6 +98,15 @@ void free_ddaemon(struct ddaemon *d) {
     free(d);
 }
 
+void free_ddaemons(void) {
+    struct ddaemon *d, *n;
+
+    for (d = daemons; d; d = n) {
+        n = d->next;
+        free_ddaemon(d);
+    }
+}
+
 struct dcategory *get_categories(void) {
     return categories;
 }
@@ -119,7 +127,13 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
         write_to_str = &d->test_cmd;
 
     if (write_to_str) {
-        *write_to_str = malloc(sizeof(char) * (strlen(value) + 1));
+        /* hacky workaround to avoid reallocing stuff in read-only segments */
+        for (int i = 0; i < sizeof(ddaemon_default) / sizeof(char *); i++)
+            if (*write_to_str == ((char **)&ddaemon_default)[i]) {
+                *write_to_str = NULL;
+                break;
+            }
+        *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
         if (!*write_to_str)
             report(R_FATAL, "Unable to allocate memory for daemon attribute");
         strcpy(*write_to_str, value);
@@ -137,7 +151,6 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
 
     /* category */
     if (strcmp(name, "category") == 0) {
-        report_value(R_DEBUG, "Adding category for", d->id_name, R_STRING);
         add_to_category(value, d);
         return 1;
     }
@@ -163,7 +176,7 @@ int print_categories(void) {
 int print_category(struct dcategory *c) {
     int status;
     struct ddaemon *d;
-    status = printf("%s:\n", c->name);
+    status = printf("%s:\t\t\t(%p)\n", c->name, (void *)c);
     if (status < 0)
         return -1;
     for (d = c->daemons; d; d = d->cnext) {

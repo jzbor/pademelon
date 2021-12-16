@@ -54,6 +54,7 @@ void load_daemons(const char *dir) {
         } else if (!S_ISREG(filestats.st_mode))
             continue;
 
+        report_value(R_DEBUG, "Parsing daemon file", subpath, R_STRING);
         status = ini_parse(subpath, &ini_ddaemon_callback, NULL);
         if (status < 0)
             report_value(R_ERROR, "An error occurred while reading desktop daemon file", subpath, R_STRING);
@@ -104,6 +105,8 @@ int main(int argc, char *argv[]) {
     }
 
 
+    free_ddaemons();
+    free_categories();
     free(sysconf);
     free(userconf);
 }
