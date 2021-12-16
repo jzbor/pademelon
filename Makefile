@@ -3,7 +3,7 @@ EXTRAFLAGS 	= -g -Wshadow -Wformat=2 -Wconversion -Wextra
 CPPFLAGS	=
 CFLAGS 		= -std=c11 -pedantic -Wall -Werror -Wno-error=unused-function -Wno-error=unused-label \
 		 	  -Wno-error=unused-value -Wno-error=unused-variable -D_XOPEN_SOURCE=700
-LDFLAGS		=
+LDFLAGS		= -linih
 # VPATH		= src
 
 all: pademelon-daemon
@@ -19,6 +19,7 @@ pademelon-daemon: common.o desktop-daemon.o pademelon-daemon.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
+	rm -f pademelon-daemon
 	rm -f common.o
 	rm -f desktop-daemon.o
 	rm -f pademelon-daemon.o

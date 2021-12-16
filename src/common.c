@@ -38,7 +38,7 @@ void report_value(int mode, const char *msg, const void *value, int type) {
 
     if (fprintf(stderr, "%s: %s", prefix, msg) < 0)
         perror("Unable to report important messages");
-    if (value && type != R_NONE) {
+    if ((value || type == R_POINTER) && type != R_NONE) {
         switch (type) {
             case R_STRING:
                 if (fprintf(stderr, ": %s", (char *) value) < 0)
