@@ -13,32 +13,59 @@ const char *sysconf = "/etc/%s/%s";
 const char *userconf = "%s/%s/%s";
 char *def_userconf = "%s/.config";
 
-void report(int mode, char *msg) {
-    if (mode >= DEFAULT_REPORT_LEVEL) {
-        if (mode == R_DEBUG) {
-            if (fprintf(stderr, "DEBUG: %s\n", msg) < 0)
-                report(R_FATAL, "Unable to report important messages");
-        } else if (mode == R_INFO) {
-            if (fprintf(stderr, "INFO: %s\n", msg) < 0)
-                report(R_FATAL, "Unable to report important messages");
-        } else if (mode == R_WARNING) {
-            if (fprintf(stderr, "WARNING: %s\n", msg) < 0)
-                report(R_FATAL, "Unable to report important messages");
-        } else if (mode == R_ERROR) {
-            if (fprintf(stderr, "ERROR: %s\n", msg) < 0)
-                report(R_FATAL, "Unable to report important messages");
-        } else if (mode == R_FATAL) {
-            if (fprintf(stderr, "FATAL: %s\n", msg) < 0)
-                report(R_FATAL, "Unable to report important messages");
-        } else {
-            report(R_ERROR, "Invalid report mode");
-        }
-        if (mode > R_INFO && errno != 0)
-            perror("\tError");
+void report(int mode, const char *msg) {
+    report_value(mode, msg, NULL, R_NONE);
+}
+
+void report_value(int mode, const char *msg, const void *value, int type) {
+    char *prefix;
+    if (mode < DEFAULT_REPORT_LEVEL)
+        return;
+
+    if (mode == R_DEBUG) {
+        prefix = "DEBUG";
+    } else if (mode == R_INFO) {
+        prefix = "INFO";
+    } else if (mode == R_WARNING) {
+        prefix = "WARNING";
+    } else if (mode == R_ERROR) {
+        prefix = "ERROR";
+    } else if (mode == R_FATAL) {
+        prefix = "FATAL";
+    } else {
+        report(R_ERROR, "Invalid report mode");
     }
+
+    if (fprintf(stderr, "%s: %s", prefix, msg) < 0)
+        perror("Unable to report important messages");
+    if (value && type != R_NONE) {
+        switch (type) {
+            case R_STRING:
+                if (fprintf(stderr, ": %s", (char *) value) < 0)
+                    perror("Unable to report important messages");
+                break;
+            case R_INTEGER:
+                if (fprintf(stderr, ": %d", *((int *) value)) < 0)
+                    perror("Unable to report important messages");
+                break;
+            case R_POINTER:
+            default:
+                if (fprintf(stderr, ": %p", value) < 0)
+                    perror("Unable to report important messages");
+        }
+    }
+
+    if (mode > R_INFO && errno != 0)
+        if (fprintf(stderr, "\n%s:\t\tError: %s", prefix, strerror(errno)) < 0)
+            perror("Unable to report important messages");
+
+    if (fprintf(stderr, "\n") < 0)
+        perror("Unable to report important messages");
 
     if (mode == R_FATAL)
         exit(EXIT_FAILURE);
+
+    errno = 0;
 }
 
 
