@@ -74,6 +74,7 @@ void load_daemon_file(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
+    int i;
     char *sysconf, *userconf;
     sysconf = system_config_path("daemons");
     userconf = user_config_path("daemons");
@@ -84,13 +85,25 @@ int main(int argc, char *argv[]) {
     load_daemons(sysconf);
     load_daemons(userconf);
 
-    if (print_ddaemons() < 0)
-        report(R_ERROR, "Unable to write to stderr");
+    for (i = 1; argv[i]; i++) {
+        if (strcmp(argv[i], "--daemons") == 0 || strcmp(argv[i], "-d") == 0) {
+            if (printf("\n;;; DAEMONS ;;;\n\n") < 0)
+                report(R_ERROR, "Unable to write to stderr");
+            if (print_ddaemons() < 0)
+                report(R_ERROR, "Unable to write to stderr");
+        } else if (strcmp(argv[i], "--categories") == 0 || strcmp(argv[i], "-c") == 0) {
+            if (printf("\n;;; CATEGORIES ;;;\n\n") < 0)
+                report(R_ERROR, "Unable to write to stderr");
+            if (print_categories() < 0)
+                report(R_ERROR, "Unable to write to stderr");
+        } else {
+            if (printf("Usage: %s [--daemons] [--categories]\n", argv[0]) < 0)
+                report(R_ERROR, "Unable to write to stderr");
+        }
 
-    if (print_categories() < 0)
-        report(R_ERROR, "Unable to write to stderr");
+    }
+
 
     free(sysconf);
     free(userconf);
-
 }
