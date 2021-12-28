@@ -3,30 +3,43 @@
 #include <dirent.h>
 #include <errno.h>
 #include <ini.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #ifndef DAEMON_FILE_ENDING
 #define DAEMON_FILE_ENDING      ".ddaemon"
 #endif
 
+#define BLOCK_SIGCHLD		if (sigprocmask(SIG_BLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to block a signal");
+#define UNBLOCK_SIGCHLD		if (sigprocmask(SIG_UNBLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to unblock a signal");
+
 struct plist {
+    int status; /* as obtained from waitpid */
+    int status_changed;
     pid_t pid;
     struct ddaemon *ddaemon;
     struct plist *next;
 };
 
 static void load_daemons(const char *dir);
+static void loop(void);
 static struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon);
 static void plist_free(void);
 static struct plist *plist_get(pid_t pid);
+static struct plist *plist_next_event(struct plist *from);
 static void plist_remove(pid_t pid);
 static struct plist *plist_search(char *id_name, char *category);
+static void setup_signals(void);
+static void sigchld_handler(int signal);
 
 static struct plist *plist_head = NULL;
+static sigset_t sigset_sigchld;
 
 void load_daemons(const char *dir) {
     int status;
@@ -84,6 +97,34 @@ void load_daemons(const char *dir) {
         report(R_FATAL, "Unable to close directory");
 }
 
+void loop(void) {
+    int temp;
+    struct plist *pl;
+    for (;;) {
+        while ((pl = plist_next_event(NULL)) != NULL) {
+            if (WIFEXITED(pl->status)) {
+                temp = WEXITSTATUS(pl->status);
+                report_value(R_DEBUG, "Process exited", &pl->pid, R_INTEGER);
+                report_value(R_DEBUG, "Exit status", &temp, R_INTEGER);
+                plist_remove(pl->pid);
+            } else if (WIFSIGNALED(pl->status)) {
+                temp = WTERMSIG(pl->status);
+                report_value(R_DEBUG, "Process terminated", &pl->pid, R_INTEGER);
+                report_value(R_DEBUG, "Terminated by signal", &temp, R_INTEGER);
+                plist_remove(pl->pid);
+            } else if (WIFSTOPPED(pl->status)) {
+                temp = WSTOPSIG(pl->status);
+                report_value(R_DEBUG, "Process stopped", &pl->pid, R_INTEGER);
+                report_value(R_DEBUG, "Stopped by", &temp, R_INTEGER);
+            } else if (WIFCONTINUED(pl->status)) {
+                report_value(R_DEBUG, "Process continued", &pl->pid, R_INTEGER);
+            }
+        }
+
+        sleep(5);
+    }
+}
+
 struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon) {
     struct plist *new_element;
 
@@ -94,20 +135,48 @@ struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon) {
     new_element->pid = pid;
     new_element->ddaemon = ddaemon;
 
+    BLOCK_SIGCHLD;
+
     /* add new element to list */
     new_element->next = plist_head;
     plist_head = new_element;
 
+    UNBLOCK_SIGCHLD;
     return new_element;
 }
 
 struct plist *plist_get(pid_t pid) {
     struct plist *pl;
+
+    BLOCK_SIGCHLD;
+
     /* go through list and check if pid matches */
     for (pl = plist_head; pl; pl = pl->next) {
-        if (pl->pid == pid)
+        if (pl->pid == pid) {
+            UNBLOCK_SIGCHLD;
             return pl;
+        }
     }
+
+    UNBLOCK_SIGCHLD;
+    return NULL;
+}
+
+struct plist *plist_next_event(struct plist *from) {
+    struct plist *pl;
+
+    BLOCK_SIGCHLD;
+
+    /* go through list and check status has changed */
+    for (pl = from ? from : plist_head; pl; pl = pl->next) {
+        if (pl->status_changed) {
+            pl->status_changed = 0;
+            UNBLOCK_SIGCHLD;
+            return pl;
+        }
+    }
+
+    UNBLOCK_SIGCHLD;
     return NULL;
 }
 
@@ -118,6 +187,8 @@ void plist_free(void) {
 
 void plist_remove(pid_t pid) {
     struct plist *pl, *pl_delete = NULL;
+
+    BLOCK_SIGCHLD;
 
     /* check if head matches */
     if (plist_head->pid == pid) {
@@ -133,20 +204,74 @@ void plist_remove(pid_t pid) {
         }
     }
 
+    UNBLOCK_SIGCHLD;
+
     /* free item (NULL anyway if not found) */
     free(pl_delete);
 }
 
 struct plist *plist_search(char *id_name, char *category) {
     struct plist *pl;
+
+    BLOCK_SIGCHLD;
+
     /* go through list and check for matching values */
     for (pl = plist_head; pl; pl = pl->next) {
         /* @TODO check for access on NULL pointers */
         if ((id_name && strcmp(id_name, pl->ddaemon->id_name) == 0)
-                || (category && strcmp(category, pl->ddaemon->category->name) == 0))
+                || (category && strcmp(category, pl->ddaemon->category->name) == 0)) {
+            UNBLOCK_SIGCHLD;
             return pl;
+        }
     }
+
+    UNBLOCK_SIGCHLD;
     return NULL;
+}
+
+static void setup_signals(void) {
+	int status;
+	struct sigaction sigaction_ignore = { .sa_handler = SIG_IGN };
+	struct sigaction sigaction_sigchld_handler = { .sa_handler = &sigchld_handler, .sa_flags = SA_NOCLDSTOP|SA_RESTART};
+
+	/* handle SIGCHLD*/
+	status = sigemptyset(&sigaction_sigchld_handler.sa_mask); // @TODO do I have to block anything here?
+	if (status == -1)
+		report(R_FATAL, "Unable to clear out a sigset");
+
+	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, NULL);
+	if (status == -1)
+		report(R_FATAL, "Unable to install signal handler");
+
+	/* create sigset for blocking SIGCHLD */
+	status = sigemptyset(&sigset_sigchld);
+	if (status == -1)
+		report(R_FATAL, "Unable to clear out a sigset");
+	status = sigaddset(&sigset_sigchld, SIGCHLD);
+	if (status == -1)
+		report(R_FATAL, "Unable to add signal to a sigset");
+}
+
+static void sigchld_handler(int signal) {
+	pid_t pid;
+	int status;
+	int errno_save = errno;
+    struct plist *pl;
+
+	if (signal != SIGCHLD) {
+		/* should not happen */
+		return;
+	}
+
+	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        pl = plist_get(pid);
+        if (pl) {
+            pl->status = status;
+            pl->status_set = 1;
+        }
+	}
+
+	errno = errno_save;
 }
 
 int main(int argc, char *argv[]) {
