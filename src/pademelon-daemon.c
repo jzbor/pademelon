@@ -9,10 +9,24 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#ifndef DAEMON_FILE_ENDING
 #define DAEMON_FILE_ENDING      ".ddaemon"
+#endif
+
+struct plist {
+    pid_t pid;
+    struct ddaemon *ddaemon;
+    struct plist *next;
+};
 
 static void load_daemons(const char *dir);
-static void load_daemon_file(const char *path);
+static struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon);
+static void plist_free(void);
+static struct plist *plist_get(pid_t pid);
+static void plist_remove(pid_t pid);
+static struct plist *plist_search(char *id_name, char *category);
+
+static struct plist *plist_head = NULL;
 
 void load_daemons(const char *dir) {
     int status;
@@ -70,8 +84,69 @@ void load_daemons(const char *dir) {
         report(R_FATAL, "Unable to close directory");
 }
 
-void load_daemon_file(const char *path) {
-    report(R_DEBUG, path);
+struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon) {
+    struct plist *new_element;
+
+    /* create new element */
+    new_element = calloc(1, sizeof(struct plist));
+    if (!new_element)
+        report(R_FATAL, "Unable to allocate memory for plist");
+    new_element->pid = pid;
+    new_element->ddaemon = ddaemon;
+
+    /* add new element to list */
+    new_element->next = plist_head;
+    plist_head = new_element;
+
+    return new_element;
+}
+
+struct plist *plist_get(pid_t pid) {
+    struct plist *pl;
+    /* go through list and check if pid matches */
+    for (pl = plist_head; pl; pl = pl->next) {
+        if (pl->pid == pid)
+            return pl;
+    }
+    return NULL;
+}
+
+void plist_free(void) {
+    while (plist_head)
+        plist_remove(plist_head->pid);
+}
+
+void plist_remove(pid_t pid) {
+    struct plist *pl, *pl_delete = NULL;
+
+    /* check if head matches */
+    if (plist_head->pid == pid) {
+        pl_delete = plist_head;
+        plist_head = pl_delete->next;
+    }
+
+    /* search for the entry before pid */
+    for (pl = plist_head; pl->next; pl = pl->next) {
+        if (pl->next->pid == pid) {
+            pl_delete = pl->next;
+            pl->next = pl_delete->next;
+        }
+    }
+
+    /* free item (NULL anyway if not found) */
+    free(pl_delete);
+}
+
+struct plist *plist_search(char *id_name, char *category) {
+    struct plist *pl;
+    /* go through list and check for matching values */
+    for (pl = plist_head; pl; pl = pl->next) {
+        /* @TODO check for access on NULL pointers */
+        if ((id_name && strcmp(id_name, pl->ddaemon->id_name) == 0)
+                || (category && strcmp(category, pl->ddaemon->category->name) == 0))
+            return pl;
+    }
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
