@@ -6,6 +6,9 @@
 #define CONFIG_SECTION_NAME     "config"
 
 struct config {
+    int no_window_manager;
+    char *window_manager;
+
     char *compositor_daemon;
     char *hotkey_daemon;
     char *notification_daemon;

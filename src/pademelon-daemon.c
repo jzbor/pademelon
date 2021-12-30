@@ -27,6 +27,8 @@ static void startup_daemons(void);
 
 static struct config *config;
 static int end = 0;
+static char *wm_overwrite = NULL;
+static int wm_ignore = 0;
 
 
 void load_daemons(const char *dir) {
@@ -180,6 +182,9 @@ void startup_daemon(const char *preference, const char *category, int auto_fallb
 }
 
 void startup_daemons(void) {
+    if (!config->no_window_manager)
+        startup_daemon(wm_overwrite ? wm_overwrite :config->window_manager, "window-manager", 1);
+
     startup_daemon(config->compositor_daemon, "compositor", 1);
     startup_daemon(config->hotkey_daemon, "hotkeys", 1);
     startup_daemon(config->notification_daemon, "notifications", 1);
@@ -247,6 +252,8 @@ int main(int argc, char *argv[]) {
             if (print_categories() < 0)
                 report(R_ERROR, "Unable to write to stdout");
             print_only = 1;
+        } else if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {
+            config->no_window_manager = 1;
         } else if (strcmp(argv[i], "--print-config") == 0 || strcmp(argv[i], "-p") == 0) {
             if (printf("\n;;; CONFIG ;;;\n\n") < 0)
                 report(R_ERROR, "Unable to write to stdout");
@@ -259,6 +266,13 @@ int main(int argc, char *argv[]) {
             if (print_ddaemons() < 0)
                 report(R_ERROR, "Unable to write to stdout");
             print_only = 1;
+        } else if (strcmp(argv[i], "--window-manager") == 0 || strcmp(argv[i], "-w") == 0) {
+            if (!argv[i + 1])
+                report(R_FATAL, "Not enough arguments for --window-manager");
+            free(config->window_manager);
+            config->window_manager = strdup(argv[++i]);
+            if (!config->window_manager)
+                report(R_FATAL, "Unable to allocate memory for settings");
         } else {
             if (printf("Usage: %s [--daemons] [--categories] [--print-config] [--config <config>] [--daemon-dir <dir>]\n", argv[0]) < 0)
                 report(R_ERROR, "Unable to write to stderr");

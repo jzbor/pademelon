@@ -169,7 +169,7 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
     }
 
     /* boolean attributes */
-    else if (strcmp(name, "default") == 0)
+    if (strcmp(name, "default") == 0)
         write_to_int = &d->cdefault;
 
     if (write_to_int) {
