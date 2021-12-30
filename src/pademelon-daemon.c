@@ -19,7 +19,6 @@
 
 #define BLOCK_SIGCHLD		if (sigprocmask(SIG_BLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to block a signal");
 #define UNBLOCK_SIGCHLD		if (sigprocmask(SIG_UNBLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to unblock a signal");
-#define SHELL               "/bin/sh"
 
 struct plist {
     int status; /* as obtained from waitpid */
@@ -40,8 +39,11 @@ static void plist_remove(pid_t pid);
 static struct plist *plist_search(char *id_name, char *category);
 static void setup_signals(void);
 static void sigchld_handler(int signal);
+static void sigint_handler(int signal);
+static void startup_daemons(void);
 
 static struct config *config;
+static int end = 0;
 static struct plist *plist_head = NULL;
 static sigset_t sigset_sigchld;
 
@@ -52,13 +54,15 @@ void launch_ddaemon(struct ddaemon *daemon) {
         return;
 
     report_value(R_DEBUG, "Launching daemon", daemon->id_name, R_STRING);
+    report_value(R_DEBUG, "Launch command", daemon->launch_cmd, R_STRING);
 
     BLOCK_SIGCHLD;
     pid = fork();
 
     if (pid == 0) { /* child */
         UNBLOCK_SIGCHLD;
-        execvp(SHELL, (char*[]){ SHELL, "-c", daemon->launch_cmd });
+        char *args[] = { "/bin/sh", "-c", daemon->launch_cmd, NULL };
+        execvp(args[0], args);
         report_value(R_ERROR, "Unable to launch daemon", daemon->launch_cmd, R_STRING);
         exit(EXIT_FAILURE);
     } else if (pid > 0) { /* parent */
@@ -128,7 +132,7 @@ void load_daemons(const char *dir) {
 void loop(void) {
     int temp;
     struct plist *pl;
-    for (;;) {
+    while (!end) {
         while ((pl = plist_next_event(NULL)) != NULL) {
             if (WIFEXITED(pl->status)) {
                 temp = WEXITSTATUS(pl->status);
@@ -222,13 +226,13 @@ void plist_remove(pid_t pid) {
     if (plist_head->pid == pid) {
         pl_delete = plist_head;
         plist_head = pl_delete->next;
-    }
-
-    /* search for the entry before pid */
-    for (pl = plist_head; pl->next; pl = pl->next) {
-        if (pl->next->pid == pid) {
-            pl_delete = pl->next;
-            pl->next = pl_delete->next;
+    } else {
+        /* search for the entry before pid */
+        for (pl = plist_head; pl && pl->next; pl = pl->next) {
+            if (pl->next->pid == pid) {
+                pl_delete = pl->next;
+                pl->next = pl_delete->next;
+            }
         }
     }
 
@@ -259,15 +263,24 @@ struct plist *plist_search(char *id_name, char *category) {
 
 static void setup_signals(void) {
 	int status;
-	struct sigaction sigaction_ignore = { .sa_handler = SIG_IGN };
-	struct sigaction sigaction_sigchld_handler = { .sa_handler = &sigchld_handler, .sa_flags = SA_NOCLDSTOP|SA_RESTART};
+	struct sigaction sigaction_sigchld_handler = { .sa_handler = &sigchld_handler, .sa_flags = SA_NODEFER|SA_NOCLDSTOP|SA_RESTART};
+	struct sigaction sigaction_sigint_handler = { .sa_handler = &sigint_handler, .sa_flags = SA_NODEFER|SA_RESTART};
 
 	/* handle SIGCHLD*/
-	status = sigemptyset(&sigaction_sigchld_handler.sa_mask); // @TODO do I have to block anything here?
+	status = sigfillset(&sigaction_sigchld_handler.sa_mask); // @TODO do I have to block anything here?
 	if (status == -1)
 		report(R_FATAL, "Unable to clear out a sigset");
 
 	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, NULL);
+	if (status == -1)
+		report(R_FATAL, "Unable to install signal handler");
+
+    /* handle SIGINT */
+	status = sigfillset(&sigaction_sigint_handler.sa_mask); // @TODO do I have to block anything here?
+	if (status == -1)
+		report(R_FATAL, "Unable to clear out a sigset");
+
+	status = sigaction(SIGINT, &sigaction_sigint_handler, NULL);
 	if (status == -1)
 		report(R_FATAL, "Unable to install signal handler");
 
@@ -302,12 +315,24 @@ void sigchld_handler(int signal) {
 	errno = errno_save;
 }
 
+void sigint_handler(int signal) {
+	int errno_save = errno;
+
+	if (signal != SIGINT) {
+		/* should not happen */
+		return;
+	}
+
+    end = 1;
+	errno = errno_save;
+}
+
 void startup_daemons(void) {
     launch_ddaemon(select_ddaemon(config->compositor_daemon, "compositor", 1));
-    launch_ddaemon(select_ddaemon(config->hotkey_daemon, "hotkey-daemon", 1));
-    launch_ddaemon(select_ddaemon(config->notification_daemon, "notification-daemon", 1));
-    launch_ddaemon(select_ddaemon(config->polkit_daemon, "polkit-daemon", 1));
-    launch_ddaemon(select_ddaemon(config->power_daemon, "power-daemon", 1));
+    launch_ddaemon(select_ddaemon(config->hotkey_daemon, "hotkeys", 1));
+    launch_ddaemon(select_ddaemon(config->notification_daemon, "notifications", 1));
+    launch_ddaemon(select_ddaemon(config->polkit_daemon, "polkit", 1));
+    launch_ddaemon(select_ddaemon(config->power_daemon, "power", 1));
 }
 
 int main(int argc, char *argv[]) {
@@ -316,18 +341,20 @@ int main(int argc, char *argv[]) {
     char *config_overwrite = NULL;
     char *daemon_dir_overwrite = NULL;
 
+    setup_signals();
+
     /* load config */
     config = init_config();
     path = system_config_path("pademelon-daemon.conf");
     if (path) {
-        status = ini_parse(path, &ini_config_callback, NULL);
+        status = ini_parse(path, &ini_config_callback, config);
         if (status < 0)
             report_value(R_WARNING, "Unable to read config file", path, R_STRING);
     }
     free(path);
     path = user_config_path("pademelon-daemon.conf");
     if (path) {
-        status = ini_parse(path, &ini_config_callback, NULL);
+        status = ini_parse(path, &ini_config_callback, config);
         if (status < 0)
             report_value(R_WARNING, "Unable to read config file", path, R_STRING);
     }
@@ -346,12 +373,15 @@ int main(int argc, char *argv[]) {
 
     for (i = 1; argv[i]; i++) {
         if (strcmp(argv[i], "--config") == 0 || strcmp(argv[i], "-c") == 0) {
-            if (argv[i + 1])
+            if (!argv[i + 1])
                 report(R_FATAL, "Not enough arguments for --config");
             config_overwrite = argv[++i];
             report_value(R_DEBUG, "Config overwrite", config_overwrite, R_STRING);
+            status = ini_parse(config_overwrite, &ini_config_callback, config);
+            if (status < 0)
+                report_value(R_WARNING, "Unable to read config file", path, R_STRING);
         } else if (strcmp(argv[i], "--daemon-dir") == 0 || strcmp(argv[i], "-d") == 0) {
-            if (argv[i + 1])
+            if (!argv[i + 1])
                 report(R_FATAL, "Not enough arguments for --daemon-dir");
             daemon_dir_overwrite = argv[++i];
             free_ddaemons();
@@ -380,6 +410,7 @@ int main(int argc, char *argv[]) {
     }
 
     startup_daemons();
+    loop();
 
     plist_free();
     free_config(config);

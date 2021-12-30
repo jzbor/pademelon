@@ -50,10 +50,22 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         }
 
         if (write_to_str) {
-            *write_to_str = malloc(sizeof(char) * strlen(value));
+            /* hacky workaround to avoid reallocing stuff in read-only segments */
+            for (int i = 0; i < sizeof(default_config) / sizeof(char *); i++)
+                if (*write_to_str == ((char **)&default_config)[i]) {
+                    *write_to_str = NULL;
+                    break;
+                }
+            *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
             if (!*write_to_str)
                 report(R_FATAL, "Unable to allocate memory for config");
             strcpy(*write_to_str, value);
+            report_value(R_DEBUG, "Writing value", value, R_STRING);
+            report_value(R_DEBUG, "\t to", *write_to_str, R_POINTER);
+            report_value(R_DEBUG, "\t saved in", write_to_str, R_POINTER);
+            report_value(R_DEBUG, "\t in struct", cfg, R_POINTER);
+            report_value(R_DEBUG, "cfg->notification-daemon", cfg->notification_daemon, R_STRING);
+            report_value(R_DEBUG, "&cfg->notification-daemon", &cfg->notification_daemon, R_POINTER);
             return 1;
         }
     }
