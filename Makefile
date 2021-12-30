@@ -4,6 +4,7 @@ CPPFLAGS	=
 CFLAGS 		= -std=c11 -pedantic -Wall -Werror -Wno-error=unused-function -Wno-error=unused-label \
 		 	  -Wno-error=unused-value -Wno-error=unused-variable -D_XOPEN_SOURCE=700
 LDFLAGS		= -linih
+PREFIX		= /usr/local
 # VPATH		= src
 
 all: pademelon-daemon
@@ -26,4 +27,20 @@ clean:
 	rm -f pademelon-daemon.o
 	rm -f pademelon-daemon-config.o
 
-.PHONY: all clean
+install:
+	install -Dm755 pademelon-daemon -t ${DESTDIR}${PREFIX}/bin
+
+install-daemons:
+	install -Dm644 daemons/* -t ${DESTDIR}${PREFIX}/share/pademelon/daemons
+
+install-all: install install-daemons
+
+uninstall:
+	rm -f ${DESTDIR}${PREFIX}/bin/pademelon-daemon
+
+uninstall-daemons:
+	rm -rf ${DESTDIR}${PREFIX}/share/pademelon/daemons
+
+uninstall-all: uninstall uninstall-daemons
+
+.PHONY: all clean install install-daemons install-all uninstall uninstall-daemons uninstall-all
