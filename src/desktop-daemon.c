@@ -50,16 +50,28 @@ void add_to_category(const char *name, struct ddaemon *d) {
     }
 }
 
-struct ddaemon *find_ddaemon(const char *id_name) {
+struct ddaemon *find_ddaemon(const char *id_name, const char *category, int init_if_not_found) {
     struct ddaemon *d;
-    for (d = daemons; d; d = d->next) {
-        if (strcmp(id_name, d->id_name) == 0) {
-            return d;
+    struct dcategory *c;
+    if (!category) {
+        for (d = daemons; d; d = d->next) {
+            if (strcmp(id_name, d->id_name) == 0) {
+                return d;
+            }
+        }
+    } else {
+        c = find_category(category);
+        if (!c)
+            return NULL;
+        for (d = c->daemons; d; d = d->cnext) {
+            if (strcmp(id_name, d->id_name) == 0) {
+                return d;
+            }
         }
     }
 
     /* daemon with this id_name doesn't exist yet */
-    if (!d) {
+    if (!d && init_if_not_found) {
         d = malloc(sizeof(struct ddaemon));
         if (!d)
             report(R_FATAL, "Unable to allocate enough memory for new daemon");
@@ -72,9 +84,19 @@ struct ddaemon *find_ddaemon(const char *id_name) {
         }
         d->next = daemons;
         daemons = d;
+        return d;
     }
 
-    return d;
+    return NULL;
+}
+
+struct dcategory *find_category(const char *name) {
+    struct dcategory *c;
+    for (c = categories; c; c = c->next) {
+        if (strcmp(c->name, name) == 0)
+            return c;
+    }
+    return NULL;
 }
 
 void free_categories(void) {
@@ -112,7 +134,7 @@ struct dcategory *get_categories(void) {
 }
 
 int ini_ddaemon_callback(void* user, const char* section, const char* name, const char* value) {
-    struct ddaemon *d = find_ddaemon(section);
+    struct ddaemon *d = find_ddaemon(section, NULL, 1);
     char **write_to_str = NULL;
     int *write_to_int = NULL;
 
@@ -224,3 +246,28 @@ int print_ddaemons(void) {
     return 0;
 }
 
+struct ddaemon *select_ddaemon(const char *user_preference, const char *category, int auto_fallback) {
+    struct dcategory *c;
+    struct ddaemon *d;
+
+    if (user_preference && (d = find_ddaemon(user_preference, category, 0))) {
+        return d;
+    } else if (!auto_fallback) {
+        return NULL;
+    } else if (user_preference) {
+        report_value(R_WARNING, "Preferred daemon not found - using fallback", user_preference, R_STRING);
+    }
+
+    /* preference was not found */
+    c = find_category(category);
+    if (!c) {
+        report_value(R_WARNING, "Unable to launch daemon - category empty", category, R_STRING);
+        return NULL;
+    }
+    for (d = c->daemons; d->cnext; d = d->cnext) {
+        if (d->cdefault)
+            return d;
+    }
+
+    return d;
+}

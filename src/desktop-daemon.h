@@ -16,7 +16,8 @@ struct dcategory { /* linked list with daemons in category */
 };
 
 void add_to_category(const char *name, struct ddaemon *d); /* creates category if necessary */
-struct ddaemon *find_ddaemon(const char *id_name);
+struct ddaemon *find_ddaemon(const char *id_name, const char *category, int init_if_not_found);
+struct dcategory *find_category(const char *name);
 void free_ddaemon(struct ddaemon *d);
 void free_ddaemons(void);
 void free_categories(void);
@@ -26,6 +27,7 @@ int print_categories(void);
 int print_category(struct dcategory *c);
 int print_ddaemon(struct ddaemon *d);
 int print_ddaemons(void);
+struct ddaemon *select_ddaemon(const char *user_preference, const char *category, int auto_fallback);
 
 
 static const struct ddaemon ddaemon_default = {

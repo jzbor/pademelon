@@ -19,6 +19,7 @@
 
 #define BLOCK_SIGCHLD		if (sigprocmask(SIG_BLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to block a signal");
 #define UNBLOCK_SIGCHLD		if (sigprocmask(SIG_UNBLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to unblock a signal");
+#define SHELL               "/bin/sh"
 
 struct plist {
     int status; /* as obtained from waitpid */
@@ -28,6 +29,7 @@ struct plist {
     struct plist *next;
 };
 
+static void launch_ddaemon(struct ddaemon *daemon);
 static void load_daemons(const char *dir);
 static void loop(void);
 static struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon);
@@ -39,8 +41,33 @@ static struct plist *plist_search(char *id_name, char *category);
 static void setup_signals(void);
 static void sigchld_handler(int signal);
 
+static struct config *config;
 static struct plist *plist_head = NULL;
 static sigset_t sigset_sigchld;
+
+void launch_ddaemon(struct ddaemon *daemon) {
+    pid_t pid;
+
+    if (!daemon)
+        return;
+
+    report_value(R_DEBUG, "Launching daemon", daemon->id_name, R_STRING);
+
+    BLOCK_SIGCHLD;
+    pid = fork();
+
+    if (pid == 0) { /* child */
+        UNBLOCK_SIGCHLD;
+        execvp(SHELL, (char*[]){ SHELL, "-c", daemon->launch_cmd });
+        report_value(R_ERROR, "Unable to launch daemon", daemon->launch_cmd, R_STRING);
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) { /* parent */
+        plist_add(pid, daemon);
+    } else {
+        report(R_FATAL, "Unable to fork into a new process");
+    }
+    UNBLOCK_SIGCHLD;
+}
 
 void load_daemons(const char *dir) {
     int status;
@@ -253,7 +280,7 @@ static void setup_signals(void) {
 		report(R_FATAL, "Unable to add signal to a sigset");
 }
 
-static void sigchld_handler(int signal) {
+void sigchld_handler(int signal) {
 	pid_t pid;
 	int status;
 	int errno_save = errno;
@@ -275,12 +302,19 @@ static void sigchld_handler(int signal) {
 	errno = errno_save;
 }
 
+void startup_daemons(void) {
+    launch_ddaemon(select_ddaemon(config->compositor_daemon, "compositor", 1));
+    launch_ddaemon(select_ddaemon(config->hotkey_daemon, "hotkey-daemon", 1));
+    launch_ddaemon(select_ddaemon(config->notification_daemon, "notification-daemon", 1));
+    launch_ddaemon(select_ddaemon(config->polkit_daemon, "polkit-daemon", 1));
+    launch_ddaemon(select_ddaemon(config->power_daemon, "power-daemon", 1));
+}
+
 int main(int argc, char *argv[]) {
     int i, status;
     char *path;
     char *config_overwrite = NULL;
     char *daemon_dir_overwrite = NULL;
-    struct config *config;
 
     /* load config */
     config = init_config();
@@ -345,6 +379,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    startup_daemons();
 
     plist_free();
     free_config(config);
