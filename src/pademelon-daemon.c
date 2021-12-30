@@ -17,26 +17,9 @@
 #define DAEMON_FILE_ENDING      ".ddaemon"
 #endif
 
-#define BLOCK_SIGCHLD		if (sigprocmask(SIG_BLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to block a signal");
-#define UNBLOCK_SIGCHLD		if (sigprocmask(SIG_UNBLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to unblock a signal");
 
-struct plist {
-    int status; /* as obtained from waitpid */
-    int status_changed;
-    pid_t pid;
-    struct ddaemon *ddaemon;
-    struct plist *next;
-};
-
-static void launch_ddaemon(struct ddaemon *daemon);
 static void load_daemons(const char *dir);
 static void loop(void);
-static struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon);
-static void plist_free(void);
-static struct plist *plist_get(pid_t pid);
-static struct plist *plist_next_event(struct plist *from);
-static void plist_remove(pid_t pid);
-static struct plist *plist_search(char *id_name, char *category);
 static void setup_signals(void);
 static void sigchld_handler(int signal);
 static void sigint_handler(int signal);
@@ -44,73 +27,7 @@ static void startup_daemons(void);
 
 static struct config *config;
 static int end = 0;
-static struct plist *plist_head = NULL;
-static sigset_t sigset_sigchld;
 
-int test_ddaemon(struct ddaemon *daemon) {
-    int status;
-	sigset_t sigset = {0};
-    pid_t pid;
-    struct plist *pl;
-
-    if (!daemon || !daemon->test_cmd)
-        return 1;
-
-    report_value(R_DEBUG, "Testing daemon", daemon->id_name, R_STRING);
-    report_value(R_DEBUG, "Test command", daemon->test_cmd, R_STRING);
-
-    BLOCK_SIGCHLD;
-    pid = fork();
-
-    if (pid == 0) { /* child */
-        UNBLOCK_SIGCHLD;
-        char *args[] = { "/bin/sh", "-c", daemon->test_cmd, NULL };
-        execvp(args[0], args);
-        report_value(R_ERROR, "Unable to test daemon", daemon->test_cmd, R_STRING);
-        exit(EXIT_FAILURE);
-    } else if (pid > 0) { /* parent */
-        plist_add(pid, daemon);
-    } else {
-        report(R_FATAL, "Unable to fork into a new process");
-    }
-
-    status = sigemptyset(&sigset);
-    if (status == -1)
-        report(R_FATAL, "Unable to add signal to sigset");
-    while ((pl = plist_get(pid)) && !pl->status_changed)
-        sigsuspend(&sigset);
-    status = WIFEXITED(pl->status) && WEXITSTATUS(pl->status) == 0;
-    plist_remove(pid);
-    UNBLOCK_SIGCHLD;
-
-    return status;
-}
-
-void launch_ddaemon(struct ddaemon *daemon) {
-    pid_t pid;
-
-    if (!daemon)
-        return;
-
-    report_value(R_DEBUG, "Launching daemon", daemon->id_name, R_STRING);
-    report_value(R_DEBUG, "Launch command", daemon->launch_cmd, R_STRING);
-
-    BLOCK_SIGCHLD;
-    pid = fork();
-
-    if (pid == 0) { /* child */
-        UNBLOCK_SIGCHLD;
-        char *args[] = { "/bin/sh", "-c", daemon->launch_cmd, NULL };
-        execvp(args[0], args);
-        report_value(R_ERROR, "Unable to launch daemon", daemon->launch_cmd, R_STRING);
-        exit(EXIT_FAILURE);
-    } else if (pid > 0) { /* parent */
-        plist_add(pid, daemon);
-    } else {
-        report(R_FATAL, "Unable to fork into a new process");
-    }
-    UNBLOCK_SIGCHLD;
-}
 
 void load_daemons(const char *dir) {
     int status;
@@ -196,110 +113,6 @@ void loop(void) {
     }
 }
 
-struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon) {
-    struct plist *new_element;
-
-    /* create new element */
-    new_element = calloc(1, sizeof(struct plist));
-    if (!new_element)
-        report(R_FATAL, "Unable to allocate memory for plist");
-    new_element->pid = pid;
-    new_element->ddaemon = ddaemon;
-
-    BLOCK_SIGCHLD;
-
-    /* add new element to list */
-    new_element->next = plist_head;
-    plist_head = new_element;
-
-    UNBLOCK_SIGCHLD;
-    return new_element;
-}
-
-struct plist *plist_get(pid_t pid) {
-    struct plist *pl;
-
-    BLOCK_SIGCHLD;
-
-    /* go through list and check if pid matches */
-    for (pl = plist_head; pl; pl = pl->next) {
-        if (pl->pid == pid) {
-            UNBLOCK_SIGCHLD;
-            return pl;
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-    return NULL;
-}
-
-struct plist *plist_next_event(struct plist *from) {
-    struct plist *pl;
-
-    BLOCK_SIGCHLD;
-
-    /* go through list and check status has changed */
-    for (pl = from ? from : plist_head; pl; pl = pl->next) {
-        if (pl->status_changed) {
-            pl->status_changed = 0;
-            UNBLOCK_SIGCHLD;
-            return pl;
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-    return NULL;
-}
-
-void plist_free(void) {
-    while (plist_head)
-        plist_remove(plist_head->pid);
-}
-
-void plist_remove(pid_t pid) {
-    struct plist *pl, *pl_delete = NULL;
-
-    BLOCK_SIGCHLD;
-
-    /* check if head matches */
-    if (plist_head->pid == pid) {
-        pl_delete = plist_head;
-        plist_head = pl_delete->next;
-    } else {
-        /* search for the entry before pid */
-        for (pl = plist_head; pl && pl->next; pl = pl->next) {
-            if (pl->next->pid == pid) {
-                pl_delete = pl->next;
-                pl->next = pl_delete->next;
-            }
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-
-    /* free item (NULL anyway if not found) */
-    free(pl_delete);
-}
-
-struct plist *plist_search(char *id_name, char *category) {
-    struct plist *pl;
-
-    BLOCK_SIGCHLD;
-
-    /* go through list and check for matching values */
-    for (pl = plist_head; pl; pl = pl->next) {
-        /* @TODO check for access on NULL pointers */
-        if ((id_name && strcmp(id_name, pl->ddaemon->id_name) == 0)
-                || (category && strcmp(category, pl->ddaemon->category->name) == 0)) {
-            UNBLOCK_SIGCHLD;
-            return pl;
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-    return NULL;
-}
-
 static void setup_signals(void) {
 	int status;
 	struct sigaction sigaction_sigchld_handler = { .sa_handler = &sigchld_handler, .sa_flags = SA_NODEFER|SA_NOCLDSTOP|SA_RESTART};
@@ -323,13 +136,7 @@ static void setup_signals(void) {
 	if (status == -1)
 		report(R_FATAL, "Unable to install signal handler");
 
-	/* create sigset for blocking SIGCHLD */
-	status = sigemptyset(&sigset_sigchld);
-	if (status == -1)
-		report(R_FATAL, "Unable to clear out a sigset");
-	status = sigaddset(&sigset_sigchld, SIGCHLD);
-	if (status == -1)
-		report(R_FATAL, "Unable to add signal to a sigset");
+    init_sigset_sigchld();
 }
 
 void sigchld_handler(int signal) {
