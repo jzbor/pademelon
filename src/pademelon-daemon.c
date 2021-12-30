@@ -47,6 +47,45 @@ static int end = 0;
 static struct plist *plist_head = NULL;
 static sigset_t sigset_sigchld;
 
+int test_ddaemon(struct ddaemon *daemon) {
+    int status;
+	sigset_t sigset = {0};
+    pid_t pid;
+    struct plist *pl;
+
+    if (!daemon || !daemon->test_cmd)
+        return 1;
+
+    report_value(R_DEBUG, "Testing daemon", daemon->id_name, R_STRING);
+    report_value(R_DEBUG, "Test command", daemon->test_cmd, R_STRING);
+
+    BLOCK_SIGCHLD;
+    pid = fork();
+
+    if (pid == 0) { /* child */
+        UNBLOCK_SIGCHLD;
+        char *args[] = { "/bin/sh", "-c", daemon->test_cmd, NULL };
+        execvp(args[0], args);
+        report_value(R_ERROR, "Unable to test daemon", daemon->test_cmd, R_STRING);
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) { /* parent */
+        plist_add(pid, daemon);
+    } else {
+        report(R_FATAL, "Unable to fork into a new process");
+    }
+
+    status = sigemptyset(&sigset);
+    if (status == -1)
+        report(R_FATAL, "Unable to add signal to sigset");
+    while ((pl = plist_get(pid)) && !pl->status_changed)
+        sigsuspend(&sigset);
+    status = WIFEXITED(pl->status) && WEXITSTATUS(pl->status) == 0;
+    plist_remove(pid);
+    UNBLOCK_SIGCHLD;
+
+    return status;
+}
+
 void launch_ddaemon(struct ddaemon *daemon) {
     pid_t pid;
 
@@ -327,16 +366,23 @@ void sigint_handler(int signal) {
 	errno = errno_save;
 }
 
+void startup_daemon(const char *preference, const char *category, int auto_fallback) {
+    struct ddaemon *d = select_ddaemon(preference, category, auto_fallback);
+    if (d && test_ddaemon(d))
+        launch_ddaemon(d);
+}
+
 void startup_daemons(void) {
-    launch_ddaemon(select_ddaemon(config->compositor_daemon, "compositor", 1));
-    launch_ddaemon(select_ddaemon(config->hotkey_daemon, "hotkeys", 1));
-    launch_ddaemon(select_ddaemon(config->notification_daemon, "notifications", 1));
-    launch_ddaemon(select_ddaemon(config->polkit_daemon, "polkit", 1));
-    launch_ddaemon(select_ddaemon(config->power_daemon, "power", 1));
+    startup_daemon(config->compositor_daemon, "compositor", 1);
+    startup_daemon(config->hotkey_daemon, "hotkeys", 1);
+    startup_daemon(config->notification_daemon, "notifications", 1);
+    startup_daemon(config->polkit_daemon, "polkit", 1);
+    startup_daemon(config->power_daemon, "power", 1);
 }
 
 int main(int argc, char *argv[]) {
     int i, status;
+    int print_only = 0;
     char *path;
     char *config_overwrite = NULL;
     char *daemon_dir_overwrite = NULL;
@@ -393,24 +439,29 @@ int main(int argc, char *argv[]) {
                 report(R_ERROR, "Unable to write to stdout");
             if (print_categories() < 0)
                 report(R_ERROR, "Unable to write to stdout");
+            print_only = 1;
         } else if (strcmp(argv[i], "--print-config") == 0 || strcmp(argv[i], "-p") == 0) {
             if (printf("\n;;; CONFIG ;;;\n\n") < 0)
                 report(R_ERROR, "Unable to write to stdout");
             if (print_config(config) < 0)
                 report(R_ERROR, "Unable to write to stdout");
+            print_only = 1;
         } else if (strcmp(argv[i], "--daemons") == 0 || strcmp(argv[i], "-t") == 0) {
             if (printf("\n;;; DAEMONS ;;;\n\n") < 0)
                 report(R_ERROR, "Unable to write to stdout");
             if (print_ddaemons() < 0)
                 report(R_ERROR, "Unable to write to stdout");
+            print_only = 1;
         } else {
             if (printf("Usage: %s [--daemons] [--categories] [--print-config] [--config <config>] [--daemon-dir <dir>]\n", argv[0]) < 0)
                 report(R_ERROR, "Unable to write to stderr");
         }
     }
 
-    startup_daemons();
-    loop();
+    if (!print_only) {
+        startup_daemons();
+        loop();
+    }
 
     plist_free();
     free_config(config);

@@ -202,9 +202,14 @@ int print_category(struct dcategory *c) {
     if (status < 0)
         return -1;
     for (d = c->daemons; d; d = d->cnext) {
-        status = printf("%s -> ", d->id_name);
-        if (status < 0)
-            return -1;
+        status = printf("%s", d->id_name);
+        if (status < 0) return -1;
+        if (d->cdefault) {
+            status = printf("(d)");
+            if (status < 0) return -1;
+        }
+        status = printf(" -> ");
+        if (status < 0) return -1;
     }
     status = printf("%p\n", NULL);
     if (status < 0)
