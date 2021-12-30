@@ -14,14 +14,16 @@ all: pademelon-daemon
 common.o: src/common.c src/common.h
 desktop-daemon.o: src/desktop-daemon.c src/desktop-daemon.h src/common.h
 pademelon-daemon.o: src/pademelon-daemon.c src/common.h
+pademelon-daemon-config.o: src/pademelon-daemon-config.c src/common.h
 
-pademelon-daemon: common.o desktop-daemon.o pademelon-daemon.o
+pademelon-daemon: common.o desktop-daemon.o pademelon-daemon.o pademelon-daemon-config.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f pademelon-daemon
 	rm -f common.o
 	rm -f desktop-daemon.o
+	rm -f pademelon-daemon
 	rm -f pademelon-daemon.o
+	rm -f pademelon-daemon-config.o
 
 .PHONY: all clean

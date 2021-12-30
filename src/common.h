@@ -40,7 +40,11 @@ void report_value(int mode, const char *msg, const void *value, int type);
  * if the file or dir is not found NULL is returned
  * if an error occurred NULL is returned and the errno is set
  */
-char *user_config_path(char *file);
+char *system_config_path(char *file);
+
+char *system_data_path(char *file);
+
+char *system_local_data_path(char *file);
 
 /*
  * get a user config file or the user config file path
@@ -48,6 +52,8 @@ char *user_config_path(char *file);
  * if the file or dir is not found NULL is returned
  * if an error occurred NULL is returned and the errno is set
  */
-char *system_config_path(char *file);
+char *user_config_path(char *file);
+
+char *user_data_path(char *file);
 
 #endif /* H_COMMON */

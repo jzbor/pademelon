@@ -1,5 +1,6 @@
 #include "common.h"
 #include "desktop-daemon.h"
+#include "pademelon-daemon-config.h"
 #include <dirent.h>
 #include <errno.h>
 #include <ini.h>
@@ -267,7 +268,7 @@ static void sigchld_handler(int signal) {
         pl = plist_get(pid);
         if (pl) {
             pl->status = status;
-            pl->status_set = 1;
+            pl->status_changed = 1;
         }
 	}
 
@@ -275,38 +276,78 @@ static void sigchld_handler(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-    int i;
-    char *sysconf, *userconf;
-    sysconf = system_config_path("daemons");
-    userconf = user_config_path("daemons");
-    report(R_DEBUG, "Config paths:");
-    report(R_DEBUG, sysconf);
-    report(R_DEBUG, userconf);
+    int i, status;
+    char *path;
+    char *config_overwrite = NULL;
+    char *daemon_dir_overwrite = NULL;
+    struct config *config;
 
-    load_daemons(sysconf);
-    load_daemons(userconf);
+    /* load config */
+    config = init_config();
+    path = system_config_path("pademelon-daemon.conf");
+    if (path) {
+        status = ini_parse(path, &ini_config_callback, NULL);
+        if (status < 0)
+            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
+    }
+    free(path);
+    path = user_config_path("pademelon-daemon.conf");
+    if (path) {
+        status = ini_parse(path, &ini_config_callback, NULL);
+        if (status < 0)
+            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
+    }
+    free(path);
+
+    /* load daemons */
+    path = system_data_path("daemons");
+    load_daemons(path);
+    free(path);
+    path = system_local_data_path("daemons");
+    load_daemons(path);
+    free(path);
+    path = user_data_path("daemons");
+    load_daemons(path);
+    free(path);
 
     for (i = 1; argv[i]; i++) {
-        if (strcmp(argv[i], "--daemons") == 0 || strcmp(argv[i], "-d") == 0) {
-            if (printf("\n;;; DAEMONS ;;;\n\n") < 0)
-                report(R_ERROR, "Unable to write to stderr");
-            if (print_ddaemons() < 0)
-                report(R_ERROR, "Unable to write to stderr");
-        } else if (strcmp(argv[i], "--categories") == 0 || strcmp(argv[i], "-c") == 0) {
+        if (strcmp(argv[i], "--config") == 0 || strcmp(argv[i], "-c") == 0) {
+            if (argv[i + 1])
+                report(R_FATAL, "Not enough arguments for --config");
+            config_overwrite = argv[++i];
+            report_value(R_DEBUG, "Config overwrite", config_overwrite, R_STRING);
+        } else if (strcmp(argv[i], "--daemon-dir") == 0 || strcmp(argv[i], "-d") == 0) {
+            if (argv[i + 1])
+                report(R_FATAL, "Not enough arguments for --daemon-dir");
+            daemon_dir_overwrite = argv[++i];
+            free_ddaemons();
+            free_categories();
+            report_value(R_DEBUG, "Daemon dir overwrite", daemon_dir_overwrite, R_STRING);
+            load_daemons(daemon_dir_overwrite);
+        } else if (strcmp(argv[i], "--categories") == 0 || strcmp(argv[i], "-k") == 0) {
             if (printf("\n;;; CATEGORIES ;;;\n\n") < 0)
-                report(R_ERROR, "Unable to write to stderr");
+                report(R_ERROR, "Unable to write to stdout");
             if (print_categories() < 0)
-                report(R_ERROR, "Unable to write to stderr");
+                report(R_ERROR, "Unable to write to stdout");
+        } else if (strcmp(argv[i], "--print-config") == 0 || strcmp(argv[i], "-p") == 0) {
+            if (printf("\n;;; CONFIG ;;;\n\n") < 0)
+                report(R_ERROR, "Unable to write to stdout");
+            if (print_config(config) < 0)
+                report(R_ERROR, "Unable to write to stdout");
+        } else if (strcmp(argv[i], "--daemons") == 0 || strcmp(argv[i], "-t") == 0) {
+            if (printf("\n;;; DAEMONS ;;;\n\n") < 0)
+                report(R_ERROR, "Unable to write to stdout");
+            if (print_ddaemons() < 0)
+                report(R_ERROR, "Unable to write to stdout");
         } else {
-            if (printf("Usage: %s [--daemons] [--categories]\n", argv[0]) < 0)
+            if (printf("Usage: %s [--daemons] [--categories] [--print-config] [--config <config>] [--daemon-dir <dir>]\n", argv[0]) < 0)
                 report(R_ERROR, "Unable to write to stderr");
         }
-
     }
 
 
+    plist_free();
+    free_config(config);
     free_ddaemons();
     free_categories();
-    free(sysconf);
-    free(userconf);
 }

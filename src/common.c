@@ -10,8 +10,12 @@
 
 const char *name = "pademelon";
 const char *sysconf = "/etc/%s/%s";
+const char *sysdata = "/usr/share/%s/%s";
+const char *syslocaldata = "/usr/local/share/%s/%s";
 const char *userconf = "%s/%s/%s";
+const char *userdata = "%s/%s/%s";
 char *def_userconf = "%s/.config";
+char *def_userdata = "%s/.local/share";
 
 void report(int mode, const char *msg) {
     report_value(mode, msg, NULL, R_NONE);
@@ -68,6 +72,47 @@ void report_value(int mode, const char *msg, const void *value, int type) {
     errno = 0;
 }
 
+char *system_config_path(char *file) {
+    char *path, *file_cpy;
+    file_cpy = file ? file : "";
+
+    /* allocate space for the string; must be freed by user */
+    path = malloc(strlen(sysconf) + strlen(name) + strlen(file_cpy) + 1);
+    if (!path)
+        report(R_FATAL, "Unable to allocate memory for the system config dir");
+    /* configure config dir according to sysconf variable, program name and file_cpy */
+    if (sprintf(path, sysconf, name, file_cpy) < 0)
+        report(R_FATAL, "Unable to configure the system config dir");
+    return path;
+}
+
+char *system_data_path(char *file) {
+    char *path, *file_cpy;
+    file_cpy = file ? file : "";
+
+    /* allocate space for the string; must be freed by user */
+    path = malloc(strlen(sysdata) + strlen(name) + strlen(file_cpy) + 1);
+    if (!path)
+        report(R_FATAL, "Unable to allocate memory for the system config dir");
+    /* configure config dir according to sysdata variable, program name and file_cpy */
+    if (sprintf(path, sysdata, name, file_cpy) < 0)
+        report(R_FATAL, "Unable to configure the system config dir");
+    return path;
+}
+
+char *system_local_data_path(char *file) {
+    char *path, *file_cpy;
+    file_cpy = file ? file : "";
+
+    /* allocate space for the string; must be freed by user */
+    path = malloc(strlen(syslocaldata) + strlen(name) + strlen(file_cpy) + 1);
+    if (!path)
+        report(R_FATAL, "Unable to allocate memory for the system config dir");
+    /* configure config dir according to syslocaldata variable, program name and file_cpy */
+    if (sprintf(path, syslocaldata, name, file_cpy) < 0)
+        report(R_FATAL, "Unable to configure the system config dir");
+    return path;
+}
 
 char *user_config_path(char *file) {
     char *path, *file_cpy, *xdg_config;
@@ -91,16 +136,24 @@ char *user_config_path(char *file) {
     return path;
 }
 
-char *system_config_path(char *file) {
-    char *path, *file_cpy;
+char *user_data_path(char *file) {
+    char *path, *file_cpy, *xdg_config;
     file_cpy = file ? file : "";
 
+    /* get config dir */
+    if (!getenv("HOME"))
+        report(R_FATAL, "Unable to read $HOME variable");
+    xdg_config = getenv("XDG_DATA_HOME");
+    char home_config[strlen(def_userdata) + strlen(getenv("HOME")) + 1];
+    if(sprintf(home_config, def_userdata, getenv("HOME")) < 0)
+        report(R_FATAL, "Unable to configure fallback user data dir");
+
     /* allocate space for the string; must be freed by user */
-    path = malloc(strlen(sysconf) + strlen(name) + strlen(file_cpy) + 1);
+    path = malloc(strlen(userdata) + strlen(xdg_config ? xdg_config : home_config) + strlen(name) + strlen(file_cpy) + 1);
     if (!path)
-        report(R_FATAL, "Unable to allocate memory for the system config dir");
-    /* configure config dir according to sysconf variable, program name and file_cpy */
-    if (sprintf(path, sysconf, name, file_cpy) < 0)
-        report(R_FATAL, "Unable to configure the system config dir");
+        report(R_FATAL, "Unable to allocate memory for the user data dir");
+    /* configure data dir according to userdata variable, program name and file_cpy */
+    if (sprintf(path, userdata, xdg_config ? xdg_config : home_config, name, file_cpy) < 0)
+        report(R_FATAL, "Unable to configure the user data dir");
     return path;
 }
