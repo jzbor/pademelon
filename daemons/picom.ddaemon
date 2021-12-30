@@ -1,0 +1,7 @@
+[picom]
+name = Picom
+description = X compositor that may fix tearing issues
+category = compositor
+command = /usr/bin/picom
+test = test -x /usr/bin/picom
+default = True

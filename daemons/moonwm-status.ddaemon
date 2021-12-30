@@ -1,0 +1,7 @@
+[moonwm-status]
+name = MoonWM's Status Script
+description = Periodically pushes a status to WM_NAME
+category = status
+command = /usr/bin/moonwm-status
+test = test -x /usr/bin/moonwm-status
+default = False

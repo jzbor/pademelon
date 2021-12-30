@@ -1,0 +1,7 @@
+[dunst]
+name = Dunst
+description = A customizable and lightweight notification-daemon
+category = notifications
+command = /usr/bin/dunst
+test = test -x /usr/bin/dunst
+default = False

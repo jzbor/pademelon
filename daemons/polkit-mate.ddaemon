@@ -1,0 +1,7 @@
+[polkit-mate]
+name = Polkit (Mate)
+description = PolicyKit integration for the MATE desktop
+category = polkit
+command = /usr/lib/mate-polkit/polkit-mate-authentication-agent-1
+test = test -x /usr/lib/mate-polkit/polkit-mate-authentication-agent-1
+default = False

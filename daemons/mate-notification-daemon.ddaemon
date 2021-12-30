@@ -1,0 +1,9 @@
+[mate-notification-daemon]
+name = Mate Notification Daemon
+description = Notification daemon for MATE
+category = notifications
+command = /usr/lib/mate-notification-daemon/mate-notification-daemon
+test = test -x /usr/lib/mate-notification-daemon/mate-notification-daemon
+default = False
+
+; @TODO start mate-notification-applet?

@@ -1,0 +1,7 @@
+[polkit-gnome]
+name = Polkit (GNOME)
+description = Legacy polkit authentication agent for GNOME
+category = polkit
+command = /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+test = test -x /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+default = True
