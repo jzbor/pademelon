@@ -1,0 +1,7 @@
+[discord]
+name = Discord
+description = All-in-one voice and text chat for gamers that's free.
+category = applets
+command = /usr/bin/discord --start-minimized
+test = test -x /usr/bin/discord
+default = False
