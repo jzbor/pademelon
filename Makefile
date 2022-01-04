@@ -30,6 +30,7 @@ clean:
 install: pademelon-daemon
 	install -Dm755 pademelon-daemon -t ${DESTDIR}${PREFIX}/bin
 	install -Dm755 src/pademelon-settings -t ${DESTDIR}${PREFIX}/bin
+	install -Dm755 pademelon-settings.desktop -t ${DESTDIR}${PREFIX}/share/applications
 
 install-daemons:
 	install -Dm644 daemons/* -t ${DESTDIR}${PREFIX}/share/pademelon/daemons

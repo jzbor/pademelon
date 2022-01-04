@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+TryExec=pademelon-settings
+Exec=pademelon-settings
+Terminal=false
+Categories=Settings;
+
+Name=Pademelon Settings
+GenericName=Settings
+Comment=Settings for the pademelon desktop manager
