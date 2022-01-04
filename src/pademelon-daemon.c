@@ -1,6 +1,7 @@
 #include "common.h"
 #include "desktop-daemon.h"
 #include "pademelon-daemon-config.h"
+#include "x11-utils.h"
 #include <dirent.h>
 #include <errno.h>
 #include <ini.h>
@@ -95,18 +96,22 @@ void loop(void) {
             if (WIFEXITED(pl->status)) {
                 temp = WEXITSTATUS(pl->status);
                 report_value(R_DEBUG, "Process exited", &pl->pid, R_INTEGER);
+                report_value(R_DEBUG, "Process belonged to daemon", pl->ddaemon->id_name, R_STRING);
                 report_value(R_DEBUG, "Exit status", &temp, R_INTEGER);
                 plist_remove(pl->pid);
             } else if (WIFSIGNALED(pl->status)) {
                 temp = WTERMSIG(pl->status);
                 report_value(R_DEBUG, "Process terminated", &pl->pid, R_INTEGER);
+                report_value(R_DEBUG, "Process belonged to daemon", pl->ddaemon->id_name, R_STRING);
                 report_value(R_DEBUG, "Terminated by signal", &temp, R_INTEGER);
                 plist_remove(pl->pid);
             } else if (WIFSTOPPED(pl->status)) {
                 temp = WSTOPSIG(pl->status);
                 report_value(R_DEBUG, "Process stopped", &pl->pid, R_INTEGER);
+                report_value(R_DEBUG, "Process belongs to daemon", pl->ddaemon->id_name, R_STRING);
                 report_value(R_DEBUG, "Stopped by", &temp, R_INTEGER);
             } else if (WIFCONTINUED(pl->status)) {
+                report_value(R_DEBUG, "Process belongs to daemon", pl->ddaemon->id_name, R_STRING);
                 report_value(R_DEBUG, "Process continued", &pl->pid, R_INTEGER);
             }
         }
