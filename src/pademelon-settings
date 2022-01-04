@@ -1,0 +1,314 @@
+#!/usr/bin/env python3
+
+import configparser
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+import os
+import os.path
+import shutil
+import subprocess
+
+TITLE='Pademelon Settings'
+DIRNAME='pademelon'
+CONFIG_SECTION_DAEMONS='daemons'
+
+
+class DaemonRow(Gtk.Box):
+    def __init__(self, cname, clabel):
+        super().__init__()
+        global categories, config
+        self.cname = cname
+        self.clabel = clabel
+
+        if cname in categories:
+            self.daemons = categories[cname]
+        else:
+            self.daemons = []
+
+        self.inner_box = Gtk.Box()
+        self.inner_box.set_spacing(5)
+        self.frame = Gtk.Frame()
+        self.frame.set_label(clabel)
+        self.settings_button = Gtk.Button(label='Settings')
+        self.daemon_selection_box = Gtk.ComboBoxText()
+        self.daemon_selection_box.connect("changed", self.on_combo_changed)
+
+        select = len(self.daemons)      # select default item
+        for daemon in self.daemons:
+            self.daemon_selection_box.append_text(daemon.display_name + self.daemon_test_str(daemon))
+            if CONFIG_SECTION_DAEMONS in config \
+                    and self.cname in config[CONFIG_SECTION_DAEMONS] \
+                    and daemon.id_name == config['daemons'][cname]:
+                select = self.daemons.index(daemon)
+        self.daemon_selection_box.append_text('Default')
+        self.daemon_selection_box.set_active(select)
+
+        self.inner_box.pack_start(self.daemon_selection_box, True, True, 0)
+        self.inner_box.pack_end(self.settings_button, False, False, 0)
+        self.frame.add(self.inner_box)
+        self.pack_start(self.frame, True, True, 0)
+
+    def daemon_test_str(self, daemon):
+        if daemon.test():
+            return ''
+        else:
+            return ' (not installed)'
+
+    def on_combo_changed(self, combo):
+        selection = self.daemon_selection_box.get_active()
+        if selection >= len(self.daemons):  # default
+            if CONFIG_SECTION_DAEMONS in config and self.cname in config[CONFIG_SECTION_DAEMONS]:
+                config.remove_option(CONFIG_SECTION_DAEMONS, self.cname)
+        else:
+            config[CONFIG_SECTION_DAEMONS][self.cname] = self.daemons[selection].id_name
+
+
+
+class DesktopDaemon():
+    def __init__(self, id_name):
+        self.id_name = id_name
+        self.display_name = id_name
+        self.desc = ""
+        self.category = "optional"
+        self.cdefault = False
+        self.launch_cmd = ""
+        self.test_cmd = ""
+        self.tested = False
+        self.test_result = False
+
+    def run_test(self):
+        # @TODO add timeout
+        cp = subprocess.run(self.test_cmd, shell=True)
+        self.tested = True
+        self.test_result = cp.returncode == 0
+        return self.test_result
+
+    def test(self):
+        if not self.tested:
+            self.run_test()
+        return self.test_result
+
+
+class MainWindow(Gtk.Window):
+    def __init__(self):
+        super().__init__(title=TITLE)
+        self.notebook_pages = []
+        self.set_border_width(10)
+        self.set_default_size(600, 800)
+
+        # create ui elements
+        self.main_box = Gtk.Box()
+        self.main_box.set_orientation(Gtk.Orientation.VERTICAL)
+        self.notebook = Gtk.Notebook()
+        self.action_bar = Gtk.ActionBar()
+        self.cancel_button = Gtk.Button(label="Cancel")
+        self.cancel_button.connect('clicked', self.on_button_clicked)
+        self.save_button = Gtk.Button(label="Save")
+        self.save_button.connect('clicked', self.on_button_clicked)
+        self.quit_button = Gtk.Button(label="Save & Exit")
+        self.quit_button.connect('clicked', self.on_button_clicked)
+
+        # add pages for notebook
+        self.notebook_pages.append(('Daemons', self.daemon_page()))
+        self.notebook_pages.append(('Display', self.display_page()))
+        for page in self.notebook_pages:
+            self.notebook.append_page(page[1], Gtk.Label(label=page[0]))
+
+        # compose ui
+        self.main_box.pack_start(self.notebook, True, True, 0)
+        self.main_box.pack_end(self.action_bar, False, False, 0)
+        self.action_bar.pack_end(self.quit_button)
+        self.action_bar.pack_end(self.save_button)
+        self.action_bar.pack_end(self.cancel_button)
+
+        self.add(self.main_box)
+        self.show_all()
+        self.connect('destroy', Gtk.main_quit)
+
+    def daemon_page(self):
+        self.daemon_rows = []
+
+        # init list box
+        self.daemons_box = Gtk.ListBox()
+        self.daemons_box.set_selection_mode(Gtk.SelectionMode.NONE)
+
+        # create daemon rows
+        self.daemon_rows.append(DaemonRow('window-manager', 'Window Manager'))
+        self.daemon_rows.append(DaemonRow('compositor', 'Compositor'))
+        self.daemon_rows.append(DaemonRow('hotkeys', 'Hotkey Daemon'))
+        self.daemon_rows.append(DaemonRow('notifications', 'Notification Daemon'))
+        self.daemon_rows.append(DaemonRow('polkit', 'Polkit'))
+        self.daemon_rows.append(DaemonRow('power', 'Power Management'))
+
+        # add daemon rows to list
+        for dr in self.daemon_rows:
+            self.daemons_box.add(dr)
+
+        return self.daemons_box
+
+    def display_page(self):
+        # init list box
+        self.display_box = Gtk.ListBox()
+        self.display_box.set_selection_mode(Gtk.SelectionMode.NONE)
+
+        # create menu items
+        self.arandr_button = Gtk.Button(label='Configure displays')
+        self.arandr_button.connect('clicked', self.on_button_clicked)
+
+        # add menu items
+        self.display_box.add(self.arandr_button)
+
+        return self.display_box
+
+    def on_button_clicked(self, source):
+        global config
+        if source == self.arandr_button:
+            spawn("arandr", check_dependency=True, parent=self)
+        # action bar
+        elif source == self.cancel_button:
+            Gtk.main_quit()
+        elif source == self.save_button:
+            write_config(config, user_config_path('pademelon.conf'), self)
+        elif source == self.quit_button:
+            write_config(config, user_config_path('pademelon.conf'), self)
+            Gtk.main_quit()
+
+
+
+def check_binary_dependency(executable, parent=None):
+    temp = shutil.which(executable)
+    if temp == None:
+        msg = "You are missing the binary dependency: {}\nPlease use your package manager to install it manually."
+        msg = msg.format(executable)
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.ERROR,
+                buttons = Gtk.ButtonsType.OK,
+                text = msg)
+        dialog.set_title("Missing Binary Dependency")
+        dialog.show()
+        dialog.run()
+        dialog.destroy()
+        return False
+    else:
+        return True
+
+
+def read_config(paths):
+    config = configparser.ConfigParser()
+    config.read(paths)
+    return config
+
+def read_desktop_daemon_files(paths):
+    categories = {}
+    files = []
+
+    for path in paths:
+        if (os.path.exists(path)):
+            files.extend([f.path for f in os.scandir(path) if f.is_file()])
+
+    # read config files
+    config = configparser.ConfigParser()
+    if len(config.read(files)) == 0:
+        return None
+
+    for daemon_id_name in config.sections():
+        daemon = DesktopDaemon(daemon_id_name)
+        try:
+            daemon.display_name = config[daemon_id_name]['name']
+        except KeyError:
+            print("Error while reading daemon config '{}': 'name' not specified".format(daemon_id_name))
+
+        # optional values
+        if ('default' in config[daemon_id_name]):
+            daemon.cdefault = str_to_bool(config[daemon_id_name]['default'])
+        if ('description' in config[daemon_id_name]):
+            daemon.desc = config[daemon_id_name]['description']
+        if ('command' in config[daemon_id_name]):
+            daemon.launch_cmd = config[daemon_id_name]['command']
+        if ('test' in config[daemon_id_name]):
+            daemon.test_cmd = config[daemon_id_name]['test']
+        if ('category' in config[daemon_id_name]):
+            daemon.category = config[daemon_id_name]['category']
+
+        # add daemon to the right category
+        if (daemon.category not in categories):
+            categories[daemon.category] = []
+        categories[daemon.category].append(daemon)
+
+    return categories
+
+
+def spawn(executable, check_dependency=False, parent=None):
+    if check_dependency and not check_binary_dependency(executable, parent):
+        return
+    temp = shutil.which(executable)
+    if temp != None:
+        subprocess.Popen(temp)
+
+
+def str_to_bool(s):
+    return s.lower() in ['true', '1']
+
+
+def system_config_path(file=''):
+    return os.path.join('/etc', DIRNAME, file)
+
+
+def system_data_path(file=''):
+    return os.path.join('/usr/share', DIRNAME, file)
+
+
+def system_local_data_path(file=''):
+    return os.path.join('/usr/share/local', DIRNAME, file)
+
+
+def user_config_path(file=''):
+    path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+    return os.path.join(path, DIRNAME, file)
+
+
+def user_data_path(file=''):
+    path = os.getenv('XDG_DATA_HOME', os.path.expanduser('~/.local/share'))
+    return os.path.join(path, DIRNAME, file)
+
+
+def write_config(config, path, parent=None):
+    if not os.path.exists(os.path.dirname(path)):   # give user chance to create parent dir
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.QUESTION,
+                buttons = Gtk.ButtonsType.YES_NO,
+                text = 'Parent directory for config file does not exist. Create it now?')
+        dialog.set_title('Config Directory')
+        dialog.show()
+        response = dialog.run()
+        if response == Gtk.ResponseType.YES:
+            os.makedirs(os.path.dirname(path))
+        dialog.destroy()
+    if not os.path.exists(os.path.dirname(path)):
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.ERROR,
+                buttons = Gtk.ButtonsType.OK,
+                text = 'Unable to write config to "{}". Parent directory does not exist.'.format(path))
+        dialog.set_title('Unable to Write Config')
+        dialog.show()
+        dialog.run()
+        dialog.destroy()
+        return
+    if os.path.exists(path):
+        pass # file already exists - overwrite?
+    file = open(path, 'w+')
+    config.write(file)
+    file.close()
+
+
+if __name__ == '__main__':
+    categories = read_desktop_daemon_files([system_data_path('daemons'), system_local_data_path('daemons'),
+            user_data_path('daemons'), '/home/jzbor/Programming/C/pademelon/daemons'])
+    config = read_config([system_config_path('pademelon.conf'), user_config_path('pademelon.conf'),
+            '/home/jzbor/Programming/C/pademelon/pademelon.conf'])
+    MainWindow()
+    Gtk.main()
