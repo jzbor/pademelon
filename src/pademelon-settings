@@ -200,9 +200,12 @@ class MainWindow(Gtk.Window):
         # create menu items
         self.arandr_button = Gtk.Button(label='Configure displays')
         self.arandr_button.connect('clicked', self.on_button_clicked)
+        self.wallpaper_button = Gtk.Button(label='Choose wallpaper')
+        self.wallpaper_button.connect('clicked', self.on_button_clicked)
 
         # add menu items
         self.display_box.add(self.arandr_button)
+        self.display_box.add(self.wallpaper_button)
 
         return self.display_box
 

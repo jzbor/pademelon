@@ -1,6 +1,7 @@
 #include "common.h"
 #include "desktop-daemon.h"
 #include "pademelon-daemon-config.h"
+#include "tools.h"
 #include "x11-utils.h"
 #include <dirent.h>
 #include <errno.h>
@@ -17,7 +18,6 @@
 #ifndef DAEMON_FILE_ENDING
 #define DAEMON_FILE_ENDING      ".ddaemon"
 #endif
-#define WALLPAPER_FILE_NAME     "wallpaper"
 
 
 static void load_daemons(const char *dir);
@@ -90,12 +90,8 @@ void load_daemons(const char *dir) {
 }
 
 static void load_wallpaper(void) {
-    char *path;
     if (config->set_wallpaper) {
-        path = user_data_path(WALLPAPER_FILE_NAME);
-        /* @TODO check if path exists */
-        if (path)
-            x11_wallpaper_all(path);
+        tl_load_wallpaper(0, NULL);
     }
 }
 
