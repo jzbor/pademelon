@@ -203,14 +203,14 @@ int main(int argc, char *argv[]) {
 
     /* load config */
     config = init_config();
-    path = system_config_path("pademelon-daemon.conf");
+    path = system_config_path("pademelon.conf");
     if (path) {
         status = ini_parse(path, &ini_config_callback, config);
         if (status < 0)
             report_value(R_WARNING, "Unable to read config file", path, R_STRING);
     }
     free(path);
-    path = user_config_path("pademelon-daemon.conf");
+    path = user_config_path("pademelon.conf");
     if (path) {
         status = ini_parse(path, &ini_config_callback, config);
         if (status < 0)

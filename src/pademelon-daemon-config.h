@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define CONFIG_SECTION_NAME     "config"
+#define CONFIG_SECTION_DAEMONS      "daemons"
 
 struct config {
     int no_window_manager;

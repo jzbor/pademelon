@@ -51,7 +51,7 @@ int test_ddaemon(struct ddaemon *daemon);
 
 static const struct ddaemon ddaemon_default = {
     .display_name = "unknown", .id_name= "unknown", .desc = "unknown",
-    .cdefault = 0,.launch_cmd = "", .test_cmd = "",
+    .cdefault = 0, .launch_cmd = "", .test_cmd = "",
 };
 
 static const struct dcategory dcategory_default = {

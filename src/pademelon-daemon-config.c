@@ -40,18 +40,18 @@ int ini_config_callback(void* user, const char* section, const char* name, const
     char **write_to_str;
     int *write_to_int = NULL;
 
-    if (strcmp(section, CONFIG_SECTION_NAME) == 0) {
+    if (strcmp(section, CONFIG_SECTION_DAEMONS) == 0) {
         if (strcmp(name, "window-manager") == 0) {
             write_to_str = &cfg->window_manager;
         } else if (strcmp(name, "compositor") == 0) {
             write_to_str = &cfg->compositor_daemon;
-        } else if (strcmp(name, "hotkey-daemon") == 0) {
+        } else if (strcmp(name, "hotkeys") == 0) {
             write_to_str = &cfg->hotkey_daemon;
-        } else if (strcmp(name, "notification-daemon") == 0) {
+        } else if (strcmp(name, "notifications") == 0) {
             write_to_str = &cfg->notification_daemon;
-        } else if (strcmp(name, "polkit-daemon") == 0) {
+        } else if (strcmp(name, "polkit") == 0) {
             write_to_str = &cfg->polkit_daemon;
-        } else if (strcmp(name, "power-daemon") == 0) {
+        } else if (strcmp(name, "power") == 0) {
             write_to_str = &cfg->power_daemon;
         }
 
