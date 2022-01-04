@@ -14,10 +14,10 @@ DIRNAME='pademelon'
 CONFIG_SECTION_DAEMONS='daemons'
 
 
-class DaemonRow(Gtk.Box):
+class DaemonBox(Gtk.Box):
     def __init__(self, cname, clabel):
         super().__init__()
-        global categories, config
+        global categories
         self.cname = cname
         self.clabel = clabel
 
@@ -26,10 +26,21 @@ class DaemonRow(Gtk.Box):
         else:
             self.daemons = []
 
-        self.inner_box = Gtk.Box()
-        self.inner_box.set_spacing(5)
         self.frame = Gtk.Frame()
         self.frame.set_label(clabel)
+        self.frame.set_margin_end(5)
+        self.frame.set_margin_start(5)
+
+        self.pack_start(self.frame, True, True, 0)
+
+
+class DaemonSelectionBox(DaemonBox):
+    def __init__(self, cname, clabel):
+        super().__init__(cname, clabel)
+        global config
+
+        self.inner_box = Gtk.Box()
+        self.inner_box.set_spacing(5)
         self.settings_button = Gtk.Button(label='Settings')
         self.daemon_selection_box = Gtk.ComboBoxText()
         self.daemon_selection_box.connect("changed", self.on_combo_changed)
@@ -40,14 +51,14 @@ class DaemonRow(Gtk.Box):
             if CONFIG_SECTION_DAEMONS in config \
                     and self.cname in config[CONFIG_SECTION_DAEMONS] \
                     and daemon.id_name == config['daemons'][cname]:
-                select = self.daemons.index(daemon)
+                select = self.daemons.index(daemon)     # select config item if existent
+                self.daemon_selection_box.set_tooltip_text(daemon.desc)
         self.daemon_selection_box.append_text('Default')
         self.daemon_selection_box.set_active(select)
 
         self.inner_box.pack_start(self.daemon_selection_box, True, True, 0)
         self.inner_box.pack_end(self.settings_button, False, False, 0)
         self.frame.add(self.inner_box)
-        self.pack_start(self.frame, True, True, 0)
 
     def daemon_test_str(self, daemon):
         if daemon.test():
@@ -60,8 +71,10 @@ class DaemonRow(Gtk.Box):
         if selection >= len(self.daemons):  # default
             if CONFIG_SECTION_DAEMONS in config and self.cname in config[CONFIG_SECTION_DAEMONS]:
                 config.remove_option(CONFIG_SECTION_DAEMONS, self.cname)
+            self.daemon_selection_box.set_has_tooltip(False)
         else:
             config[CONFIG_SECTION_DAEMONS][self.cname] = self.daemons[selection].id_name
+            self.daemon_selection_box.set_tooltip_text(self.daemons[selection].desc)
 
 
 
@@ -129,21 +142,24 @@ class MainWindow(Gtk.Window):
     def daemon_page(self):
         self.daemon_rows = []
 
-        # init list box
-        self.daemons_box = Gtk.ListBox()
-        self.daemons_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        # init daemons box
+        self.daemons_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.daemons_box.set_spacing(5)
+        self.applet_box = OptionalDaemonBox('applet', 'Applets')
 
-        # create daemon rows
-        self.daemon_rows.append(DaemonRow('window-manager', 'Window Manager'))
-        self.daemon_rows.append(DaemonRow('compositor', 'Compositor'))
-        self.daemon_rows.append(DaemonRow('hotkeys', 'Hotkey Daemon'))
-        self.daemon_rows.append(DaemonRow('notifications', 'Notification Daemon'))
-        self.daemon_rows.append(DaemonRow('polkit', 'Polkit'))
-        self.daemon_rows.append(DaemonRow('power', 'Power Management'))
+        # create daemon frames
+        self.daemon_rows.append(DaemonSelectionBox('window-manager', 'Window Manager'))
+        self.daemon_rows.append(DaemonSelectionBox('compositor', 'Compositor'))
+        self.daemon_rows.append(DaemonSelectionBox('hotkeys', 'Hotkey Daemon'))
+        self.daemon_rows.append(DaemonSelectionBox('notifications', 'Notification Daemon'))
+        self.daemon_rows.append(DaemonSelectionBox('polkit', 'Polkit'))
+        self.daemon_rows.append(DaemonSelectionBox('power', 'Power Management'))
 
-        # add daemon rows to list
+        # add daemon frames to list
         for dr in self.daemon_rows:
-            self.daemons_box.add(dr)
+            self.daemons_box.pack_start(dr, False, False, 5)
+
+        self.daemons_box.pack_start(self.applet_box, False, False, 5)
 
         return self.daemons_box
 
@@ -174,6 +190,40 @@ class MainWindow(Gtk.Window):
             write_config(config, user_config_path('pademelon.conf'), self)
             Gtk.main_quit()
 
+
+class OptionalDaemonBox(DaemonBox):
+    def __init__(self, cname, clabel):
+        super().__init__(cname, clabel)
+        global config
+
+        self.inner_box = Gtk.FlowBox()
+        self.inner_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.check_buttons = []
+
+        if CONFIG_SECTION_DAEMONS in config and cname in config[CONFIG_SECTION_DAEMONS]:
+            activated_daemons = config[CONFIG_SECTION_DAEMONS][cname].split(' ')
+        else:
+            activated_daemons = []
+
+        for daemon in self.daemons:
+            cb = Gtk.CheckButton(label=daemon.display_name)
+            cb.connect("toggled", self.on_button_toggled, "1")
+            cb.set_tooltip_text(daemon.desc)
+            if daemon.id_name in activated_daemons:
+                cb.set_active(True)
+            self.check_buttons.append(cb)
+            if daemon.test():
+                self.inner_box.add(cb)
+
+        self.frame.add(self.inner_box)
+
+    def on_button_toggled(self, button, name):
+        global config
+        activated_daemons = []
+        for cb in self.check_buttons:
+            if cb.get_active():
+                activated_daemons.append(self.daemons[self.check_buttons.index(cb)].id_name)
+        config[CONFIG_SECTION_DAEMONS][self.cname] = ' '.join(activated_daemons)
 
 
 def check_binary_dependency(executable, parent=None):
