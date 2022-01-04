@@ -4,4 +4,5 @@ description = Power manager for the Xfce desktop
 category = power
 command = /usr/bin/xfce4-power-manager
 test = test -x /usr/bin/xfce4-power-manager
+settings = /usr/bin/xfce4-power-manager-settings
 default = True

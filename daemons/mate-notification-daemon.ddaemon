@@ -4,6 +4,7 @@ description = Notification daemon for MATE
 category = notifications
 command = /usr/lib/mate-notification-daemon/mate-notification-daemon
 test = test -x /usr/lib/mate-notification-daemon/mate-notification-daemon
+settings = /usr/bin/mate-notification-properties
 default = False
 
 ; @TODO start mate-notification-applet?

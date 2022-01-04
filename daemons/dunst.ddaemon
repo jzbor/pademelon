@@ -4,4 +4,5 @@ description = A customizable and lightweight notification-daemon
 category = notifications
 command = /usr/bin/dunst
 test = test -x /usr/bin/dunst
+settings = config://dunst/dunstrc
 default = False
