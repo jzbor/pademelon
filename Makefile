@@ -27,8 +27,9 @@ clean:
 	rm -f pademelon-daemon.o
 	rm -f pademelon-daemon-config.o
 
-install:
+install: pademelon-daemon
 	install -Dm755 pademelon-daemon -t ${DESTDIR}${PREFIX}/bin
+	install -Dm755 src/pademelon-settings -t ${DESTDIR}${PREFIX}/bin
 
 install-daemons:
 	install -Dm644 daemons/* -t ${DESTDIR}${PREFIX}/share/pademelon/daemons
@@ -36,7 +37,7 @@ install-daemons:
 install-all: install install-daemons
 
 uninstall:
-	rm -f ${DESTDIR}${PREFIX}/bin/pademelon-daemon
+	rm -f ${DESTDIR}${PREFIX}/bin/pademelon-daemon ${DESTDIR}${PREFIX}/bin/pademelon-settings
 
 uninstall-daemons:
 	rm -rf ${DESTDIR}${PREFIX}/share/pademelon/daemons
