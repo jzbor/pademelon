@@ -85,7 +85,15 @@ class DaemonSelectionBox(DaemonBox):
             dialog.run()
             dialog.destroy()
             return
-        spawn(selected.settings, check_dependency=True, parent=self.window)
+        if selected.settings.startswith("config://"):
+            path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+            # @TODO find a way to check the dependency here
+            spawn('xdg-open ' + os.path.join(path, selected.settings[len('config://'):]), check_dependency=False, parent=self.window)
+        elif selected.settings.startswith('file://'):
+            # @TODO find a way to check the dependency here
+            spawn('xdg-open ' + selected.settings[len('file://'):], check_dependency=False, parent=self.window)
+        else:
+            spawn(selected.settings, check_dependency=True, parent=self.window)
 
     def on_combo_changed(self, combo):
         selected = self.selected_daemon();

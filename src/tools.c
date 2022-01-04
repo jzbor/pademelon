@@ -2,9 +2,13 @@
 #include "tools.h"
 #include "x11-utils.h"
 #include <errno.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#define BUFSIZE     100
 
 static char* wallpaper_path(void);
 
@@ -21,9 +25,10 @@ int tl_load_wallpaper(int argc, char *argv[]) {
 }
 
 int tl_set_wallpaper(int argc, char *argv[]) {
-    char c = 0;
-    int bytes_written;
-    char *path;
+    char buffer[BUFSIZE];
+    int status;
+    size_t n;
+    char *path, *dirpath;
     FILE *source, *target;
 
     if (argc < 0) {
@@ -37,12 +42,30 @@ int tl_set_wallpaper(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    /* open input file */
     source = fopen(argv[0], "r");
     if (!source) {
         fprintf(stderr, "set-wallpaper: unable to open file\n");
         return EXIT_FAILURE;
     }
 
+    /* check if output dir exists */
+    dirpath = strdup(path);
+    if (!dirpath) {
+        fprintf(stderr, "set-wallpaper: unable to allocate enough memory\n");
+        fclose(source);
+        return EXIT_FAILURE;
+    }
+
+    status = mkdir(dirname(dirpath), S_IRWXU|S_IRGRP|S_IROTH);
+    if (status == -1 && errno != EEXIST) {
+        perror("set-wallpaper: unable to create data dir");
+        fclose(source);
+        return EXIT_FAILURE;
+    }
+    free(dirpath);
+
+    /* open output file */
     target = fopen(path, "w");
     if (!target) {
         fprintf(stderr, "set-wallpaper: unable to open target file\n");
@@ -50,16 +73,12 @@ int tl_set_wallpaper(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    bytes_written = 0;
-    while ((c = fgetc(source)) != EOF) {
-        if(fputc(c, target) == EOF) {
+    while ((n = fread(buffer, sizeof(char), sizeof(buffer), source)) > 0) {
+        if (fwrite(buffer, sizeof(char), n, target) != n) {
             fprintf(stderr, "set-wallpaper: error while writing to target file\n");
             return EXIT_FAILURE;
         }
-        bytes_written++;
     }
-    fprintf(stderr, "%d bytes copied\n", bytes_written);
-    fprintf(stderr, "%d is the last copied byte (feof: %d, ferror: %d, errno: %d/%s)\n", c, feof(source), ferror(source), errno, strerror(errno));
 
     if (ferror(source)) {
         fprintf(stderr, "set-wallpaper: error while reading from source file\n");
