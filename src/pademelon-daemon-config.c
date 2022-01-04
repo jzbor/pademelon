@@ -15,6 +15,7 @@ static const struct config default_config = {
     .notification_daemon = NULL,
     .polkit_daemon = NULL,
     .power_daemon = NULL,
+    .applets = NULL,
 };
 
 
@@ -24,6 +25,7 @@ void free_config(struct config *cfg) {
     free(cfg->notification_daemon);
     free(cfg->polkit_daemon);
     free(cfg->power_daemon);
+    free(cfg->applets);
     free(cfg);
 }
 
@@ -37,8 +39,10 @@ struct config *init_config(void) {
 
 int ini_config_callback(void* user, const char* section, const char* name, const char* value) {
     struct config *cfg = (struct config *) user;
-    char **write_to_str;
+    char **write_to_str = NULL;
     int *write_to_int = NULL;
+
+    report_value(R_DEBUG, "name", name, R_STRING);
 
     if (strcmp(section, CONFIG_SECTION_DAEMONS) == 0) {
         if (strcmp(name, "window-manager") == 0) {
@@ -53,6 +57,8 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             write_to_str = &cfg->polkit_daemon;
         } else if (strcmp(name, "power") == 0) {
             write_to_str = &cfg->power_daemon;
+        } else if (strcmp(name, "applets") == 0) {
+            write_to_str = &cfg->applets;
         }
 
         if (write_to_str) {

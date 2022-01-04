@@ -182,6 +182,9 @@ void startup_daemon(const char *preference, const char *category, int auto_fallb
 }
 
 void startup_daemons(void) {
+    struct dcategory *c;
+    struct ddaemon *d;
+    char *s, *token;
     if (!config->no_window_manager)
         startup_daemon(wm_overwrite ? wm_overwrite :config->window_manager, "window-manager", 1);
 
@@ -190,6 +193,19 @@ void startup_daemons(void) {
     startup_daemon(config->notification_daemon, "notifications", 1);
     startup_daemon(config->polkit_daemon, "polkit", 1);
     startup_daemon(config->power_daemon, "power", 1);
+
+    c = find_category("applets");
+    if (c && config->applets) {
+        s = strdup(config->applets);
+        if (!s)
+            report(R_FATAL, "Unable to allocate memory for applets");
+        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
+            d = find_ddaemon(token, "applets", 0);
+            if (d && test_ddaemon(d))
+                launch_ddaemon(d);
+        }
+        free(s);
+    }
 }
 
 int main(int argc, char *argv[]) {

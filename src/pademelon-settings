@@ -15,11 +15,12 @@ CONFIG_SECTION_DAEMONS='daemons'
 
 
 class DaemonBox(Gtk.Box):
-    def __init__(self, cname, clabel):
+    def __init__(self, window, cname, clabel):
         super().__init__()
         global categories
         self.cname = cname
         self.clabel = clabel
+        self.window = window
 
         if cname in categories:
             self.daemons = categories[cname]
@@ -35,13 +36,14 @@ class DaemonBox(Gtk.Box):
 
 
 class DaemonSelectionBox(DaemonBox):
-    def __init__(self, cname, clabel):
-        super().__init__(cname, clabel)
+    def __init__(self, window, cname, clabel):
+        super().__init__(window, cname, clabel)
         global config
 
         self.inner_box = Gtk.Box()
         self.inner_box.set_spacing(5)
         self.settings_button = Gtk.Button(label='Settings')
+        self.settings_button.connect('clicked', self.on_button_clicked)
         self.daemon_selection_box = Gtk.ComboBoxText()
         self.daemon_selection_box.connect("changed", self.on_combo_changed)
 
@@ -66,15 +68,41 @@ class DaemonSelectionBox(DaemonBox):
         else:
             return ' (not installed)'
 
+    def on_button_clicked(self, source):
+        if source is not self.settings_button:
+            return
+        selected = self.selected_daemon()
+        if selected == None:
+            return
+        if selected.settings == '':
+            dialog = Gtk.MessageDialog(
+                    transient_for = self.window,
+                    message_type = Gtk.MessageType.ERROR,
+                    buttons = Gtk.ButtonsType.OK,
+                    text = 'No settings file or application found for "{}".'.format(selected.display_name))
+            dialog.set_title('No Settings Available')
+            dialog.show()
+            dialog.run()
+            dialog.destroy()
+            return
+        spawn(selected.settings, check_dependency=True, parent=self.window)
+
     def on_combo_changed(self, combo):
-        selection = self.daemon_selection_box.get_active()
-        if selection >= len(self.daemons):  # default
+        selected = self.selected_daemon();
+        if selected == None:
             if CONFIG_SECTION_DAEMONS in config and self.cname in config[CONFIG_SECTION_DAEMONS]:
                 config.remove_option(CONFIG_SECTION_DAEMONS, self.cname)
             self.daemon_selection_box.set_has_tooltip(False)
         else:
-            config[CONFIG_SECTION_DAEMONS][self.cname] = self.daemons[selection].id_name
-            self.daemon_selection_box.set_tooltip_text(self.daemons[selection].desc)
+            config[CONFIG_SECTION_DAEMONS][self.cname] = selected.id_name
+            self.daemon_selection_box.set_tooltip_text(selected.desc)
+
+    def selected_daemon(self):
+        selection = self.daemon_selection_box.get_active()
+        if selection >= len(self.daemons):  # default
+            return None
+        else:
+            return self.daemons[selection]
 
 
 
@@ -87,6 +115,7 @@ class DesktopDaemon():
         self.cdefault = False
         self.launch_cmd = ""
         self.test_cmd = ""
+        self.settings = ""
         self.tested = False
         self.test_result = False
 
@@ -145,15 +174,15 @@ class MainWindow(Gtk.Window):
         # init daemons box
         self.daemons_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.daemons_box.set_spacing(5)
-        self.applet_box = OptionalDaemonBox('applet', 'Applets')
+        self.applet_box = OptionalDaemonBox(self, 'applets', 'Applets')
 
         # create daemon frames
-        self.daemon_rows.append(DaemonSelectionBox('window-manager', 'Window Manager'))
-        self.daemon_rows.append(DaemonSelectionBox('compositor', 'Compositor'))
-        self.daemon_rows.append(DaemonSelectionBox('hotkeys', 'Hotkey Daemon'))
-        self.daemon_rows.append(DaemonSelectionBox('notifications', 'Notification Daemon'))
-        self.daemon_rows.append(DaemonSelectionBox('polkit', 'Polkit'))
-        self.daemon_rows.append(DaemonSelectionBox('power', 'Power Management'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'window-manager', 'Window Manager'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'compositor', 'Compositor'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'hotkeys', 'Hotkey Daemon'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'notifications', 'Notification Daemon'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'polkit', 'Polkit'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'power', 'Power Management'))
 
         # add daemon frames to list
         for dr in self.daemon_rows:
@@ -192,8 +221,8 @@ class MainWindow(Gtk.Window):
 
 
 class OptionalDaemonBox(DaemonBox):
-    def __init__(self, cname, clabel):
-        super().__init__(cname, clabel)
+    def __init__(self, window, cname, clabel):
+        super().__init__(window, cname, clabel)
         global config
 
         self.inner_box = Gtk.FlowBox()
@@ -275,12 +304,14 @@ def read_desktop_daemon_files(paths):
             daemon.cdefault = str_to_bool(config[daemon_id_name]['default'])
         if ('description' in config[daemon_id_name]):
             daemon.desc = config[daemon_id_name]['description']
+        if ('category' in config[daemon_id_name]):
+            daemon.category = config[daemon_id_name]['category']
         if ('command' in config[daemon_id_name]):
             daemon.launch_cmd = config[daemon_id_name]['command']
         if ('test' in config[daemon_id_name]):
             daemon.test_cmd = config[daemon_id_name]['test']
-        if ('category' in config[daemon_id_name]):
-            daemon.category = config[daemon_id_name]['category']
+        if ('settings' in config[daemon_id_name]):
+            daemon.settings = config[daemon_id_name]['settings']
 
         # add daemon to the right category
         if (daemon.category not in categories):

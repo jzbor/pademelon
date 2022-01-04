@@ -14,6 +14,8 @@ struct config {
     char *notification_daemon;
     char *polkit_daemon;
     char *power_daemon;
+
+    char *applets;
 };
 
 void free_config(struct config *cfg);
