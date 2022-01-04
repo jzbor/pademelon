@@ -4,18 +4,21 @@
 #include <stddef.h>
 
 #define CONFIG_SECTION_DAEMONS      "daemons"
+#define CONFIG_SECTION_APPEARANCE   "appearance"
 
 struct config {
+    /* CONFIG_SECTION_DAEMONS */
     int no_window_manager;
     char *window_manager;
-
     char *compositor_daemon;
     char *hotkey_daemon;
     char *notification_daemon;
     char *polkit_daemon;
     char *power_daemon;
-
     char *applets;
+
+    /* CONFIG_SECTION_APPEARANCE */
+    int set_wallpaper;
 };
 
 void free_config(struct config *cfg);

@@ -17,9 +17,11 @@
 #ifndef DAEMON_FILE_ENDING
 #define DAEMON_FILE_ENDING      ".ddaemon"
 #endif
+#define WALLPAPER_FILE_NAME     "wallpaper"
 
 
 static void load_daemons(const char *dir);
+static void load_wallpaper(void);
 static void loop(void);
 static void setup_signals(void);
 static void sigchld_handler(int signal);
@@ -29,7 +31,6 @@ static void startup_daemons(void);
 static struct config *config;
 static int end = 0;
 static char *wm_overwrite = NULL;
-static int wm_ignore = 0;
 
 
 void load_daemons(const char *dir) {
@@ -86,6 +87,16 @@ void load_daemons(const char *dir) {
     status = closedir(directory);
     if (status)
         report(R_FATAL, "Unable to close directory");
+}
+
+static void load_wallpaper(void) {
+    char *path;
+    if (config->set_wallpaper) {
+        path = user_data_path(WALLPAPER_FILE_NAME);
+        /* @TODO check if path exists */
+        if (path)
+            x11_wallpaper_all(path);
+    }
 }
 
 void loop(void) {
@@ -301,8 +312,11 @@ int main(int argc, char *argv[]) {
     }
 
     if (!print_only) {
+        x11_init();
         startup_daemons();
+        load_wallpaper();
         loop();
+        x11_deinit();
     }
 
     plist_free();
