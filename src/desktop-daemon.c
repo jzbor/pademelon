@@ -16,13 +16,26 @@ struct ddaemon *daemons = NULL;
 
 void add_to_category(const char *name, struct ddaemon *d) {
     struct dcategory *c;
+    struct ddaemon *diter;
 
-    report_value(R_DEBUG, "Category", d->category, R_POINTER);
-
-    /* daemon already has category */
-    /* @TODO implement overwrite */
-    if (d->category != NULL)
-        return;
+    /* daemon already has category - remove daemon from it*/
+    if (d->category != NULL) {
+        /* check if head matches */
+        if (d->category->daemons == d) {
+            d->category->daemons = d->cnext;
+            d->category = NULL;
+            d->cnext = NULL;
+        } else {
+            for (diter = d->category->daemons; diter && diter->next; diter = diter->cnext) {
+                if (diter->cnext == d) {
+                    diter->cnext = d->cnext;
+                    d->category = NULL;
+                    d->cnext = NULL;
+                    break;
+                }
+            }
+        }
+    }
 
     /* add daemon if category exists */
     for (c = categories; c; c = c->next) {

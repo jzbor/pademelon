@@ -133,6 +133,7 @@ void plist_remove(pid_t pid) {
             if (pl->next->pid == pid) {
                 pl_delete = pl->next;
                 pl->next = pl_delete->next;
+                break;
             }
         }
     }
