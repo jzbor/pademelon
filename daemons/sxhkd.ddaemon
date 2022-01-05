@@ -1,0 +1,8 @@
+[sxhkd]
+name = Sxhkd
+description = Simple X hotkey daemon
+category = hotkeys
+command = /usr/bin/sxhkd
+test = test -x /usr/bin/sxhkd
+settings = config://sxhkd/sxhkdrc
+default = False

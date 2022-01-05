@@ -1,0 +1,7 @@
+[kdeconnect]
+name = KDE Connect
+description = Adds communication between your computer and your smartphone
+category = applets
+command = /usr/bin/kdeconnect-indicator
+test = test -x /usr/bin/kdeconnect-indicator
+default = False
