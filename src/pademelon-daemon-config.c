@@ -103,17 +103,17 @@ int ini_config_callback(void* user, const char* section, const char* name, const
 
 int print_config(struct config *cfg) {
     int status;
-    status = printf("[%s]\t\t; %p\n", "config", (void *)cfg);
+    status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_DAEMONS, (void *)cfg);
     if (status < 0)
         return -1;
 
     PRINT_PROPERTY_STR("window-manager", cfg->window_manager);
 
     PRINT_PROPERTY_STR("compositor", cfg->compositor_daemon);
-    PRINT_PROPERTY_STR("hotkey-daemon", cfg->hotkey_daemon);
-    PRINT_PROPERTY_STR("notification-daemon", cfg->notification_daemon);
-    PRINT_PROPERTY_STR("polkit-daemon", cfg->polkit_daemon);
-    PRINT_PROPERTY_STR("power-daemon", cfg->power_daemon);
+    PRINT_PROPERTY_STR("hotkeys", cfg->hotkey_daemon);
+    PRINT_PROPERTY_STR("notifications", cfg->notification_daemon);
+    PRINT_PROPERTY_STR("polkit", cfg->polkit_daemon);
+    PRINT_PROPERTY_STR("power", cfg->power_daemon);
 
     PRINT_PROPERTY_BOOL("no-window-manager", cfg->no_window_manager);
 
