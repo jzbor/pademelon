@@ -6,15 +6,14 @@
 * ~~Improve test implementation in `pademelon-daemon` with `system()`~~
 * ~~Save last display layout with unxrandr~~
 * ~~`pademelon-settings`: display warning when selecting daemon that is not installed~~
-* Implement basic external support for volume, backlight and keyboard layout
+* ~~Support for setting the keyboard-layout via `setxkbmap`~~
+* Implement basic external support for volume, backlight and ~~keyboard layout~~
 * Timeout for test command
 * Fix test implementation in `pademelon-settings`
 * Verify `no-window-manager` functionality
 * Rework and verify options for `pademelon-daemon`
 * Rework or remove `print_config()`
 * Check for freeing in ro segements (`free_ddaemon()`)
-* Load default ARandr profiles
-* Support for setting the keyboard-layout via `setxkbmap`
 
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift
