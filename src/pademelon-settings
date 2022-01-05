@@ -100,8 +100,20 @@ class DaemonSelectionBox(DaemonBox):
                 config.remove_option(CONFIG_SECTION_DAEMONS, self.cname)
             self.daemon_selection_box.set_has_tooltip(False)
         else:
+            if not selected.test():
+                dialog = Gtk.MessageDialog(
+                        transient_for = self.window,
+                        message_type = Gtk.MessageType.WARNING,
+                        buttons = Gtk.ButtonsType.OK,
+                        text = 'You selected a program, that is not installed or not available: "{}". '.format(selected.display_name)
+                               + 'You might want want to either install that program or choose another one.')
+                dialog.set_title('Program not installed')
+                dialog.show()
+                dialog.run()
+                dialog.destroy()
             config[CONFIG_SECTION_DAEMONS][self.cname] = selected.id_name
             self.daemon_selection_box.set_tooltip_text(selected.desc)
+
 
     def selected_daemon(self):
         selection = self.daemon_selection_box.get_active()
