@@ -323,37 +323,14 @@ struct ddaemon *select_ddaemon(const char *user_preference, const char *category
 
 int test_ddaemon(struct ddaemon *daemon) {
     int status;
-	sigset_t sigset = {0};
-    pid_t pid;
-    struct plist *pl;
 
     if (!daemon || !daemon->test_cmd)
         return 1;
 
-    block_signal(SIGCHLD);
-    pid = fork();
-
-    if (pid == 0) { /* child */
-        unblock_signal(SIGCHLD);
-        char *args[] = { "/bin/sh", "-c", daemon->test_cmd, NULL };
-        execvp(args[0], args);
-        report_value(R_ERROR, "Unable to test daemon", daemon->test_cmd, R_STRING);
-        exit(EXIT_FAILURE);
-    } else if (pid > 0) { /* parent */
-        plist_add(pid, daemon);
-    } else {
-        report(R_FATAL, "Unable to fork into a new process");
-    }
-
-    status = sigemptyset(&sigset);
+    status = execute(daemon->test_cmd);
     if (status == -1)
-        report(R_FATAL, "Unable to add signal to sigset");
-    /* @TODO add timeout */
-    while ((pl = plist_get(pid)) && !pl->status_changed)
-        sigsuspend(&sigset);
-    status = WIFEXITED(pl->status) && WEXITSTATUS(pl->status) == 0;
-    plist_remove(pid);
-    unblock_signal(SIGCHLD);
-
-    return status;
+        report(R_FATAL, "Execute failed");
+    else if (status == 0)
+        return 1;
+    return 0;
 }

@@ -1,8 +1,10 @@
+#include "common.h"
+#include "signals.h"
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
 
 #define MAX(A, B)               ((A) > (B) ? (A) : (B))
 #define MIN(A, B)               ((A) < (B) ? (A) : (B))
@@ -16,6 +18,35 @@ const char *userconf = "%s/%s/%s";
 const char *userdata = "%s/%s/%s";
 char *def_userconf = "%s/.config";
 char *def_userdata = "%s/.local/share";
+
+int execute(const char *command) {
+    int status;
+
+    if (!command)
+        return -1;
+
+    /* @TODO improve code so the caller can be sure of the sigchld handler */
+    if (!block_signal(SIGCHLD))
+        return -1;
+    if (!install_default_sigchld_handler()) {
+        unblock_signal(SIGCHLD);
+        return -1;
+    }
+
+    status = system(command);
+
+    if (!restore_sigchld_handler()) {
+        unblock_signal(SIGCHLD);
+        return -1;
+    }
+    if (!unblock_signal(SIGCHLD))
+        return -1;
+
+    if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+    else
+        return 1;
+}
 
 void report(int mode, const char *msg) {
     report_value(mode, msg, NULL, R_NONE);

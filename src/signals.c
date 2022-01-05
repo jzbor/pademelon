@@ -10,6 +10,7 @@
 static void plist_sigchld_handler(int signal);
 
 static struct plist *plist_head = NULL;
+static struct sigaction sigaction_sigchld_prev_handler = { .sa_handler = SIG_DFL, .sa_flags = SA_NODEFER|SA_NOCLDSTOP|SA_RESTART};
 
 int block_signal(int signal) {
     int status;
@@ -37,7 +38,7 @@ int install_default_sigchld_handler(void) {
 	if (status == -1)
 		return 0;
 
-	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, NULL);
+	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, &sigaction_sigchld_prev_handler);
 	if (status == -1)
 		return 0;
     return 1;
@@ -52,7 +53,7 @@ int install_plist_sigchld_handler(void) {
 	if (status == -1)
 		return 0;
 
-	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, NULL);
+	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, &sigaction_sigchld_prev_handler);
 	if (status == -1)
 		return 0;
     return 1;
@@ -183,6 +184,14 @@ void plist_sigchld_handler(int signal) {
 	}
 
 	errno = errno_save;
+}
+
+int restore_sigchld_handler(void) {
+    int status;
+	status = sigaction(SIGCHLD, &sigaction_sigchld_prev_handler, NULL);
+	if (status == -1)
+		return 0;
+    return 1;
 }
 
 int unblock_signal(int signal) {

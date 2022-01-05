@@ -20,6 +20,7 @@ struct plist *plist_get(pid_t pid);
 struct plist *plist_next_event(struct plist *from);
 void plist_remove(pid_t pid);
 /* struct plist *plist_search(char *id_name, char *category); */
+int restore_sigchld_handler(void);
 int unblock_signal(int signal);
 
 #endif /* H_SIGNALS */

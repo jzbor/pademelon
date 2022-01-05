@@ -17,6 +17,9 @@
 #define STR_ENDS_WITH(S, SUF) (strlen((S)) >= strlen((SUF)) \
         && strncmp((SUF), &(S)[strlen((S)) - strlen((SUF))], strlen((SUF))) == 0)
 
+/* returns -1 on error, return code else */
+int execute(const char *command);
+
 /*
  * see report_value
  */
