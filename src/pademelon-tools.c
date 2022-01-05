@@ -11,7 +11,9 @@ struct tool {
 };
 
 struct tool tools[] = {
+    { "load-display-conf", tl_load_display_conf },
     { "load-wallpaper", tl_load_wallpaper },
+    { "save-display-conf", tl_save_display_conf },
     { "set-wallpaper", tl_set_wallpaper },
     { NULL, NULL },
 };

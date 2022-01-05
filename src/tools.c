@@ -8,9 +8,33 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define BUFSIZE     512
+#define BUFSIZE             512
+#define UNXRANDR_CMD        "unxrandr"
+#define DISPLAY_CONF_FILE   "displayconfiguration"
 
 static char* wallpaper_path(void);
+
+int tl_load_display_conf(int argc, char *argv[]) {
+    int status;
+    char *path;
+    if (argc > 0) {
+        path = argv[0];
+    } else {
+        path = user_data_path(DISPLAY_CONF_FILE);
+        if (!path)
+            return EXIT_FAILURE;
+    }
+
+    status = execute(path);
+    if (status == -1) {
+        return EXIT_FAILURE;
+    } else {
+        if (chmod(path, S_IRWXU|S_IRGRP|S_IROTH) == -1)
+            return EXIT_FAILURE;
+        return status;
+    }
+}
+
 
 int tl_load_wallpaper(int argc, char *argv[]) {
     char *path;
@@ -22,6 +46,23 @@ int tl_load_wallpaper(int argc, char *argv[]) {
     }
     fprintf(stderr, "load-wallpaper: unable to set wallpaper to all screens\n");
     return EXIT_FAILURE;
+}
+
+int tl_save_display_conf(int argc, char *argv[]) {
+    int status;
+    char *path = user_data_path(DISPLAY_CONF_FILE);
+    if (!path)
+        return EXIT_FAILURE;
+
+    char temp[strlen(UNXRANDR_CMD) + strlen(" > ") + strlen(path) + 1];
+    strcpy(temp, UNXRANDR_CMD);
+    strcat(temp, " > ");
+    strcat(temp, path);
+    status = execute(temp);
+    if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+    else
+        return EXIT_SUCCESS;
 }
 
 int tl_set_wallpaper(int argc, char *argv[]) {

@@ -131,6 +131,7 @@ void loop(void) {
         if (x11_screen_has_changed()) {
             report(R_DEBUG, "Screen configuration has changed");
             load_wallpaper();
+            tl_save_display_conf(0, NULL);
         }
 
         sleep(1);
@@ -297,6 +298,7 @@ int main(int argc, char *argv[]) {
     if (!print_only) {
         x11_init();
         load_wallpaper();
+        tl_load_display_conf(0, NULL);
         startup_daemons();
         loop();
         x11_deinit();
