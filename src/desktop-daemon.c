@@ -132,6 +132,7 @@ void free_ddaemon(struct ddaemon *d) {
 
     free(d->launch_cmd);
     free(d->test_cmd);
+    free(d->settings);
 
     free(d);
 }
@@ -163,6 +164,8 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
         write_to_str = &d->launch_cmd;
     else if (strcmp(name, "test") == 0)
         write_to_str = &d->test_cmd;
+    else if (strcmp(name, "settings") == 0)
+        write_to_str = &d->settings;
 
     if (write_to_str) {
         /* hacky workaround to avoid reallocing stuff in read-only segments */

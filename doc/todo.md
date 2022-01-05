@@ -13,6 +13,7 @@
 * Rework and verify options for `pademelon-daemon`
 * Rework or remove `print_config()`
 * `pademelon-settings`: display warning when selecting daemon that is not installed
+* Check for freeing in ro segements (`free_ddaemon()`)
 
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift

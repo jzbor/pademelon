@@ -5,6 +5,7 @@ struct ddaemon {
     int cdefault;
     char *display_name, *id_name, *desc; /* allocated by user, freed in free_ddaemon() */
     char *launch_cmd, *test_cmd; /* allocated by user, freed in free_ddaemon() */
+    char *settings; /* allocated by user, freed in free_ddaemon() */
     struct ddaemon *next, *cnext;
     struct dcategory *category;
 };
@@ -35,7 +36,7 @@ int test_ddaemon(struct ddaemon *daemon);
 
 static const struct ddaemon ddaemon_default = {
     .display_name = "unknown", .id_name= "unknown", .desc = "unknown",
-    .cdefault = 0, .launch_cmd = "", .test_cmd = "",
+    .cdefault = 0, .launch_cmd = "", .test_cmd = "", .settings = "",
 };
 
 static const struct dcategory dcategory_default = {
