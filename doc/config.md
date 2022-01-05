@@ -19,4 +19,8 @@ These values should be specified as a boolean:
 These values should be specified as a boolean:
 * `set-wallpaper`: let pademelon set wallpaper
 
+## Section: `input`
+
+* `keyboard-layout`: keyboard layout as defined by `setxkbmap(1)` and `xkeyboard-config(7)`
+
 

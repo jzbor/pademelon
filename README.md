@@ -27,7 +27,8 @@ Still one important goal of this software is to provide a desktop that works out
 * **Polkit:** gnome-polkit
 
 ### Dependencies on external executables
-* **ARandr:** Configure display layouts
+* **ARandR:** Configure display layouts
+* **setxkbmap:** Set the keyboard map
 
 ### Libraries
 * **X11**

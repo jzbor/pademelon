@@ -23,6 +23,7 @@
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
 
 static void load_daemons(const char *dir);
+static void load_keyboard(void);
 static void load_wallpaper(void);
 static void loop(void);
 static void setup_signals(void);
@@ -89,7 +90,16 @@ void load_daemons(const char *dir) {
         report(R_FATAL, "Unable to close directory");
 }
 
-static void load_wallpaper(void) {
+void load_keyboard(void) {
+    if (config->keyboard_settings) {
+        char temp[sizeof("setxkbmap ") + strlen(config->keyboard_settings) + 1];
+        strcpy(temp, "setxkbmap ");
+        strcat(temp, config->keyboard_settings);
+        execute(temp);
+    }
+}
+
+void load_wallpaper(void) {
     if (config->set_wallpaper) {
         tl_load_wallpaper(0, NULL);
     }
@@ -310,6 +320,7 @@ int main(int argc, char *argv[]) {
     if (!print_only) {
         x11_init();
         load_wallpaper();
+        load_keyboard();
         tl_load_display_conf(0, NULL);
         startup_daemons();
         loop();

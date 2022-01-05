@@ -11,13 +11,6 @@
 
 static const struct config default_config = {
     .no_window_manager = 0,
-    .compositor_daemon = NULL,
-    .hotkey_daemon = NULL,
-    .notification_daemon = NULL,
-    .polkit_daemon = NULL,
-    .power_daemon = NULL,
-    .applets = NULL,
-
     .set_wallpaper = 1,
 };
 
@@ -27,7 +20,10 @@ void free_config(struct config *cfg) {
     free(cfg->notification_daemon);
     free(cfg->polkit_daemon);
     free(cfg->power_daemon);
+    free(cfg->status_daemon);
     free(cfg->applets);
+
+    free(cfg->keyboard_settings);
     free(cfg);
 }
 
@@ -96,7 +92,24 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             *write_to_int = IS_TRUE(value);
             return 1;
         }
+    } else if (strcmp(section, CONFIG_SECTION_INPUT) == 0) {
+        if (strcmp(name, "keyboard-layout") == 0) {
+            write_to_str = &cfg->keyboard_settings;
+        }
 
+        if (write_to_str) {
+            /* hacky workaround to avoid reallocing stuff in read-only segments */
+            for (int i = 0; i < sizeof(default_config) / sizeof(char *); i++)
+                if (*write_to_str == ((char **)&default_config)[i]) {
+                    *write_to_str = NULL;
+                    break;
+                }
+            *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
+            if (!*write_to_str)
+                report(R_FATAL, "Unable to allocate memory for config");
+            strcpy(*write_to_str, value);
+            return 1;
+        }
     }
 
     report_value(R_WARNING, "Unknown key", name, R_STRING);

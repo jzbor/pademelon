@@ -12,6 +12,8 @@ import subprocess
 TITLE='Pademelon Settings'
 DIRNAME='pademelon'
 CONFIG_SECTION_DAEMONS='daemons'
+CONFIG_SECTION_APPEARANCE='appearance'
+CONFIG_SECTION_INPUT='input'
 
 
 class DaemonBox(Gtk.Box):
@@ -41,7 +43,6 @@ class DaemonSelectionBox(DaemonBox):
         global config
 
         self.inner_box = Gtk.Box()
-        self.inner_box.set_spacing(5)
         self.settings_button = Gtk.Button(label='Settings')
         self.settings_button.connect('clicked', self.on_button_clicked)
         self.daemon_selection_box = Gtk.ComboBoxText()
@@ -58,8 +59,8 @@ class DaemonSelectionBox(DaemonBox):
         self.daemon_selection_box.append_text('Default')
         self.daemon_selection_box.set_active(select)
 
-        self.inner_box.pack_start(self.daemon_selection_box, True, True, 0)
-        self.inner_box.pack_end(self.settings_button, False, False, 0)
+        self.inner_box.pack_start(self.daemon_selection_box, True, True, 5)
+        self.inner_box.pack_end(self.settings_button, False, False, 5)
         self.frame.add(self.inner_box)
 
     def daemon_test_str(self, daemon):
@@ -111,9 +112,10 @@ class DaemonSelectionBox(DaemonBox):
                 dialog.show()
                 dialog.run()
                 dialog.destroy()
+            if CONFIG_SECTION_DAEMONS not in config:
+                config[CONFIG_SECTION_DAEMONS] = {}
             config[CONFIG_SECTION_DAEMONS][self.cname] = selected.id_name
             self.daemon_selection_box.set_tooltip_text(selected.desc)
-
 
     def selected_daemon(self):
         selection = self.daemon_selection_box.get_active()
@@ -171,7 +173,7 @@ class MainWindow(Gtk.Window):
 
         # add pages for notebook
         self.notebook_pages.append(('Daemons', self.daemon_page()))
-        self.notebook_pages.append(('Display', self.display_page()))
+        self.notebook_pages.append(('System', self.system_page()))
         for page in self.notebook_pages:
             self.notebook.append_page(page[1], Gtk.Label(label=page[0]))
 
@@ -211,22 +213,46 @@ class MainWindow(Gtk.Window):
 
         return self.daemons_box
 
-    def display_page(self):
-        # init list box
-        self.display_box = Gtk.ListBox()
-        self.display_box.set_selection_mode(Gtk.SelectionMode.NONE)
+    def system_page(self):
+        # init main box
+        self.system_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.system_box.set_spacing(5)
 
-        # create menu items
-        self.arandr_button = Gtk.Button(label='Configure displays')
+        # display frame
+        self.display_frame = Gtk.Frame()
+        self.display_frame.set_label('Display')
+        self.display_frame.set_margin_end(5)
+        self.display_frame.set_margin_start(5)
+        self.display_box = Gtk.Box()
+        self.arandr_button = Gtk.Button(label='Configure display layout')
         self.arandr_button.connect('clicked', self.on_button_clicked)
         self.wallpaper_button = Gtk.Button(label='Choose wallpaper')
         self.wallpaper_button.connect('clicked', self.on_button_clicked)
+        self.display_box.pack_start(self.arandr_button, True, True, 5)
+        self.display_box.pack_start(self.wallpaper_button, True, True, 5)
+        self.display_frame.add(self.display_box)
+
+        # input frame
+        self.input_frame = Gtk.Frame()
+        self.input_frame.set_label('Input')
+        self.input_frame.set_margin_end(5)
+        self.input_frame.set_margin_start(5)
+        self.input_box = Gtk.Box()
+        self.keyboard_label = Gtk.Label()
+        self.keyboard_label.set_text('Keyboard Layout:')
+        self.keyboard_entry = Gtk.Entry()
+        self.keyboard_entry.connect("changed", self.on_entry_changed)
+        if CONFIG_SECTION_INPUT in config and 'keyboard-layout' in config[CONFIG_SECTION_INPUT]:
+            self.keyboard_entry.set_text(config[CONFIG_SECTION_INPUT]['keyboard-layout'])
+        self.input_box.pack_start(self.keyboard_label, False, False, 5)
+        self.input_box.pack_start(self.keyboard_entry, True, True, 5)
+        self.input_frame.add(self.input_box)
 
         # add menu items
-        self.display_box.add(self.arandr_button)
-        self.display_box.add(self.wallpaper_button)
+        self.system_box.add(self.display_frame)
+        self.system_box.add(self.input_frame)
 
-        return self.display_box
+        return self.system_box
 
     def on_button_clicked(self, source):
         global config
@@ -254,6 +280,13 @@ class MainWindow(Gtk.Window):
         elif source == self.quit_button:
             write_config(config, user_config_path('pademelon.conf'), self)
             Gtk.main_quit()
+
+    def on_entry_changed(self, entry):
+        global config
+        if entry == self.keyboard_entry:
+            if CONFIG_SECTION_INPUT not in config:
+                config[CONFIG_SECTION_INPUT] = {}
+            config[CONFIG_SECTION_INPUT]['keyboard-layout'] = self.keyboard_entry.get_text()
 
 
 class OptionalDaemonBox(DaemonBox):
@@ -288,6 +321,8 @@ class OptionalDaemonBox(DaemonBox):
         for cb in self.check_buttons:
             if cb.get_active():
                 activated_daemons.append(self.daemons[self.check_buttons.index(cb)].id_name)
+        if CONFIG_SECTION_DAEMONS not in config:
+            config[CONFIG_SECTION_DAEMONS] = {}
         config[CONFIG_SECTION_DAEMONS][self.cname] = ' '.join(activated_daemons)
 
 

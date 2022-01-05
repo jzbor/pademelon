@@ -5,6 +5,7 @@
 
 #define CONFIG_SECTION_DAEMONS      "daemons"
 #define CONFIG_SECTION_APPEARANCE   "appearance"
+#define CONFIG_SECTION_INPUT        "input"
 
 struct config {
     /* CONFIG_SECTION_DAEMONS */
@@ -20,6 +21,9 @@ struct config {
 
     /* CONFIG_SECTION_APPEARANCE */
     int set_wallpaper;
+
+    /* CONFIG_SECTION_INPUT */
+    char *keyboard_settings;
 };
 
 void free_config(struct config *cfg);
