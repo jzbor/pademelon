@@ -24,7 +24,6 @@
 
 static void load_daemons(const char *dir);
 static void load_keyboard(void);
-static void load_wallpaper(void);
 static void loop(void);
 static void setup_signals(void);
 static void sigint_handler(int signal);
@@ -99,12 +98,6 @@ void load_keyboard(void) {
     }
 }
 
-void load_wallpaper(void) {
-    if (config->set_wallpaper) {
-        tl_load_wallpaper(0, NULL);
-    }
-}
-
 void loop(void) {
     int temp, wp_cycle_counter;
     struct plist *pl;
@@ -146,12 +139,12 @@ void loop(void) {
             report(R_DEBUG, "Screen configuration has changed");
             wp_cycle_counter = SECS_TO_WALLPAPER_REFRESH / CYCLE_LENGTH;
             tl_save_display_conf(0, NULL);
-            load_wallpaper();
+            tl_load_wallpaper(0, NULL);
         }
 
         /* supposed to workaround bugs but it does not seem to work */
         if (wp_cycle_counter == 0) {
-            load_wallpaper();
+            tl_load_wallpaper(0, NULL);
         }
         if (wp_cycle_counter >= 0)
             wp_cycle_counter--;
@@ -319,7 +312,7 @@ int main(int argc, char *argv[]) {
 
     if (!print_only) {
         x11_init();
-        load_wallpaper();
+        tl_load_wallpaper(0, NULL);
         load_keyboard();
         tl_load_display_conf(0, NULL);
         startup_daemons();

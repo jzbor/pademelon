@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #define CONFIG_SECTION_DAEMONS      "daemons"
-#define CONFIG_SECTION_APPEARANCE   "appearance"
 #define CONFIG_SECTION_INPUT        "input"
 
 struct config {
@@ -18,9 +17,6 @@ struct config {
     char *power_daemon;
     char *status_daemon;
     char *applets;
-
-    /* CONFIG_SECTION_APPEARANCE */
-    int set_wallpaper;
 
     /* CONFIG_SECTION_INPUT */
     char *keyboard_settings;

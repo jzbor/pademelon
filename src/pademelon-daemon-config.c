@@ -11,7 +11,6 @@
 
 static const struct config default_config = {
     .no_window_manager = 0,
-    .set_wallpaper = 1,
 };
 
 void free_config(struct config *cfg) {
@@ -83,15 +82,6 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             *write_to_int = IS_TRUE(value);
             return 1;
         }
-    } else if (strcmp(section, CONFIG_SECTION_DAEMONS) == 0) {
-        /* boolean attributes */
-        if (strcmp(name, "set-wallpaper") == 0)
-            write_to_int = &cfg->set_wallpaper;
-
-        if (write_to_int) {
-            *write_to_int = IS_TRUE(value);
-            return 1;
-        }
     } else if (strcmp(section, CONFIG_SECTION_INPUT) == 0) {
         if (strcmp(name, "keyboard-layout") == 0) {
             write_to_str = &cfg->keyboard_settings;
@@ -131,10 +121,10 @@ int print_config(struct config *cfg) {
     PRINT_PROPERTY_STR("status", cfg->status_daemon);
     PRINT_PROPERTY_BOOL("no-window-manager", cfg->no_window_manager);
 
-    status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_APPEARANCE, (void *)cfg);
+    status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_INPUT, (void *)cfg);
     if (status < 0)
         return -1;
-    PRINT_PROPERTY_BOOL("set-wallpaper", cfg->set_wallpaper);
+    PRINT_PROPERTY_STR("keyboard-layout", cfg->keyboard_settings);
 
     if (fflush(stdout) == EOF)
         return -1;
