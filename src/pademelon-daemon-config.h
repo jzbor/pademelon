@@ -15,6 +15,7 @@ struct config {
     char *notification_daemon;
     char *polkit_daemon;
     char *power_daemon;
+    char *status_daemon;
     char *applets;
 
     /* CONFIG_SECTION_APPEARANCE */

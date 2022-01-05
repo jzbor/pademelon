@@ -59,6 +59,8 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             write_to_str = &cfg->polkit_daemon;
         } else if (strcmp(name, "power") == 0) {
             write_to_str = &cfg->power_daemon;
+        } else if (strcmp(name, "status") == 0) {
+            write_to_str = &cfg->status_daemon;
         } else if (strcmp(name, "applets") == 0) {
             write_to_str = &cfg->applets;
         }
@@ -113,6 +115,7 @@ int print_config(struct config *cfg) {
     PRINT_PROPERTY_STR("notifications", cfg->notification_daemon);
     PRINT_PROPERTY_STR("polkit", cfg->polkit_daemon);
     PRINT_PROPERTY_STR("power", cfg->power_daemon);
+    PRINT_PROPERTY_STR("status", cfg->status_daemon);
     PRINT_PROPERTY_BOOL("no-window-manager", cfg->no_window_manager);
 
     status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_APPEARANCE, (void *)cfg);

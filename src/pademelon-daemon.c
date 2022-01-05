@@ -187,6 +187,7 @@ void startup_daemons(void) {
     startup_daemon(config->notification_daemon, "notifications", 1);
     startup_daemon(config->polkit_daemon, "polkit", 1);
     startup_daemon(config->power_daemon, "power", 1);
+    startup_daemon(config->status_daemon, "status", 0);
 
     c = find_category("applets");
     if (c && config->applets) {

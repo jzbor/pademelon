@@ -9,6 +9,7 @@ These keys require the id of their respective daemon files:
 * `notifications`: Notification Daemon
 * `polkit`: Polkit GUI Provider
 * `power`: Power Manager
+* `status`: Status script or status bar
 
 These values should be specified as a boolean:
 * `no-window-manager`: don't launch any window manager

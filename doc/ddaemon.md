@@ -23,6 +23,7 @@
 * `notifications`: Notification Daemon
 * `polkit`: Polkit GUI Provider
 * `power`: Power Manager
+* `status`: status script or bar
 
 ## Example
 ```ini

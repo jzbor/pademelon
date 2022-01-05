@@ -189,6 +189,7 @@ class MainWindow(Gtk.Window):
         self.daemon_rows.append(DaemonSelectionBox(self, 'notifications', 'Notification Daemon'))
         self.daemon_rows.append(DaemonSelectionBox(self, 'polkit', 'Polkit'))
         self.daemon_rows.append(DaemonSelectionBox(self, 'power', 'Power Management'))
+        self.daemon_rows.append(DaemonSelectionBox(self, 'status', 'Status Script or Bar'))
 
         # add daemon frames to list
         for dr in self.daemon_rows:
