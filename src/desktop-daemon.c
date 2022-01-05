@@ -1,5 +1,6 @@
 #include "common.h"
 #include "desktop-daemon.h"
+#include "signals.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,13 +10,9 @@
 #define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
 #define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
-#define BLOCK_SIGCHLD		        if (sigprocmask(SIG_BLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to block a signal");
-#define UNBLOCK_SIGCHLD		        if (sigprocmask(SIG_UNBLOCK, &sigset_sigchld, NULL) == -1) report(R_FATAL, "Unable to unblock a signal");
 
 struct dcategory *categories = NULL;
 struct ddaemon *daemons = NULL;
-static struct plist *plist_head = NULL;
-static sigset_t sigset_sigchld;
 
 void add_to_category(const char *name, struct ddaemon *d) {
     struct dcategory *c;
@@ -187,29 +184,17 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
     return 1;
 }
 
-void init_sigset_sigchld(void) {
-    int status;
-
-	/* create sigset for blocking SIGCHLD */
-	status = sigemptyset(&sigset_sigchld);
-	if (status == -1)
-		report(R_FATAL, "Unable to clear out a sigset");
-	status = sigaddset(&sigset_sigchld, SIGCHLD);
-	if (status == -1)
-		report(R_FATAL, "Unable to add signal to a sigset");
-}
-
 void launch_ddaemon(struct ddaemon *daemon) {
     pid_t pid;
 
     if (!daemon)
         return;
 
-    BLOCK_SIGCHLD;
+    block_signal(SIGCHLD);
     pid = fork();
 
     if (pid == 0) { /* child */
-        UNBLOCK_SIGCHLD;
+        unblock_signal(SIGCHLD);
         char *args[] = { "/bin/sh", "-c", daemon->launch_cmd, NULL };
         execvp(args[0], args);
         report_value(R_ERROR, "Unable to launch daemon", daemon->launch_cmd, R_STRING);
@@ -219,111 +204,7 @@ void launch_ddaemon(struct ddaemon *daemon) {
     } else {
         report(R_FATAL, "Unable to fork into a new process");
     }
-    UNBLOCK_SIGCHLD;
-}
-
-struct plist *plist_add(pid_t pid, struct ddaemon *ddaemon) {
-    struct plist *new_element;
-
-    /* create new element */
-    new_element = calloc(1, sizeof(struct plist));
-    if (!new_element)
-        report(R_FATAL, "Unable to allocate memory for plist");
-    new_element->pid = pid;
-    new_element->ddaemon = ddaemon;
-
-    BLOCK_SIGCHLD;
-
-    /* add new element to list */
-    new_element->next = plist_head;
-    plist_head = new_element;
-
-    UNBLOCK_SIGCHLD;
-    return new_element;
-}
-
-struct plist *plist_get(pid_t pid) {
-    struct plist *pl;
-
-    BLOCK_SIGCHLD;
-
-    /* go through list and check if pid matches */
-    for (pl = plist_head; pl; pl = pl->next) {
-        if (pl->pid == pid) {
-            UNBLOCK_SIGCHLD;
-            return pl;
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-    return NULL;
-}
-
-struct plist *plist_next_event(struct plist *from) {
-    struct plist *pl;
-
-    BLOCK_SIGCHLD;
-
-    /* go through list and check status has changed */
-    for (pl = from ? from : plist_head; pl; pl = pl->next) {
-        if (pl->status_changed) {
-            pl->status_changed = 0;
-            UNBLOCK_SIGCHLD;
-            return pl;
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-    return NULL;
-}
-
-void plist_free(void) {
-    while (plist_head)
-        plist_remove(plist_head->pid);
-}
-
-void plist_remove(pid_t pid) {
-    struct plist *pl, *pl_delete = NULL;
-
-    BLOCK_SIGCHLD;
-
-    /* check if head matches */
-    if (plist_head->pid == pid) {
-        pl_delete = plist_head;
-        plist_head = pl_delete->next;
-    } else {
-        /* search for the entry before pid */
-        for (pl = plist_head; pl && pl->next; pl = pl->next) {
-            if (pl->next->pid == pid) {
-                pl_delete = pl->next;
-                pl->next = pl_delete->next;
-            }
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-
-    /* free item (NULL anyway if not found) */
-    free(pl_delete);
-}
-
-struct plist *plist_search(char *id_name, char *category) {
-    struct plist *pl;
-
-    BLOCK_SIGCHLD;
-
-    /* go through list and check for matching values */
-    for (pl = plist_head; pl; pl = pl->next) {
-        /* @TODO check for access on NULL pointers */
-        if ((id_name && strcmp(id_name, pl->ddaemon->id_name) == 0)
-                || (category && strcmp(category, pl->ddaemon->category->name) == 0)) {
-            UNBLOCK_SIGCHLD;
-            return pl;
-        }
-    }
-
-    UNBLOCK_SIGCHLD;
-    return NULL;
+    unblock_signal(SIGCHLD);
 }
 
 int print_categories(void) {
@@ -400,6 +281,7 @@ int print_ddaemons(void) {
 struct ddaemon *select_ddaemon(const char *user_preference, const char *category, int auto_fallback) {
     struct dcategory *c;
     struct ddaemon *d;
+    /* @TODO use last *working* daemon instead of just last */
 
     if (user_preference && (d = find_ddaemon(user_preference, category, 0))) {
         return d;
@@ -432,11 +314,11 @@ int test_ddaemon(struct ddaemon *daemon) {
     if (!daemon || !daemon->test_cmd)
         return 1;
 
-    BLOCK_SIGCHLD;
+    block_signal(SIGCHLD);
     pid = fork();
 
     if (pid == 0) { /* child */
-        UNBLOCK_SIGCHLD;
+        unblock_signal(SIGCHLD);
         char *args[] = { "/bin/sh", "-c", daemon->test_cmd, NULL };
         execvp(args[0], args);
         report_value(R_ERROR, "Unable to test daemon", daemon->test_cmd, R_STRING);
@@ -455,7 +337,7 @@ int test_ddaemon(struct ddaemon *daemon) {
         sigsuspend(&sigset);
     status = WIFEXITED(pl->status) && WEXITSTATUS(pl->status) == 0;
     plist_remove(pid);
-    UNBLOCK_SIGCHLD;
+    unblock_signal(SIGCHLD);
 
     return status;
 }

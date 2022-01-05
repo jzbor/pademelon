@@ -87,11 +87,9 @@ class DaemonSelectionBox(DaemonBox):
             return
         if selected.settings.startswith("config://"):
             path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
-            # @TODO find a way to check the dependency here
-            spawn('xdg-open ' + os.path.join(path, selected.settings[len('config://'):]), check_dependency=False, parent=self.window)
+            spawn(['xdg-open', os.path.join(path, selected.settings[len('config://'):])], check_dependency=True, parent=self.window)
         elif selected.settings.startswith('file://'):
-            # @TODO find a way to check the dependency here
-            spawn('xdg-open ' + selected.settings[len('file://'):], check_dependency=False, parent=self.window)
+            spawn(['xdg-open', selected.settings[len('file://'):]], check_dependency=True, parent=self.window)
         else:
             spawn(selected.settings, check_dependency=True, parent=self.window)
 
@@ -221,6 +219,20 @@ class MainWindow(Gtk.Window):
         global config
         if source == self.arandr_button:
             spawn("arandr", check_dependency=True, parent=self)
+        elif source == self.wallpaper_button:
+            dialog = Gtk.FileChooserDialog(title="Choose background image",
+                    parent=self,
+                    action=Gtk.FileChooserAction.OPEN)
+            dialog.add_buttons(
+                    Gtk.STOCK_CANCEL,
+                    Gtk.ResponseType.CANCEL,
+                    Gtk.STOCK_OPEN,
+                    Gtk.ResponseType.OK)
+            response = dialog.run()
+            if response == Gtk.ResponseType.OK:
+                print("Setting new wallpaper: " + dialog.get_filename())
+                spawn(["pademelon-tools", "set-wallpaper", dialog.get_filename()], check_dependency=True, parent=self)
+            dialog.destroy()
         # action bar
         elif source == self.cancel_button:
             Gtk.main_quit()
@@ -267,7 +279,10 @@ class OptionalDaemonBox(DaemonBox):
 
 
 def check_binary_dependency(executable, parent=None):
-    temp = shutil.which(executable)
+    if type(executable) == str:
+        temp = shutil.which(executable)
+    else:
+        temp = shutil.which(executable[0])
     if temp == None:
         msg = "You are missing the binary dependency: {}\nPlease use your package manager to install it manually."
         msg = msg.format(executable)
@@ -335,9 +350,12 @@ def read_desktop_daemon_files(paths):
 def spawn(executable, check_dependency=False, parent=None):
     if check_dependency and not check_binary_dependency(executable, parent):
         return
-    temp = shutil.which(executable)
+    if type(executable) == str:
+        temp = shutil.which(executable)
+    else:
+        temp = shutil.which(executable[0])
     if temp != None:
-        subprocess.Popen(temp)
+        subprocess.Popen(executable)
 
 
 def str_to_bool(s):

@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define BUFSIZE     100
+#define BUFSIZE     512
 
 static char* wallpaper_path(void);
 

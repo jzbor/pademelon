@@ -1,6 +1,7 @@
 #include "common.h"
 #include "desktop-daemon.h"
 #include "pademelon-daemon-config.h"
+#include "signals.h"
 #include "tools.h"
 #include "x11-utils.h"
 #include <dirent.h>
@@ -24,7 +25,6 @@ static void load_daemons(const char *dir);
 static void load_wallpaper(void);
 static void loop(void);
 static void setup_signals(void);
-static void sigchld_handler(int signal);
 static void sigint_handler(int signal);
 static void startup_daemons(void);
 
@@ -103,23 +103,29 @@ void loop(void) {
             if (WIFEXITED(pl->status)) {
                 temp = WEXITSTATUS(pl->status);
                 report_value(R_DEBUG, "Process exited", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belonged to daemon", pl->ddaemon->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belonged to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Exit status", &temp, R_INTEGER);
                 plist_remove(pl->pid);
             } else if (WIFSIGNALED(pl->status)) {
                 temp = WTERMSIG(pl->status);
                 report_value(R_DEBUG, "Process terminated", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belonged to daemon", pl->ddaemon->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belonged to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Terminated by signal", &temp, R_INTEGER);
                 plist_remove(pl->pid);
             } else if (WIFSTOPPED(pl->status)) {
                 temp = WSTOPSIG(pl->status);
                 report_value(R_DEBUG, "Process stopped", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belongs to daemon", pl->ddaemon->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belongs to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Stopped by", &temp, R_INTEGER);
             } else if (WIFCONTINUED(pl->status)) {
-                report_value(R_DEBUG, "Process belongs to daemon", pl->ddaemon->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belongs to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Process continued", &pl->pid, R_INTEGER);
+            }
+
+            if (WIFEXITED(pl->status)|| WIFSIGNALED(pl->status)) {
+                if (((struct ddaemon*) pl->content) && strcmp(((struct ddaemon*) pl->content)->category->name, "window-manager") == 0) {
+                    end = 1;
+                }
             }
         }
 
@@ -128,23 +134,17 @@ void loop(void) {
             load_wallpaper();
         }
 
-        sleep(5);
+        sleep(1);
     }
 }
 
 static void setup_signals(void) {
 	int status;
-	struct sigaction sigaction_sigchld_handler = { .sa_handler = &sigchld_handler, .sa_flags = SA_NODEFER|SA_NOCLDSTOP|SA_RESTART};
 	struct sigaction sigaction_sigint_handler = { .sa_handler = &sigint_handler, .sa_flags = SA_NODEFER|SA_RESTART};
 
-	/* handle SIGCHLD*/
-	status = sigfillset(&sigaction_sigchld_handler.sa_mask); // @TODO do I have to block anything here?
-	if (status == -1)
-		report(R_FATAL, "Unable to clear out a sigset");
-
-	status = sigaction(SIGCHLD, &sigaction_sigchld_handler, NULL);
-	if (status == -1)
-		report(R_FATAL, "Unable to install signal handler");
+    /* handle SIGCHLD */
+    if (!install_plist_sigchld_handler())
+		report(R_FATAL, "Unable to install plist sigchld handler");
 
     /* handle SIGINT */
 	status = sigfillset(&sigaction_sigint_handler.sa_mask); // @TODO do I have to block anything here?
@@ -154,30 +154,6 @@ static void setup_signals(void) {
 	status = sigaction(SIGINT, &sigaction_sigint_handler, NULL);
 	if (status == -1)
 		report(R_FATAL, "Unable to install signal handler");
-
-    init_sigset_sigchld();
-}
-
-void sigchld_handler(int signal) {
-	pid_t pid;
-	int status;
-	int errno_save = errno;
-    struct plist *pl;
-
-	if (signal != SIGCHLD) {
-		/* should not happen */
-		return;
-	}
-
-	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-        pl = plist_get(pid);
-        if (pl) {
-            pl->status = status;
-            pl->status_changed = 1;
-        }
-	}
-
-	errno = errno_save;
 }
 
 void sigint_handler(int signal) {
@@ -205,8 +181,10 @@ void startup_daemons(void) {
     if (!config->no_window_manager)
         startup_daemon(wm_overwrite ? wm_overwrite :config->window_manager, "window-manager", 1);
 
+    sleep(5);
+
     startup_daemon(config->compositor_daemon, "compositor", 1);
-    startup_daemon(config->hotkey_daemon, "hotkeys", 1);
+    startup_daemon(config->hotkey_daemon, "hotkeys", 0);
     startup_daemon(config->notification_daemon, "notifications", 1);
     startup_daemon(config->polkit_daemon, "polkit", 1);
     startup_daemon(config->power_daemon, "power", 1);
@@ -312,10 +290,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /* MoonWM workaround */
+    if (setenv("MOONWM_NO_AUTOSTART", "1", 1) == -1)
+        report(R_ERROR, "Unable to set env var");
+
     if (!print_only) {
         x11_init();
-        startup_daemons();
         load_wallpaper();
+        startup_daemons();
         loop();
         x11_deinit();
     }
