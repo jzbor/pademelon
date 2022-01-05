@@ -108,14 +108,17 @@ int print_config(struct config *cfg) {
         return -1;
 
     PRINT_PROPERTY_STR("window-manager", cfg->window_manager);
-
     PRINT_PROPERTY_STR("compositor", cfg->compositor_daemon);
     PRINT_PROPERTY_STR("hotkeys", cfg->hotkey_daemon);
     PRINT_PROPERTY_STR("notifications", cfg->notification_daemon);
     PRINT_PROPERTY_STR("polkit", cfg->polkit_daemon);
     PRINT_PROPERTY_STR("power", cfg->power_daemon);
-
     PRINT_PROPERTY_BOOL("no-window-manager", cfg->no_window_manager);
+
+    status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_APPEARANCE, (void *)cfg);
+    if (status < 0)
+        return -1;
+    PRINT_PROPERTY_BOOL("set-wallpaper", cfg->set_wallpaper);
 
     if (fflush(stdout) == EOF)
         return -1;
