@@ -123,6 +123,11 @@ void loop(void) {
             }
         }
 
+        if (x11_screen_has_changed()) {
+            report(R_DEBUG, "Screen configuration has changed");
+            load_wallpaper();
+        }
+
         sleep(5);
     }
 }

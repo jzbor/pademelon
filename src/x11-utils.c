@@ -55,7 +55,33 @@ int x11_init(void) {
         report(R_ERROR, "Unable to open X11 display");
         return 0;
     }
+
+    XRRSelectInput(display, XDefaultRootWindow(display),
+            RRScreenChangeNotifyMask | RRCrtcChangeNotifyMask |
+            RROutputChangeNotifyMask | RROutputPropertyNotifyMask);
     return 1;
+}
+
+int x11_screen_has_changed(void) {
+    int have_rr, rr_event_base, rr_error_base;
+    int screen_changed = 0;
+    if (!display)
+        return 0;
+    XEvent event;
+    have_rr = XRRQueryExtension (display, &rr_event_base, &rr_error_base);
+    if (!have_rr)
+        return 0;
+    while (XCheckTypedEvent(display, rr_event_base + RRScreenChangeNotify, &event)
+            || XCheckTypedEvent(display, rr_event_base + RRNotify, &event)) {
+        /* if (event.type == rr_event_base + RRScreenChangeNotify) */
+        /*     fprintf(stderr, "RRScreenChangeNotify\n"); */
+        /* else if (event.type == rr_event_base + RRNotify) */
+        /*     fprintf(stderr, "RRNotify\n"); */
+        /* else */
+        /*     fprintf(stderr, "Unknown: %d\n", event.type); */
+        screen_changed = 1;
+    }
+    return screen_changed;
 }
 
 int x11_wallpaper_all(const char *path) {
