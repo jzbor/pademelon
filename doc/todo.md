@@ -14,6 +14,7 @@
 * Rework or remove `print_config()`
 * Check for freeing in ro segements (`free_ddaemon()`)
 * Load default ARandr profiles
+* Support for setting the keyboard-layout via `setxkbmap`
 
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift
@@ -22,3 +23,13 @@
 * Support for selecting ARandr profiles
 * Config template loading
 * Implement SIGUSR1 to restart daemons
+* **Generalize Daemon Concept for Applications:**
+    * Required changes:
+        * `struct ddaemon`
+        * Parser for `struct ddaemon`
+        * `pademelon-settings`
+    * Application categories:
+        * Terminal
+        * Browser
+        * Pdf-Reader
+        * Editor

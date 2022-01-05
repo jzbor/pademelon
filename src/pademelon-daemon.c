@@ -19,7 +19,8 @@
 #ifndef DAEMON_FILE_ENDING
 #define DAEMON_FILE_ENDING      ".ddaemon"
 #endif
-
+#define CYCLE_LENGTH                1   /* seconds */
+#define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
 
 static void load_daemons(const char *dir);
 static void load_wallpaper(void);
@@ -95,8 +96,11 @@ static void load_wallpaper(void) {
 }
 
 void loop(void) {
-    int temp;
+    int temp, wp_cycle_counter;
     struct plist *pl;
+
+    wp_cycle_counter = -1;
+
     while (!end) {
         while ((pl = plist_next_event(NULL)) != NULL) {
             if (WIFEXITED(pl->status)) {
@@ -130,11 +134,19 @@ void loop(void) {
 
         if (x11_screen_has_changed()) {
             report(R_DEBUG, "Screen configuration has changed");
-            load_wallpaper();
+            wp_cycle_counter = SECS_TO_WALLPAPER_REFRESH / CYCLE_LENGTH;
             tl_save_display_conf(0, NULL);
+            load_wallpaper();
         }
 
-        sleep(1);
+        /* supposed to workaround bugs but it does not seem to work */
+        if (wp_cycle_counter == 0) {
+            load_wallpaper();
+        }
+        if (wp_cycle_counter >= 0)
+            wp_cycle_counter--;
+
+        sleep(CYCLE_LENGTH);
     }
 }
 
