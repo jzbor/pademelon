@@ -55,6 +55,9 @@ int tl_print_daemons(int argc, char *argv[]) {
 
     load_daemons();
 
+    if (printf("These are the available categories ([d]efault, [a]vailable):\n\n") < 0)
+        return EXIT_FAILURE;
+
     for (c = get_categories(); c; c = c->next) {
         if (print_category(c) < 0)
             return EXIT_FAILURE;
@@ -162,7 +165,7 @@ int print_category(struct dcategory *c) {
         if (status < 0) return -1;
         tested = test_ddaemon(d);
         if (d->cdefault || tested) {
-            status = printf("(%s%s)", d->cdefault ? "d" : "", tested ? "t" : "");
+            status = printf("(%s%s)", d->cdefault ? "d" : "", tested ? "a" : "");
             if (status < 0) return -1;
         }
         status = printf(" -> ");
