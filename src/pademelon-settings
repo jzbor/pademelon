@@ -319,13 +319,16 @@ class OptionalApplicationBox(ApplicationBox):
 
     def on_button_toggled(self, button, name):
         global config
-        activated_applications = []
         for cb in self.check_buttons:
-            if cb.get_active():
-                activated_applications.append(self.applications[self.check_buttons.index(cb)].id_name)
+            application_id_name = self.applications[self.check_buttons.index(cb)].id_name
+            if cb.get_active() and application_id_name not in self.activated_applications:
+                self.activated_applications.add(application_id_name)
+            elif not cb.get_active() and application_id_name in self.activated_applications:
+                self.activated_applications.remove(application_id_name)
         if self.config_section not in config:
             config[self.config_section] = {}
-        config[self.config_section][self.cname] = ' '.join(activated_applications)
+        print(self.activated_applications)
+        config[self.config_section][self.cname] = ' '.join(self.activated_applications)
 
 
 def check_binary_dependency(executable, parent=None):
