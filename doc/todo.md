@@ -10,12 +10,13 @@
 * ~~**Generalize Daemon Concept for Applications:**~~
 * ~~Fix settings implementation in `pademelon-settings`~~
 * ~~Timeout for test command~~
-* Verify `no-window-manager` functionality
-* Check for freeing in ro segements (`free_ddaemon()`)
-* Rework or remove `print_config()`
+* ~~Check for freeing in ro segements (`free_ddaemon()`)~~
+* ~~Verify `no-window-manager` functionality~~
 
 ## Before 0.2.0
 * Implement basic external support for volume, backlight and ~~keyboard layout~~
+* Proper help screens for tools
+* Add `print_config()` to tools
 
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift
