@@ -1,0 +1,7 @@
+[bspwm]
+name = bspwm
+description = Tiling window manager based on binary space partitioning
+category = window-manager
+command = /usr/bin/bspwm
+test = test -x /usr/bin/bspwm
+default = False
