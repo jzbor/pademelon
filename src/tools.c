@@ -1,4 +1,5 @@
 #include "common.h"
+#include "desktop-daemon.h"
 #include "tools.h"
 #include "x11-utils.h"
 #include <errno.h>
@@ -13,6 +14,7 @@
 #define DISPLAY_CONF_FILE   "displayconfiguration"
 
 static char* wallpaper_path(void);
+static int print_category(struct dcategory *c);
 
 int tl_load_display_conf(int argc, char *argv[]) {
     int status;
@@ -47,6 +49,23 @@ int tl_load_wallpaper(int argc, char *argv[]) {
     fprintf(stderr, "load-wallpaper: unable to set wallpaper to all screens\n");
     return EXIT_FAILURE;
 }
+
+int tl_print_daemons(int argc, char *argv[]) {
+    struct dcategory *c;
+
+    load_daemons();
+
+    for (c = get_categories(); c; c = c->next) {
+        if (print_category(c) < 0)
+            return EXIT_FAILURE;
+        if (printf("\n") < 0)
+            return EXIT_FAILURE;
+    }
+    if (fflush(stdout) == EOF)
+        return EXIT_FAILURE;
+    return EXIT_SUCCESS;
+}
+
 
 int tl_save_display_conf(int argc, char *argv[]) {
     int status;
@@ -130,6 +149,29 @@ int tl_set_wallpaper(int argc, char *argv[]) {
     fclose(target);
 
     return tl_load_wallpaper(0, NULL);
+}
+
+int print_category(struct dcategory *c) {
+    int status, tested;
+    struct ddaemon *d;
+    status = printf("%s:\n", c->name);
+    if (status < 0)
+        return -1;
+    for (d = c->daemons; d; d = d->cnext) {
+        status = printf("%s", d->id_name);
+        if (status < 0) return -1;
+        tested = test_ddaemon(d);
+        if (d->cdefault || tested) {
+            status = printf("(%s%s)", d->cdefault ? "d" : "", tested ? "t" : "");
+            if (status < 0) return -1;
+        }
+        status = printf(" -> ");
+        if (status < 0) return -1;
+    }
+    status = printf("%p\n", NULL);
+    if (status < 0)
+        return -1;
+    return 0;
 }
 
 char* wallpaper_path(void) {

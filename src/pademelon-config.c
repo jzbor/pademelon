@@ -1,8 +1,9 @@
 #include "common.h"
 #include "pademelon-config.h"
+#include <ini.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
 #define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
@@ -24,14 +25,6 @@ void free_config(struct config *cfg) {
 
     free(cfg->keyboard_settings);
     free(cfg);
-}
-
-struct config *init_config(void) {
-    struct config *cfg = malloc(sizeof(struct config));
-    if (!cfg)
-        report(R_FATAL, "Unable to allocate enough memory for config");
-    memcpy(cfg, &default_config, sizeof(struct config));
-    return cfg;
 }
 
 int ini_config_callback(void* user, const char* section, const char* name, const char* value) {
@@ -104,6 +97,35 @@ int ini_config_callback(void* user, const char* section, const char* name, const
 
     report_value(R_WARNING, "Unknown key", name, R_STRING);
     return 1;
+}
+
+struct config *load_config(void) {
+    int status;
+    char *path;
+    struct config *cfg;
+
+    /* init config struct */
+    cfg = malloc(sizeof(struct config));
+    if (!cfg)
+        return NULL;
+    memcpy(cfg, &default_config, sizeof(struct config));
+
+    path = system_config_path("pademelon.conf");
+    if (path) {
+        status = ini_parse(path, &ini_config_callback, cfg);
+        if (status < 0)
+            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
+    }
+    free(path);
+    path = user_config_path("pademelon.conf");
+    if (path) {
+        status = ini_parse(path, &ini_config_callback, cfg);
+        if (status < 0)
+            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
+    }
+    free(path);
+
+    return cfg;
 }
 
 int print_config(struct config *cfg) {

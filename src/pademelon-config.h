@@ -25,6 +25,7 @@ struct config {
 void free_config(struct config *cfg);
 int ini_config_callback(void* user, const char* section, const char* name, const char* value);
 struct config *init_config(void);
+struct config *load_config(void);
 int print_config(struct config *cfg);
 
 #endif /* H_PADEMELON_DAEMON_CONFIG */

@@ -1,10 +1,14 @@
 #include "common.h"
 #include "desktop-daemon.h"
 #include "signals.h"
+#include <dirent.h>
+#include <errno.h>
+#include <ini.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
@@ -64,6 +68,10 @@ void add_to_category(const char *name, struct ddaemon *d) {
         categories = c;
         d->category = c;
     }
+}
+
+struct dcategory *get_categories(void) {
+    return categories;
 }
 
 struct ddaemon *find_ddaemon(const char *id_name, const char *category, int init_if_not_found) {
@@ -146,10 +154,6 @@ void free_ddaemons(void) {
     }
 }
 
-struct dcategory *get_categories(void) {
-    return categories;
-}
-
 int ini_ddaemon_callback(void* user, const char* section, const char* name, const char* value) {
     struct ddaemon *d = find_ddaemon(section, NULL, 1);
     char **write_to_str = NULL;
@@ -223,41 +227,91 @@ void launch_ddaemon(struct ddaemon *daemon) {
     unblock_signal(SIGCHLD);
 }
 
-int print_categories(void) {
-    struct dcategory *c;
-    for (c = categories; c; c = c->next) {
-        if (print_category(c) < 0)
-            return -1;
-        if (printf("\n") < 0)
-            return -1;
+void load_daemons(void) {
+    char *path;
+    static int daemons_loaded = 0;
+
+    /* only load daemons on the first call */
+    if (daemons_loaded)
+        return;
+    else
+        daemons_loaded = 1;
+
+    /* /usr/local/share/... */
+    path = system_data_path("daemons");
+    if (path) {
+        load_daemons_from_dir(path);
+        free(path);
     }
-    if (fflush(stdout) == EOF)
-        return -1;
-    return 0;
+
+    /* /usr/local/share/local... */
+    path = system_local_data_path("daemons");
+    if (path) {
+        load_daemons_from_dir(path);
+        free(path);
+    }
+
+    /* ~/.local/share */
+    path = user_data_path("daemons");
+    if (path) {
+        load_daemons_from_dir(path);
+        free(path);
+    }
 }
 
+void load_daemons_from_dir(const char *dir) {
+    int status;
+    DIR *directory;
+    struct dirent *diriter;
+    struct stat filestats = {0};
 
-int print_category(struct dcategory *c) {
-    int status, tested;
-    struct ddaemon *d;
-    status = printf("%s:\t\t\t(%p)\n", c->name, (void *)c);
-    if (status < 0)
-        return -1;
-    for (d = c->daemons; d; d = d->cnext) {
-        status = printf("%s", d->id_name);
-        if (status < 0) return -1;
-        tested = test_ddaemon(d);
-        if (d->cdefault || tested) {
-            status = printf("(%s%s)", d->cdefault ? "d" : "", tested ? "t" : "");
-            if (status < 0) return -1;
-        }
-        status = printf(" -> ");
-        if (status < 0) return -1;
+    /* open directory for iteration */
+    directory = opendir(dir);
+    if (directory == NULL) {
+        report_value(R_WARNING, "Unable to load daemons from the following directory", dir, R_STRING);
+        return;
     }
-    status = printf("%p\n", NULL);
-    if (status < 0)
-        return -1;
-    return 0;
+
+    errno = 0;
+    /* iterate over all files in the specified directory and check file ending */
+    while ((diriter = readdir(directory)) != NULL) {
+        /* ignore current and parent directory */
+        if (strcmp(diriter->d_name, ".") == 0 || strcmp(diriter->d_name, "..") == 0)
+            continue;
+
+        /* ignore files with an inappropriate ending */
+        if (!STR_ENDS_WITH(diriter->d_name, DAEMON_FILE_ENDING)) {
+            report_value(R_DEBUG, "Not a desktop daemon file", diriter->d_name, R_STRING);
+            continue;
+        }
+
+        /* put together path for subfiles */
+        char subpath[strlen(dir) + strlen("/") + strlen(diriter->d_name) + 1];
+        status = snprintf(subpath, sizeof(subpath), "%s/%s", dir, diriter->d_name);
+        if (status < 0)
+            report(R_FATAL, "Unable to print path to variable on the stack");
+
+        /* check if path is actually a regular file */
+        status = stat(subpath, &filestats);
+        if (status) {
+            report(R_ERROR, "Unable to get file stats for potential daemon config file");
+            continue;
+        } else if (!S_ISREG(filestats.st_mode))
+            continue;
+
+        status = ini_parse(subpath, &ini_ddaemon_callback, NULL);
+        if (status < 0)
+            report_value(R_ERROR, "An error occurred while reading desktop daemon file", subpath, R_STRING);
+    }
+
+    if (errno != 0) {
+        report_value(R_ERROR, "An error was encountered while iterating through the following directory",
+                dir, R_STRING);
+    }
+
+    status = closedir(directory);
+    if (status)
+        report(R_FATAL, "Unable to close directory");
 }
 
 int print_ddaemon(struct ddaemon *d) {

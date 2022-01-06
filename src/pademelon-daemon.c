@@ -4,25 +4,18 @@
 #include "signals.h"
 #include "tools.h"
 #include "x11-utils.h"
-#include <dirent.h>
 #include <errno.h>
-#include <ini.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#ifndef DAEMON_FILE_ENDING
-#define DAEMON_FILE_ENDING      ".ddaemon"
-#endif
 #define CYCLE_LENGTH                1   /* seconds */
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
 
-static void load_daemons(const char *dir);
 static void load_keyboard(void);
 static void loop(void);
 static void setup_signals(void);
@@ -33,61 +26,6 @@ static struct config *config;
 static int end = 0;
 static char *wm_overwrite = NULL;
 
-
-void load_daemons(const char *dir) {
-    int status;
-    DIR *directory;
-    struct dirent *diriter;
-    struct stat filestats = {0};
-
-    /* open directory for iteration */
-    directory = opendir(dir);
-    if (directory == NULL) {
-        report_value(R_WARNING, "Unable to load daemons from the following directory", dir, R_STRING);
-        return;
-    }
-
-    errno = 0;
-    /* iterate over all files in the specified directory and check file ending */
-    while ((diriter = readdir(directory)) != NULL) {
-        /* ignore current and parent directory */
-        if (strcmp(diriter->d_name, ".") == 0 || strcmp(diriter->d_name, "..") == 0)
-            continue;
-
-        /* ignore files with an inappropriate ending */
-        if (!STR_ENDS_WITH(diriter->d_name, DAEMON_FILE_ENDING)) {
-            report_value(R_DEBUG, "Not a desktop daemon file", diriter->d_name, R_STRING);
-            continue;
-        }
-
-        /* put together path for subfiles */
-        char subpath[strlen(dir) + strlen("/") + strlen(diriter->d_name) + 1];
-        status = snprintf(subpath, sizeof(subpath), "%s/%s", dir, diriter->d_name);
-        if (status < 0)
-            report(R_FATAL, "Unable to print path to variable on the stack");
-
-        /* check if path is actually a regular file */
-        status = stat(subpath, &filestats);
-        if (status) {
-            report(R_ERROR, "Unable to get file stats for potential daemon config file");
-            continue;
-        } else if (!S_ISREG(filestats.st_mode))
-            continue;
-
-        status = ini_parse(subpath, &ini_ddaemon_callback, NULL);
-        if (status < 0)
-            report_value(R_ERROR, "An error occurred while reading desktop daemon file", subpath, R_STRING);
-    }
-
-    if (errno != 0) {
-        report_value(R_ERROR, "An error was encountered while iterating through the following directory",
-                dir, R_STRING);
-    }
-
-    status = closedir(directory);
-    if (status)
-        report(R_FATAL, "Unable to close directory");
-}
 
 void load_keyboard(void) {
     if (config->keyboard_settings) {
@@ -220,66 +158,19 @@ void startup_daemons(void) {
 }
 
 int main(int argc, char *argv[]) {
-    int i, status;
+    int i;
     int print_only = 0;
-    char *path;
-    char *config_overwrite = NULL;
-    char *daemon_dir_overwrite = NULL;
 
     setup_signals();
 
     /* load config */
-    config = init_config();
-    path = system_config_path("pademelon.conf");
-    if (path) {
-        status = ini_parse(path, &ini_config_callback, config);
-        if (status < 0)
-            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
-    }
-    free(path);
-    path = user_config_path("pademelon.conf");
-    if (path) {
-        status = ini_parse(path, &ini_config_callback, config);
-        if (status < 0)
-            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
-    }
-    free(path);
+    config = load_config();
 
     /* load daemons */
-    path = system_data_path("daemons");
-    load_daemons(path);
-    free(path);
-    path = system_local_data_path("daemons");
-    load_daemons(path);
-    free(path);
-    path = user_data_path("daemons");
-    load_daemons(path);
-    free(path);
+    load_daemons();
 
     for (i = 1; argv[i]; i++) {
-        if (strcmp(argv[i], "--config") == 0 || strcmp(argv[i], "-c") == 0) {
-            if (!argv[i + 1])
-                report(R_FATAL, "Not enough arguments for --config");
-            config_overwrite = argv[++i];
-            report_value(R_DEBUG, "Config overwrite", config_overwrite, R_STRING);
-            status = ini_parse(config_overwrite, &ini_config_callback, config);
-            if (status < 0)
-                report_value(R_WARNING, "Unable to read config file", path, R_STRING);
-        } else if (strcmp(argv[i], "--daemon-dir") == 0 || strcmp(argv[i], "-d") == 0) {
-            if (!argv[i + 1])
-                report(R_FATAL, "Not enough arguments for --daemon-dir");
-            daemon_dir_overwrite = argv[++i];
-            free_ddaemons();
-            free_categories();
-            report_value(R_DEBUG, "Daemon dir overwrite", daemon_dir_overwrite, R_STRING);
-            load_daemons(daemon_dir_overwrite);
-        } else if (strcmp(argv[i], "--categories") == 0 || strcmp(argv[i], "-k") == 0) {
-            if (printf("\n;;; CATEGORIES ;;;\n\n") < 0)
-                report(R_ERROR, "Unable to write to stdout");
-            if (print_categories() < 0)
-                report(R_ERROR, "Unable to write to stdout");
-            print_only = 1;
-        } else if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {
+        if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {
             config->no_window_manager = 1;
         } else if (strcmp(argv[i], "--print-config") == 0 || strcmp(argv[i], "-p") == 0) {
             if (printf("\n;;; CONFIG ;;;\n\n") < 0)
@@ -301,7 +192,7 @@ int main(int argc, char *argv[]) {
             if (!config->window_manager)
                 report(R_FATAL, "Unable to allocate memory for settings");
         } else {
-            if (printf("Usage: %s [--daemons] [--categories] [--print-config] [--config <config>] [--daemon-dir <dir>]\n", argv[0]) < 0)
+            if (printf("Usage: %s [--daemons] [--categories] [--print-config]\n", argv[0]) < 0)
                 report(R_FATAL, "Unable to write to stderr");
         }
     }

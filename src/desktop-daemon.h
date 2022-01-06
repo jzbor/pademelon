@@ -1,6 +1,8 @@
 #ifndef H_DESKTOP_DAEMON
 #define H_DESKTOP_DAEMON
 
+#define DAEMON_FILE_ENDING      ".ddaemon"
+
 struct ddaemon {
     int cdefault;
     char *display_name, *id_name, *desc; /* allocated by user, freed in free_ddaemon() */
@@ -17,6 +19,7 @@ struct dcategory { /* linked list with daemons in category */
 };
 
 void add_to_category(const char *name, struct ddaemon *d); /* creates category if necessary */
+struct dcategory *get_categories(void);
 struct ddaemon *find_ddaemon(const char *id_name, const char *category, int init_if_not_found);
 struct dcategory *find_category(const char *name);
 void free_ddaemon(struct ddaemon *d);
@@ -26,8 +29,8 @@ struct dcategory *get_categories(void);
 int ini_ddaemon_callback(void* user, const char* section, const char* name, const char* value);
 void init_sigset_sigchld(void);
 void launch_ddaemon(struct ddaemon *daemon);
-int print_categories(void);
-int print_category(struct dcategory *c);
+void load_daemons(void);
+void load_daemons_from_dir(const char *dir);
 int print_ddaemon(struct ddaemon *d);
 int print_ddaemons(void);
 struct ddaemon *select_ddaemon(const char *user_preference, const char *category, int auto_fallback);
