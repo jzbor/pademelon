@@ -16,6 +16,7 @@ CONFIG_SECTION_INPUT = 'input'
 DIRNAME = 'pademelon'
 TEST_TIMEOUT = 1    # in seconds
 TITLE = 'Pademelon Settings'
+PREFERENCE_NONE = 'none'
 
 
 class ApplicationBox(Gtk.Box):
@@ -51,7 +52,7 @@ class ApplicationSelectionBox(ApplicationBox):
         self.application_selection_box = Gtk.ComboBoxText()
         self.application_selection_box.connect("changed", self.on_combo_changed)
 
-        select = len(self.applications)      # select default item
+        select = len(self.applications) + 1      # select default item
         for application in self.applications:
             self.application_selection_box.append_text(application.display_name + self.application_test_str(application))
             if self.config_section in config \
@@ -60,6 +61,11 @@ class ApplicationSelectionBox(ApplicationBox):
                         # @TODO generalize section name for applications
                 select = self.applications.index(application)     # select config item if existent
                 self.application_selection_box.set_tooltip_text(application.desc)
+        if self.config_section in config \
+                and self.cname in config[self.config_section] \
+                and PREFERENCE_NONE == config[self.config_section][cname]:
+            select = len(self.applications)
+        self.application_selection_box.append_text('None')
         self.application_selection_box.append_text('Default')
         self.application_selection_box.set_active(select)
 
@@ -101,9 +107,14 @@ class ApplicationSelectionBox(ApplicationBox):
     def on_combo_changed(self, combo):
         selected = self.selected_application();
         if selected == None:
-            if self.config_section in config and self.cname in config[self.config_section]:
-                config.remove_option(self.config_section, self.cname)
-            self.application_selection_box.set_has_tooltip(False)
+            if self.application_selection_box.get_active() == len(self.applications):   # none
+                if self.config_section not in config:
+                    config[self.config_section] = {}
+                config[self.config_section][self.cname] = PREFERENCE_NONE
+            else: # default
+                if self.config_section in config and self.cname in config[self.config_section]:
+                    config.remove_option(self.config_section, self.cname)
+                self.application_selection_box.set_has_tooltip(False)
         else:
             if not selected.test():
                 dialog = Gtk.MessageDialog(
@@ -123,7 +134,7 @@ class ApplicationSelectionBox(ApplicationBox):
 
     def selected_application(self):
         selection = self.application_selection_box.get_active()
-        if selection >= len(self.applications):  # default
+        if selection >= len(self.applications):  # default, none
             return None
         else:
             return self.applications[selection]

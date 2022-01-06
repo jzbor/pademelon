@@ -31,10 +31,10 @@ int block_signal(int signal) {
 
 int install_default_sigchld_handler(void) {
     int status;
-	struct sigaction sigaction_sigchld_handler = { .sa_handler = SIG_DFL, .sa_flags = SA_NODEFER|SA_NOCLDSTOP|SA_RESTART};
+	struct sigaction sigaction_sigchld_handler = { .sa_handler = SIG_DFL };
 
 	/* handle SIGCHLD*/
-	status = sigfillset(&sigaction_sigchld_handler.sa_mask); // @TODO do I have to block anything here?
+	status = sigemptyset(&sigaction_sigchld_handler.sa_mask); // @TODO do I have to block anything here?
 	if (status == -1)
 		return 0;
 

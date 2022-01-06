@@ -11,6 +11,7 @@
 static void reset_root_atoms(Display *display, Window root, Pixmap pixmap);
 
 static Display *display = NULL;
+static int x11_initialized = 0;
 
 void reset_root_atoms(Display *display, Window root, Pixmap pixmap) {
     Atom atom_root, atom_eroot, type;
@@ -49,6 +50,9 @@ void reset_root_atoms(Display *display, Window root, Pixmap pixmap) {
 }
 
 int x11_init(void) {
+    if (x11_initialized)
+        return 1;
+
     /* open x11 display */
     display = XOpenDisplay(NULL);
     if (!display) {
@@ -59,6 +63,8 @@ int x11_init(void) {
     XRRSelectInput(display, XDefaultRootWindow(display),
             RRScreenChangeNotifyMask | RRCrtcChangeNotifyMask |
             RROutputChangeNotifyMask | RROutputPropertyNotifyMask);
+
+    x11_initialized = 1;
     return 1;
 }
 
@@ -170,5 +176,7 @@ int x11_wallpaper_all(const char *path) {
 }
 
 void x11_deinit(void) {
+    if (!x11_initialized)
+        return;
     XCloseDisplay(display);
 }
