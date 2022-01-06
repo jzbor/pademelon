@@ -94,7 +94,7 @@ int tl_set_wallpaper(int argc, char *argv[]) {
     char *path, *dirpath;
     FILE *source, *target;
 
-    if (argc < 0) {
+    if (argc < 1) {
         fprintf(stderr, "set-wallpaper: not enough arguments\n");
         return EXIT_FAILURE;
     }
@@ -181,3 +181,30 @@ char* wallpaper_path(void) {
     return user_data_path(WALLPAPER_FILE_NAME);
 }
 
+int tl_test_application(int argc, char *argv[]) {
+    struct dapplication *a;
+
+    if (argc < 1) {
+        fprintf(stderr, "test-application: not enough arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    load_applications();
+    a = find_application(argv[0], NULL, 0);
+    if (!a) {
+        fprintf(stderr, "test-application: application not found\n");
+        return EXIT_FAILURE;
+    }
+
+    if (test_application(a)) {
+        /* we don't really care if the print works */
+        printf("Application available: (%s, \"%s\")\n", a->id_name, a->display_name);
+        fflush(stdout);
+        return EXIT_SUCCESS;
+    } else {
+        /* we don't really care if the print works */
+        printf("Application not available: (%s, \"%s\")\n", a->id_name, a->display_name);
+        fflush(stdout);
+        return EXIT_FAILURE;
+    }
+}

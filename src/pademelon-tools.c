@@ -18,6 +18,7 @@ struct tool tools[] = {
     { "print-applications", "print installed application files",        tl_print_applications },
     { "save-display-conf",  "save current display configuration",       tl_save_display_conf },
     { "set-wallpaper",      "set the wallpaper",                        tl_set_wallpaper },
+    { "test-application",   "test if an application is installed and available", tl_test_application },
     { NULL,                 NULL,                                       NULL },
 };
 
