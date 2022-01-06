@@ -459,7 +459,7 @@ def system_data_path(file=''):
 
 
 def system_local_data_path(file=''):
-    return os.path.join('/usr/share/local', DIRNAME, file)
+    return os.path.join('/usr/local/share', DIRNAME, file)
 
 
 def user_config_path(file=''):
