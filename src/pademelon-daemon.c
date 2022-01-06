@@ -1,5 +1,5 @@
 #include "common.h"
-#include "desktop-daemon.h"
+#include "desktop-application.h"
 #include "pademelon-config.h"
 #include "signals.h"
 #include "tools.h"
@@ -20,7 +20,7 @@ static void load_keyboard(void);
 static void loop(void);
 static void setup_signals(void);
 static void sigint_handler(int signal);
-static void startup_daemons(void);
+static void startup_applications(void);
 
 static struct config *config;
 static int end = 0;
@@ -47,27 +47,27 @@ void loop(void) {
             if (WIFEXITED(pl->status)) {
                 temp = WEXITSTATUS(pl->status);
                 report_value(R_DEBUG, "Process exited", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belonged to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belonged to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Exit status", &temp, R_INTEGER);
                 plist_remove(pl->pid);
             } else if (WIFSIGNALED(pl->status)) {
                 temp = WTERMSIG(pl->status);
                 report_value(R_DEBUG, "Process terminated", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belonged to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belonged to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Terminated by signal", &temp, R_INTEGER);
                 plist_remove(pl->pid);
             } else if (WIFSTOPPED(pl->status)) {
                 temp = WSTOPSIG(pl->status);
                 report_value(R_DEBUG, "Process stopped", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belongs to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belongs to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Stopped by", &temp, R_INTEGER);
             } else if (WIFCONTINUED(pl->status)) {
-                report_value(R_DEBUG, "Process belongs to daemon", ((struct ddaemon*) pl->content)->id_name, R_STRING);
+                report_value(R_DEBUG, "Process belongs to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Process continued", &pl->pid, R_INTEGER);
             }
 
             if (WIFEXITED(pl->status)|| WIFSIGNALED(pl->status)) {
-                if (((struct ddaemon*) pl->content) && strcmp(((struct ddaemon*) pl->content)->category->name, "window-manager") == 0) {
+                if (((struct dapplication*) pl->content) && strcmp(((struct dapplication*) pl->content)->category->name, "window-manager") == 0) {
                     end = 1;
                 }
             }
@@ -121,27 +121,27 @@ void sigint_handler(int signal) {
 	errno = errno_save;
 }
 
-void startup_daemon(const char *preference, const char *category, int auto_fallback) {
-    struct ddaemon *d = select_ddaemon(preference, category, auto_fallback);
-    if (d && test_ddaemon(d))
-        launch_ddaemon(d);
+void startup_application(const char *preference, const char *category, int auto_fallback) {
+    struct dapplication *d = select_application(preference, category, auto_fallback);
+    if (d && test_application(d))
+        launch_application(d);
 }
 
-void startup_daemons(void) {
+void startup_applications(void) {
     struct dcategory *c;
-    struct ddaemon *d;
+    struct dapplication *d;
     char *s, *token;
     if (!config->no_window_manager)
-        startup_daemon(wm_overwrite ? wm_overwrite :config->window_manager, "window-manager", 1);
+        startup_application(wm_overwrite ? wm_overwrite :config->window_manager, "window-manager", 1);
 
     sleep(5);
 
-    startup_daemon(config->compositor_daemon, "compositor", 1);
-    startup_daemon(config->hotkey_daemon, "hotkeys", 0);
-    startup_daemon(config->notification_daemon, "notifications", 1);
-    startup_daemon(config->polkit_daemon, "polkit", 1);
-    startup_daemon(config->power_daemon, "power", 1);
-    startup_daemon(config->status_daemon, "status", 0);
+    startup_application(config->compositor_daemon, "compositor", 1);
+    startup_application(config->hotkey_daemon, "hotkeys", 0);
+    startup_application(config->notification_daemon, "notifications", 1);
+    startup_application(config->polkit_daemon, "polkit", 1);
+    startup_application(config->power_daemon, "power", 1);
+    startup_application(config->status_daemon, "status", 0);
 
     c = find_category("applets");
     if (c && config->applets) {
@@ -149,9 +149,9 @@ void startup_daemons(void) {
         if (!s)
             report(R_FATAL, "Unable to allocate memory for applets");
         for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
-            d = find_ddaemon(token, "applets", 0);
-            if (d && test_ddaemon(d))
-                launch_ddaemon(d);
+            d = find_application(token, "applets", 0);
+            if (d && test_application(d))
+                launch_application(d);
         }
         free(s);
     }
@@ -166,8 +166,8 @@ int main(int argc, char *argv[]) {
     /* load config */
     config = load_config();
 
-    /* load daemons */
-    load_daemons();
+    /* load applications */
+    load_applications();
 
     for (i = 1; argv[i]; i++) {
         if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {
@@ -178,10 +178,10 @@ int main(int argc, char *argv[]) {
             if (print_config(config) < 0)
                 report(R_ERROR, "Unable to write to stdout");
             print_only = 1;
-        } else if (strcmp(argv[i], "--daemons") == 0 || strcmp(argv[i], "-t") == 0) {
-            if (printf("\n;;; DAEMONS ;;;\n\n") < 0)
+        } else if (strcmp(argv[i], "--applications") == 0 || strcmp(argv[i], "-t") == 0) {
+            if (printf("\n;;; applications ;;;\n\n") < 0)
                 report(R_ERROR, "Unable to write to stdout");
-            if (print_ddaemons() < 0)
+            if (print_applications() < 0)
                 report(R_ERROR, "Unable to write to stdout");
             print_only = 1;
         } else if (strcmp(argv[i], "--window-manager") == 0 || strcmp(argv[i], "-w") == 0) {
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
             if (!config->window_manager)
                 report(R_FATAL, "Unable to allocate memory for settings");
         } else {
-            if (printf("Usage: %s [--daemons] [--categories] [--print-config]\n", argv[0]) < 0)
+            if (printf("Usage: %s [--applications] [--categories] [--print-config]\n", argv[0]) < 0)
                 report(R_FATAL, "Unable to write to stderr");
         }
     }
@@ -206,13 +206,13 @@ int main(int argc, char *argv[]) {
         tl_load_wallpaper(0, NULL);
         load_keyboard();
         tl_load_display_conf(0, NULL);
-        startup_daemons();
+        startup_applications();
         loop();
         x11_deinit();
     }
 
     plist_free();
     free_config(config);
-    free_ddaemons();
+    free_applications();
     free_categories();
 }

@@ -1,20 +1,20 @@
-# Desktop Daemon Files
+# Desktop Application Files
 
-* Desktop daemon files end on `.ddaemon`
-* The section name is the id-name of the daemon
+* Desktop application files end on `.dapp`
+* The section name is the id-name of the application
     * It must not contain spaces or "special" characters
 
 ### Attributes
 * `name`: Name to be displayed
-* `description`: Description of what the daemon is/does
-* `category`: Daemon category (see below)
-* `command`: Shell command to launch daemon
-* `test`: Command to test whether the daemon is installed/available
+* `description`: Description of what the application is/does
+* `category`: Application category (see below)
+* `command`: Shell command to launch application
+* `test`: Command to test whether the application is installed/available
 * `settings`: Settings application or file. Can be one of the following:
     * with prefix `config://`: config file relative to `~/.config`
     * with prefix `file://`: config file with absolute path (not as useful)
     * else: path to settings executable
-* `default`: Whether the daemon serves as default/fallback for its category
+* `default`: Whether the application serves as default/fallback for its category
 
 ### Categories
 * `window-manager`: X11 Window Manager

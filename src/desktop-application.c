@@ -1,5 +1,5 @@
 #include "common.h"
-#include "desktop-daemon.h"
+#include "desktop-application.h"
 #include "signals.h"
 #include <dirent.h>
 #include <errno.h>
@@ -16,57 +16,57 @@
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
 
 struct dcategory *categories = NULL;
-struct ddaemon *daemons = NULL;
+struct dapplication *applications = NULL;
 
-void add_to_category(const char *name, struct ddaemon *d) {
+void add_to_category(const char *name, struct dapplication *a) {
     struct dcategory *c;
-    struct ddaemon *diter;
+    struct dapplication *aiter;
 
-    /* daemon already has category - remove daemon from it*/
-    if (d->category != NULL) {
+    /* application already has category - remove application from it*/
+    if (a->category != NULL) {
         /* check if head matches */
-        if (d->category->daemons == d) {
-            d->category->daemons = d->cnext;
-            d->category = NULL;
-            d->cnext = NULL;
+        if (a->category->applications == a) {
+            a->category->applications = a->cnext;
+            a->category = NULL;
+            a->cnext = NULL;
         } else {
-            for (diter = d->category->daemons; diter && diter->next; diter = diter->cnext) {
-                if (diter->cnext == d) {
-                    diter->cnext = d->cnext;
-                    d->category = NULL;
-                    d->cnext = NULL;
+            for (aiter = a->category->applications; aiter && aiter->next; aiter = aiter->cnext) {
+                if (aiter->cnext == a) {
+                    aiter->cnext = a->cnext;
+                    a->category = NULL;
+                    a->cnext = NULL;
                     break;
                 }
             }
         }
     }
 
-    /* add daemon if category exists */
+    /* add application if category exists */
     for (c = categories; c; c = c->next) {
         if (strcmp(name, c->name) == 0) {
-            d->cnext = c->daemons;
-            d->category = c;
-            c->daemons = d;
+            a->cnext = c->applications;
+            a->category = c;
+            c->applications = a;
             break;
         }
     }
 
     /* create category - it does not exist yet */
-    if (d->category == NULL) {
+    if (a->category == NULL) {
         c = malloc(sizeof(struct dcategory));
         if (!c)
             report(R_FATAL, "Unable to allocate enough memory for new category");
-        memcpy(c, &dcategory_default, sizeof(dcategory_default));
+        memcpy(c, &category_default, sizeof(category_default));
 
         /* set name and add to lists */
         c->name = strdup(name);
         if (!c->name) {
             report(R_FATAL, "Unable to allocate space for new category name");
         }
-        c->daemons = d;
+        c->applications = a;
         c->next = categories;
         categories = c;
-        d->category = c;
+        a->category = c;
     }
 }
 
@@ -74,41 +74,41 @@ struct dcategory *get_categories(void) {
     return categories;
 }
 
-struct ddaemon *find_ddaemon(const char *id_name, const char *category, int init_if_not_found) {
-    struct ddaemon *d;
+struct dapplication *find_application(const char *id_name, const char *category, int init_if_not_found) {
+    struct dapplication *a;
     struct dcategory *c;
     if (!category) {
-        for (d = daemons; d; d = d->next) {
-            if (strcmp(id_name, d->id_name) == 0) {
-                return d;
+        for (a = applications; a; a = a->next) {
+            if (strcmp(id_name, a->id_name) == 0) {
+                return a;
             }
         }
     } else {
         c = find_category(category);
         if (!c)
             return NULL;
-        for (d = c->daemons; d; d = d->cnext) {
-            if (strcmp(id_name, d->id_name) == 0) {
-                return d;
+        for (a = c->applications; a; a = a->cnext) {
+            if (strcmp(id_name, a->id_name) == 0) {
+                return a;
             }
         }
     }
 
-    /* daemon with this id_name doesn't exist yet */
-    if (!d && init_if_not_found) {
-        d = malloc(sizeof(struct ddaemon));
-        if (!d)
-            report(R_FATAL, "Unable to allocate enough memory for new daemon");
-        memcpy(d, &ddaemon_default, sizeof(ddaemon_default));
+    /* application with this id_name doesn't exist yet */
+    if (!a && init_if_not_found) {
+        a = malloc(sizeof(struct dapplication));
+        if (!a)
+            report(R_FATAL, "Unable to allocate enough memory for new application");
+        memcpy(a, &application_default, sizeof(application_default));
 
         /* set name and add to lists */
-        d->id_name = strdup(id_name);
-        if (!d->id_name) {
+        a->id_name = strdup(id_name);
+        if (!a->id_name) {
             report(R_FATAL, "Unable to allocate space for new desktop id_name");
         }
-        d->next = daemons;
-        daemons = d;
-        return d;
+        a->next = applications;
+        applications = a;
+        return a;
     }
 
     return NULL;
@@ -133,61 +133,61 @@ void free_categories(void) {
     }
 }
 
-void free_ddaemon(struct ddaemon *d) {
-    free(d->display_name);
-    free(d->id_name);
-    free(d->desc);
+void free_application(struct dapplication *a) {
+    free(a->display_name);
+    free(a->id_name);
+    free(a->desc);
 
-    free(d->launch_cmd);
-    free(d->test_cmd);
-    free(d->settings);
+    free(a->launch_cmd);
+    free(a->test_cmd);
+    free(a->settings);
 
-    free(d);
+    free(a);
 }
 
-void free_ddaemons(void) {
-    struct ddaemon *d, *n;
+void free_applications(void) {
+    struct dapplication *a, *n;
 
-    for (d = daemons; d; d = n) {
-        n = d->next;
-        free_ddaemon(d);
+    for (a = applications; a; a = n) {
+        n = a->next;
+        free_application(a);
     }
 }
 
-int ini_ddaemon_callback(void* user, const char* section, const char* name, const char* value) {
-    struct ddaemon *d = find_ddaemon(section, NULL, 1);
+int ini_application_callback(void* user, const char* section, const char* name, const char* value) {
+    struct dapplication *a = find_application(section, NULL, 1);
     char **write_to_str = NULL;
     int *write_to_int = NULL;
 
     /* string attributes */
     if (strcmp(name, "name") == 0)
-        write_to_str = &d->display_name;
+        write_to_str = &a->display_name;
     else if (strcmp(name, "description") == 0)
-        write_to_str = &d->desc;
+        write_to_str = &a->desc;
     else if (strcmp(name, "command") == 0)
-        write_to_str = &d->launch_cmd;
+        write_to_str = &a->launch_cmd;
     else if (strcmp(name, "test") == 0)
-        write_to_str = &d->test_cmd;
+        write_to_str = &a->test_cmd;
     else if (strcmp(name, "settings") == 0)
-        write_to_str = &d->settings;
+        write_to_str = &a->settings;
 
     if (write_to_str) {
         /* hacky workaround to avoid reallocing stuff in read-only segments */
-        for (int i = 0; i < sizeof(ddaemon_default) / sizeof(char *); i++)
-            if (*write_to_str == ((char **)&ddaemon_default)[i]) {
+        for (int i = 0; i < sizeof(application_default) / sizeof(char *); i++)
+            if (*write_to_str == ((char **)&application_default)[i]) {
                 *write_to_str = NULL;
                 break;
             }
         *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
         if (!*write_to_str)
-            report(R_FATAL, "Unable to allocate memory for daemon attribute");
+            report(R_FATAL, "Unable to allocate memory for application attribute");
         strcpy(*write_to_str, value);
         return 1;
     }
 
     /* boolean attributes */
     if (strcmp(name, "default") == 0)
-        write_to_int = &d->cdefault;
+        write_to_int = &a->cdefault;
 
     if (write_to_int) {
         *write_to_int = IS_TRUE(value);
@@ -196,7 +196,7 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
 
     /* category */
     if (strcmp(name, "category") == 0) {
-        add_to_category(value, d);
+        add_to_category(value, a);
         return 1;
     }
 
@@ -204,10 +204,10 @@ int ini_ddaemon_callback(void* user, const char* section, const char* name, cons
     return 1;
 }
 
-void launch_ddaemon(struct ddaemon *daemon) {
+void launch_application(struct dapplication *application) {
     pid_t pid;
 
-    if (!daemon)
+    if (!application)
         return;
 
     block_signal(SIGCHLD);
@@ -215,51 +215,51 @@ void launch_ddaemon(struct ddaemon *daemon) {
 
     if (pid == 0) { /* child */
         unblock_signal(SIGCHLD);
-        char *args[] = { "/bin/sh", "-c", daemon->launch_cmd, NULL };
+        char *args[] = { "/bin/sh", "-c", application->launch_cmd, NULL };
         execvp(args[0], args);
-        report_value(R_ERROR, "Unable to launch daemon", daemon->launch_cmd, R_STRING);
+        report_value(R_ERROR, "Unable to launch application", application->launch_cmd, R_STRING);
         exit(EXIT_FAILURE);
     } else if (pid > 0) { /* parent */
-        plist_add(pid, daemon);
+        plist_add(pid, application);
     } else {
         report(R_FATAL, "Unable to fork into a new process");
     }
     unblock_signal(SIGCHLD);
 }
 
-void load_daemons(void) {
+void load_applications(void) {
     char *path;
-    static int daemons_loaded = 0;
+    static int applications_loaded = 0;
 
-    /* only load daemons on the first call */
-    if (daemons_loaded)
+    /* only load applications on the first call */
+    if (applications_loaded)
         return;
     else
-        daemons_loaded = 1;
+        applications_loaded = 1;
 
     /* /usr/local/share/... */
-    path = system_data_path("daemons");
+    path = system_data_path("applications");
     if (path) {
-        load_daemons_from_dir(path);
+        load_applications_from_dir(path);
         free(path);
     }
 
     /* /usr/local/share/local... */
-    path = system_local_data_path("daemons");
+    path = system_local_data_path("applications");
     if (path) {
-        load_daemons_from_dir(path);
+        load_applications_from_dir(path);
         free(path);
     }
 
     /* ~/.local/share */
-    path = user_data_path("daemons");
+    path = user_data_path("applications");
     if (path) {
-        load_daemons_from_dir(path);
+        load_applications_from_dir(path);
         free(path);
     }
 }
 
-void load_daemons_from_dir(const char *dir) {
+void load_applications_from_dir(const char *dir) {
     int status;
     DIR *directory;
     struct dirent *diriter;
@@ -268,7 +268,7 @@ void load_daemons_from_dir(const char *dir) {
     /* open directory for iteration */
     directory = opendir(dir);
     if (directory == NULL) {
-        report_value(R_WARNING, "Unable to load daemons from the following directory", dir, R_STRING);
+        report_value(R_WARNING, "Unable to load applications from the following directory", dir, R_STRING);
         return;
     }
 
@@ -280,8 +280,8 @@ void load_daemons_from_dir(const char *dir) {
             continue;
 
         /* ignore files with an inappropriate ending */
-        if (!STR_ENDS_WITH(diriter->d_name, DAEMON_FILE_ENDING)) {
-            report_value(R_DEBUG, "Not a desktop daemon file", diriter->d_name, R_STRING);
+        if (!STR_ENDS_WITH(diriter->d_name, APPLICATION_FILE_ENDING)) {
+            report_value(R_DEBUG, "Not a desktop application file", diriter->d_name, R_STRING);
             continue;
         }
 
@@ -294,14 +294,14 @@ void load_daemons_from_dir(const char *dir) {
         /* check if path is actually a regular file */
         status = stat(subpath, &filestats);
         if (status) {
-            report(R_ERROR, "Unable to get file stats for potential daemon config file");
+            report(R_ERROR, "Unable to get file stats for potential application config file");
             continue;
         } else if (!S_ISREG(filestats.st_mode))
             continue;
 
-        status = ini_parse(subpath, &ini_ddaemon_callback, NULL);
+        status = ini_parse(subpath, &ini_application_callback, NULL);
         if (status < 0)
-            report_value(R_ERROR, "An error occurred while reading desktop daemon file", subpath, R_STRING);
+            report_value(R_ERROR, "An error occurred while reading desktop application file", subpath, R_STRING);
     }
 
     if (errno != 0) {
@@ -314,31 +314,31 @@ void load_daemons_from_dir(const char *dir) {
         report(R_FATAL, "Unable to close directory");
 }
 
-int print_ddaemon(struct ddaemon *d) {
+int print_application(struct dapplication *a) {
     int status;
-    status = printf("[%s]\t\t; %p\n", d->id_name, (void *)d);
+    status = printf("[%s]\t\t; %p\n", a->id_name, (void *)a);
     if (status < 0)
         return -1;
-    PRINT_PROPERTY_STR("name", d->display_name);
-    PRINT_PROPERTY_STR("description", d->desc);
-    if (d->category) {
-        PRINT_PROPERTY_STR("category", d->category->name);
+    PRINT_PROPERTY_STR("name", a->display_name);
+    PRINT_PROPERTY_STR("description", a->desc);
+    if (a->category) {
+        PRINT_PROPERTY_STR("category", a->category->name);
     } else {
-        PRINT_PROPERTY_STR("; category", dcategory_default.name);
+        PRINT_PROPERTY_STR("; category", category_default.name);
     }
-    PRINT_PROPERTY_STR("command", d->launch_cmd);
-    PRINT_PROPERTY_STR("test", d->test_cmd);
-    PRINT_PROPERTY_BOOL("default", d->cdefault);
+    PRINT_PROPERTY_STR("command", a->launch_cmd);
+    PRINT_PROPERTY_STR("test", a->test_cmd);
+    PRINT_PROPERTY_BOOL("default", a->cdefault);
 
     if (fflush(stdout) == EOF)
         return -1;
     return 0;
 }
 
-int print_ddaemons(void) {
-    struct ddaemon *d;
-    for (d = daemons; d; d = d->next) {
-        if (print_ddaemon(d) < 0)
+int print_applications(void) {
+    struct dapplication *a;
+    for (a = applications; a; a = a->next) {
+        if (print_application(a) < 0)
             return -1;
         if (printf("\n") < 0)
             return -1;
@@ -348,40 +348,40 @@ int print_ddaemons(void) {
     return 0;
 }
 
-struct ddaemon *select_ddaemon(const char *user_preference, const char *category, int auto_fallback) {
+struct dapplication *select_application(const char *user_preference, const char *category, int auto_fallback) {
     struct dcategory *c;
-    struct ddaemon *d;
-    /* @TODO use last *working* daemon instead of just last */
+    struct dapplication *a;
+    /* @TODO use last *working* application instead of just last */
 
-    if (user_preference && (d = find_ddaemon(user_preference, category, 0))) {
-        return d;
+    if (user_preference && (a = find_application(user_preference, category, 0))) {
+        return a;
     } else if (!auto_fallback) {
         return NULL;
     } else if (user_preference) {
-        report_value(R_WARNING, "Preferred daemon not found - using fallback", user_preference, R_STRING);
+        report_value(R_WARNING, "Preferred application not found - using fallback", user_preference, R_STRING);
     }
 
     /* preference was not found */
     c = find_category(category);
     if (!c) {
-        report_value(R_WARNING, "Unable to launch daemon - category empty", category, R_STRING);
+        report_value(R_WARNING, "Unable to launch application - category empty", category, R_STRING);
         return NULL;
     }
-    for (d = c->daemons; d->cnext; d = d->cnext) {
-        if (d->cdefault)
-            return d;
+    for (a = c->applications; a->cnext; a = a->cnext) {
+        if (a->cdefault)
+            return a;
     }
 
-    return d;
+    return a;
 }
 
-int test_ddaemon(struct ddaemon *daemon) {
+int test_application(struct dapplication *application) {
     int status;
 
-    if (!daemon || !daemon->test_cmd)
+    if (!application || !application->test_cmd)
         return 1;
 
-    status = execute(daemon->test_cmd);
+    status = execute(application->test_cmd);
     if (status == -1)
         report(R_FATAL, "Execute failed");
     else if (status == 0)

@@ -2,7 +2,7 @@
 
 ## Section: `daemons`
 
-These keys require the id of their respective daemon files:
+These keys require the id of their respective application files:
 * `window-manager`: X11 Window Manager
 * `compositor`: X11 Compositor (e.g. `picom`)
 * `hotkeys`: Hotkey Daemon

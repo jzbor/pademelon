@@ -15,7 +15,7 @@ static int print_tools(void);
 struct tool tools[] = {
     { "load-display-conf",  "load last saved display configuration",    tl_load_display_conf },
     { "load-wallpaper",     "load wallpaper",                           tl_load_wallpaper },
-    { "print-daemons",      "print installed daemon files",             tl_print_daemons },
+    { "print-applications", "print installed application files",        tl_print_applications },
     { "save-display-conf",  "save current display configuration",       tl_save_display_conf },
     { "set-wallpaper",      "set the wallpaper",                        tl_set_wallpaper },
     { NULL,                 NULL,                                       NULL },

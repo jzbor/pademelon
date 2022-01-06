@@ -1,5 +1,5 @@
 #include "common.h"
-#include "desktop-daemon.h"
+#include "desktop-application.h"
 #include "tools.h"
 #include "x11-utils.h"
 #include <errno.h>
@@ -50,10 +50,10 @@ int tl_load_wallpaper(int argc, char *argv[]) {
     return EXIT_FAILURE;
 }
 
-int tl_print_daemons(int argc, char *argv[]) {
+int tl_print_applications(int argc, char *argv[]) {
     struct dcategory *c;
 
-    load_daemons();
+    load_applications();
 
     if (printf("These are the available categories ([d]efault, [a]vailable):\n\n") < 0)
         return EXIT_FAILURE;
@@ -156,14 +156,14 @@ int tl_set_wallpaper(int argc, char *argv[]) {
 
 int print_category(struct dcategory *c) {
     int status, tested;
-    struct ddaemon *d;
+    struct dapplication *d;
     status = printf("%s:\n", c->name);
     if (status < 0)
         return -1;
-    for (d = c->daemons; d; d = d->cnext) {
+    for (d = c->applications; d; d = d->cnext) {
         status = printf("%s", d->id_name);
         if (status < 0) return -1;
-        tested = test_ddaemon(d);
+        tested = test_application(d);
         if (d->cdefault || tested) {
             status = printf("(%s%s)", d->cdefault ? "d" : "", tested ? "a" : "");
             if (status < 0) return -1;

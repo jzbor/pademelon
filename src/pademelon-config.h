@@ -1,5 +1,5 @@
-#ifndef H_PADEMELON_DAEMON_CONFIG
-#define H_PADEMELON_DAEMON_CONFIG
+#ifndef H_PADEMELON_CONFIG
+#define H_PADEMELON_CONFIG
 
 #include <stddef.h>
 
@@ -28,4 +28,4 @@ struct config *init_config(void);
 struct config *load_config(void);
 int print_config(struct config *cfg);
 
-#endif /* H_PADEMELON_DAEMON_CONFIG */
+#endif /* H_PADEMELON_CONFIG */
