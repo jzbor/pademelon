@@ -9,11 +9,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
 #define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
+#define TEST_TIMEOUT                1   /* in seconds */
 
 struct dcategory *categories = NULL;
 struct dapplication *applications = NULL;
@@ -380,15 +382,49 @@ struct dapplication *select_application(const char *user_preference, const char 
 }
 
 int test_application(struct dapplication *application) {
-    int status;
+    int status, wstatus;
+    pid_t pid;
+    int sleep_remaining = TEST_TIMEOUT;
 
     if (!application || !application->test_cmd)
         return 1;
 
-    status = execute(application->test_cmd);
-    if (status == -1)
-        report(R_FATAL, "Execute failed");
-    else if (status == 0)
-        return 1;
-    return 0;
+    /* @TODO handle errors */
+    install_default_sigchld_handler();
+    pid = fork();
+
+    if (pid == 0) { /* child */
+        char *args[] = { "/bin/sh", "-c", application->test_cmd, NULL };
+        execvp(args[0], args);
+        return 0; /* exec has failed */
+    } else if (pid > 0) { /* parent */
+        while ((status = waitpid(pid, &wstatus, WUNTRACED|WNOHANG)) == 0) {
+            sleep_remaining = sleep(sleep_remaining);
+            if (sleep_remaining == 0)
+                break;
+        }
+
+        if (status == -1) { /* an error occured */
+            perror("waitpid");
+            restore_sigchld_handler();
+            return 0;
+        } else if (status == 0) {   /* child has not returned yet */
+            /* kill child */
+            kill(pid, SIGKILL);
+            restore_sigchld_handler();
+            return 0;
+        } else {    /* child has terminated and no error occured */
+            if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) {
+                restore_sigchld_handler();
+                return 1;
+            } else {
+                restore_sigchld_handler();
+                return 0;
+            }
+        }
+    } else {
+        /* unable to fork into new process */
+        restore_sigchld_handler();
+        return 0;
+    }
 }

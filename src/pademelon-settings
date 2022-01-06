@@ -9,12 +9,13 @@ import os.path
 import shutil
 import subprocess
 
-TITLE='Pademelon Settings'
-DIRNAME='pademelon'
-CONFIG_SECTION_DAEMONS='daemons'
-CONFIG_SECTION_APPLICATIONS='applications'
-CONFIG_SECTION_APPEARANCE='appearance'
-CONFIG_SECTION_INPUT='input'
+CONFIG_SECTION_DAEMONS = 'daemons'
+CONFIG_SECTION_APPLICATIONS = 'applications'
+CONFIG_SECTION_APPEARANCE = 'appearance'
+CONFIG_SECTION_INPUT = 'input'
+DIRNAME = 'pademelon'
+TEST_TIMEOUT = 1    # in seconds
+TITLE = 'Pademelon Settings'
 
 
 class ApplicationBox(Gtk.Box):
@@ -143,11 +144,15 @@ class DesktopApplication():
         self.test_result = False
 
     def run_test(self):
-        # @TODO add timeout
-        cp = subprocess.run(self.test_cmd, shell=True)
-        self.tested = True
-        self.test_result = cp.returncode == 0
+        try:
+            cp = subprocess.run(self.test_cmd, shell=True, timeout=TEST_TIMEOUT)
+            self.tested = True
+            self.test_result = cp.returncode == 0
+        except subprocess.TimeoutExpired:
+            self.tested = True
+            self.test_result = 0
         return self.test_result
+
 
     def test(self):
         if not self.tested:

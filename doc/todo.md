@@ -9,11 +9,13 @@
 * ~~Support for setting the keyboard-layout via `setxkbmap`~~
 * ~~**Generalize Daemon Concept for Applications:**~~
 * ~~Fix settings implementation in `pademelon-settings`~~
-* Implement basic external support for volume, backlight and ~~keyboard layout~~
-* Timeout for test command
+* ~~Timeout for test command~~
 * Verify `no-window-manager` functionality
 * Check for freeing in ro segements (`free_ddaemon()`)
 * Rework or remove `print_config()`
+
+## Before 0.2.0
+* Implement basic external support for volume, backlight and ~~keyboard layout~~
 
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift
