@@ -33,4 +33,8 @@ struct config *init_config(void);
 struct config *load_config(void);
 int print_config(struct config *cfg);
 
+static const struct config default_config = { /* do NOT define strings here (invalid free) */
+    .no_window_manager = 0,
+};
+
 #endif /* H_PADEMELON_CONFIG */

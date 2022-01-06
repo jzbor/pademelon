@@ -37,13 +37,21 @@ struct dapplication *select_application(const char *user_preference, const char 
 int test_application(struct dapplication *application);
 
 
-static const struct dapplication application_default = {
-    .display_name = "unknown", .id_name= "unknown", .desc = "unknown",
-    .cdefault = 0, .launch_cmd = "", .test_cmd = "", .settings = "",
+static const struct dapplication application_default = { /* do NOT define strings here (invalid free) */
+    .cdefault = 0
 };
 
-static const struct dcategory category_default = {
-    .name = "default",
+static const struct dcategory category_default = { /* do NOT define strings here (invalid free) */
+    0
 };
+
+
+/* The forbidden workaround: */
+        /* /1* hacky workaround to avoid reallocing stuff in read-only segments *1/ */
+        /* for (int i = 0; i < sizeof(application_default) / sizeof(char *); i++) */
+        /*     if (*write_to_str == ((char **)&application_default)[i]) { */
+        /*         *write_to_str = NULL; */
+        /*         break; */
+        /*     } */
 
 #endif /* H_DESKTOP_APPLICATION */

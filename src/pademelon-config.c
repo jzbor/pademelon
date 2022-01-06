@@ -10,10 +10,6 @@
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
 
 
-static const struct config default_config = {
-    .no_window_manager = 0,
-};
-
 void free_config(struct config *cfg) {
     free(cfg->compositor_daemon);
     free(cfg->hotkey_daemon);
@@ -57,12 +53,6 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         }
 
         if (write_to_str) {
-            /* hacky workaround to avoid reallocing stuff in read-only segments */
-            for (int i = 0; i < sizeof(default_config) / sizeof(char *); i++)
-                if (*write_to_str == ((char **)&default_config)[i]) {
-                    *write_to_str = NULL;
-                    break;
-                }
             *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
             if (!*write_to_str)
                 report(R_FATAL, "Unable to allocate memory for config");
@@ -86,12 +76,6 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         }
 
         if (write_to_str) {
-            /* hacky workaround to avoid reallocing stuff in read-only segments */
-            for (int i = 0; i < sizeof(default_config) / sizeof(char *); i++)
-                if (*write_to_str == ((char **)&default_config)[i]) {
-                    *write_to_str = NULL;
-                    break;
-                }
             *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
             if (!*write_to_str)
                 report(R_FATAL, "Unable to allocate memory for config");
@@ -104,12 +88,6 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         }
 
         if (write_to_str) {
-            /* hacky workaround to avoid reallocing stuff in read-only segments */
-            for (int i = 0; i < sizeof(default_config) / sizeof(char *); i++)
-                if (*write_to_str == ((char **)&default_config)[i]) {
-                    *write_to_str = NULL;
-                    break;
-                }
             *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
             if (!*write_to_str)
                 report(R_FATAL, "Unable to allocate memory for config");

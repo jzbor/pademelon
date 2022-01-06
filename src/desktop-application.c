@@ -178,12 +178,6 @@ int ini_application_callback(void* user, const char* section, const char* name, 
         write_to_str = &a->settings;
 
     if (write_to_str) {
-        /* hacky workaround to avoid reallocing stuff in read-only segments */
-        for (int i = 0; i < sizeof(application_default) / sizeof(char *); i++)
-            if (*write_to_str == ((char **)&application_default)[i]) {
-                *write_to_str = NULL;
-                break;
-            }
         *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
         if (!*write_to_str)
             report(R_FATAL, "Unable to allocate memory for application attribute");
