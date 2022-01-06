@@ -504,9 +504,8 @@ def write_config(config, path, parent=None):
 
 
 if __name__ == '__main__':
-    categories = read_desktop_application_files([system_data_path('applications'), system_local_data_path('applications'),
-            user_data_path('applications'), '/home/jzbor/Programming/C/pademelon/applications'])
-    config = read_config([system_config_path('pademelon.conf'), user_config_path('pademelon.conf'),
-            '/home/jzbor/Programming/C/pademelon/pademelon.conf'])
+    categories = read_desktop_application_files([system_data_path('applications'),
+            system_local_data_path('applications'), user_data_path('applications')])
+    config = read_config([system_config_path('pademelon.conf'), user_config_path('pademelon.conf')])
     MainWindow()
     Gtk.main()
