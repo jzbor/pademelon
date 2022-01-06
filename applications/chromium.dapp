@@ -1,0 +1,7 @@
+[chromium]
+name = Chromium
+description = A web browser built for speed, simplicity, and security
+category = browser
+command = /usr/bin/chromium
+test = test -x /usr/bin/chromium
+default = False

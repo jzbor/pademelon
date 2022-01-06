@@ -1,0 +1,8 @@
+[xfce4-terminal]
+name = XFCE4's Terminal Emulator
+description = A modern terminal emulator primarily for the Xfce desktop environment
+category = terminal
+command = /usr/bin/xfce4-terminal
+test = test -x /usr/bin/xfce4-terminal
+settings = /usr/bin/xfce4-terminal --preferences
+default = False
