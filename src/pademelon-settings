@@ -12,6 +12,7 @@ import subprocess
 TITLE='Pademelon Settings'
 DIRNAME='pademelon'
 CONFIG_SECTION_DAEMONS='daemons'
+CONFIG_SECTION_APPLICATIONS='applications'
 CONFIG_SECTION_APPEARANCE='appearance'
 CONFIG_SECTION_INPUT='input'
 
@@ -54,7 +55,7 @@ class ApplicationSelectionBox(ApplicationBox):
             self.application_selection_box.append_text(application.display_name + self.application_test_str(application))
             if self.config_section in config \
                     and self.cname in config[self.config_section] \
-                    and application.id_name == config['daemons'][cname]:
+                    and application.id_name == config[self.config_section][cname]:
                         # @TODO generalize section name for applications
                 select = self.applications.index(application)     # select config item if existent
                 self.application_selection_box.set_tooltip_text(application.desc)
@@ -175,6 +176,7 @@ class MainWindow(Gtk.Window):
 
         # add pages for notebook
         self.notebook_pages.append(('Daemons', self.daemon_page()))
+        self.notebook_pages.append(('Applications', self.application_page()))
         self.notebook_pages.append(('System', self.system_page()))
         for page in self.notebook_pages:
             self.notebook.append_page(page[1], Gtk.Label(label=page[0]))
@@ -189,6 +191,24 @@ class MainWindow(Gtk.Window):
         self.add(self.main_box)
         self.show_all()
         self.connect('destroy', Gtk.main_quit)
+
+    def application_page(self):
+        self.application_rows = []
+
+        # init applications box
+        self.applications_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.applications_box.set_spacing(5)
+
+        # create application frames
+        self.application_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_APPLICATIONS, 'terminal', 'Terminal Emulator'))
+        self.application_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_APPLICATIONS, 'browser', 'Web Browser'))
+
+        # add application frames to box
+        for ar in self.application_rows:
+            self.applications_box.pack_start(ar, False, False, 5)
+
+        return self.applications_box
+
 
     def daemon_page(self):
         self.daemon_rows = []
@@ -207,7 +227,7 @@ class MainWindow(Gtk.Window):
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'power', 'Power Management'))
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'status', 'Status Script or Bar'))
 
-        # add daemon frames to list
+        # add daemon frames to box
         for dr in self.daemon_rows:
             self.daemons_box.pack_start(dr, False, False, 5)
 
@@ -301,15 +321,15 @@ class OptionalApplicationBox(ApplicationBox):
         self.check_buttons = []
 
         if self.config_section in config and cname in config[self.config_section]:
-            activated_applications = config[self.config_section][cname].split(' ')
+            self.activated_applications = set(config[self.config_section][cname].split(' '))
         else:
-            activated_applications = []
+            self.activated_applications = set()
 
         for application in self.applications:
             cb = Gtk.CheckButton(label=application.display_name)
             cb.connect("toggled", self.on_button_toggled, "1")
             cb.set_tooltip_text(application.desc)
-            if application.id_name in activated_applications:
+            if application.id_name in self.activated_applications:
                 cb.set_active(True)
             self.check_buttons.append(cb)
             if application.test():
@@ -327,7 +347,6 @@ class OptionalApplicationBox(ApplicationBox):
                 self.activated_applications.remove(application_id_name)
         if self.config_section not in config:
             config[self.config_section] = {}
-        print(self.activated_applications)
         config[self.config_section][self.cname] = ' '.join(self.activated_applications)
 
 

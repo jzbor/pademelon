@@ -1,0 +1,8 @@
+[firefox]
+name = Firefox
+description = Standalone web browser from mozilla.org
+category = browser
+command = /usr/bin/firefox
+test = test -x /usr/bin/firefox
+settings = /usr/bin/firefox --preferences
+default = True
