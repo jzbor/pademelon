@@ -1,5 +1,5 @@
 #include "common.h"
-#include "pademelon-daemon-config.h"
+#include "pademelon-config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

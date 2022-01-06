@@ -1,6 +1,6 @@
 #include "common.h"
 #include "desktop-daemon.h"
-#include "pademelon-daemon-config.h"
+#include "pademelon-config.h"
 #include "signals.h"
 #include "tools.h"
 #include "x11-utils.h"
