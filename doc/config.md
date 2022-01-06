@@ -2,7 +2,7 @@
 
 ## Section: `daemons`
 
-These keys require the id of their respective application files:
+These options require the id of their respective application files ([see `desktop-applications.md`](desktop-applications.md)):
 * `window-manager`: X11 Window Manager
 * `compositor`: X11 Compositor (e.g. `picom`)
 * `hotkeys`: Hotkey Daemon
@@ -13,6 +13,12 @@ These keys require the id of their respective application files:
 
 These values should be specified as a boolean:
 * `no-window-manager`: don't launch any window manager
+
+## Section: Applications
+
+These options require the id of their respective application files ([see `desktop-applications.md`](desktop-applications.md)):
+* `browser`: Web Browser
+* `Terminal`: Terminal
 
 ## Section: `input`
 
