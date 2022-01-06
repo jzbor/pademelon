@@ -18,6 +18,7 @@
 
 static void load_keyboard(void);
 static void loop(void);
+void set_application(const char *preference, const char *category, const char *export_name, int auto_fallback);
 static void setup_signals(void);
 static void sigint_handler(int signal);
 static void startup_applications(void);
@@ -91,6 +92,12 @@ void loop(void) {
     }
 }
 
+void set_application(const char *preference, const char *category, const char *export_name, int auto_fallback) {
+    struct dapplication *a = select_application(preference, category, auto_fallback);
+    if (a && test_application(a))
+        export_application(a, export_name);
+}
+
 static void setup_signals(void) {
 	int status;
 	struct sigaction sigaction_sigint_handler = { .sa_handler = &sigint_handler, .sa_flags = SA_NODEFER|SA_RESTART};
@@ -122,20 +129,27 @@ void sigint_handler(int signal) {
 }
 
 void startup_application(const char *preference, const char *category, int auto_fallback) {
-    struct dapplication *d = select_application(preference, category, auto_fallback);
-    if (d && test_application(d))
-        launch_application(d);
+    struct dapplication *a = select_application(preference, category, auto_fallback);
+    if (a && test_application(a))
+        launch_application(a);
 }
 
 void startup_applications(void) {
     struct dcategory *c;
     struct dapplication *d;
     char *s, *token;
+
+    /* set default applications */
+    set_application(config->browser, "browser", "BROWSER", 1);
+    set_application(config->terminal, "terminal", "TERMINAL", 1);
+
+    /* start window manager */
     if (!config->no_window_manager)
         startup_application(wm_overwrite ? wm_overwrite :config->window_manager, "window-manager", 1);
 
-    sleep(5);
+    sleep(3);
 
+    /* start daemons */
     startup_application(config->compositor_daemon, "compositor", 1);
     startup_application(config->hotkey_daemon, "hotkeys", 0);
     startup_application(config->notification_daemon, "notifications", 1);

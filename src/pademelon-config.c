@@ -23,6 +23,9 @@ void free_config(struct config *cfg) {
     free(cfg->status_daemon);
     free(cfg->applets);
 
+    free(cfg->browser);
+    free(cfg->terminal);
+
     free(cfg->keyboard_settings);
     free(cfg);
 }
@@ -73,6 +76,26 @@ int ini_config_callback(void* user, const char* section, const char* name, const
 
         if (write_to_int) {
             *write_to_int = IS_TRUE(value);
+            return 1;
+        }
+    } else if (strcmp(section, CONFIG_SECTION_APPLICATIONS) == 0) {
+        if (strcmp(name, "browser") == 0) {
+            write_to_str = &cfg->browser;
+        } else if (strcmp(name, "terminal") == 0) {
+            write_to_str = &cfg->terminal;
+        }
+
+        if (write_to_str) {
+            /* hacky workaround to avoid reallocing stuff in read-only segments */
+            for (int i = 0; i < sizeof(default_config) / sizeof(char *); i++)
+                if (*write_to_str == ((char **)&default_config)[i]) {
+                    *write_to_str = NULL;
+                    break;
+                }
+            *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
+            if (!*write_to_str)
+                report(R_FATAL, "Unable to allocate memory for config");
+            strcpy(*write_to_str, value);
             return 1;
         }
     } else if (strcmp(section, CONFIG_SECTION_INPUT) == 0) {

@@ -70,6 +70,10 @@ void add_to_category(const char *name, struct dapplication *a) {
     }
 }
 
+int export_application(struct dapplication *application, const char *name) {
+    return setenv(name, application->launch_cmd, 0);
+}
+
 struct dcategory *get_categories(void) {
     return categories;
 }
