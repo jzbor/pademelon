@@ -7,13 +7,13 @@
 * ~~Save last display layout with unxrandr~~
 * ~~`pademelon-settings`: display warning when selecting daemon that is not installed~~
 * ~~Support for setting the keyboard-layout via `setxkbmap`~~
+* ~~**Generalize Daemon Concept for Applications:**~~
+* ~~Fix settings implementation in `pademelon-settings`~~
 * Implement basic external support for volume, backlight and ~~keyboard layout~~
 * Timeout for test command
-* Fix test implementation in `pademelon-settings`
 * Verify `no-window-manager` functionality
-* Rework and verify options for `pademelon-daemon`
-* Rework or remove `print_config()`
 * Check for freeing in ro segements (`free_ddaemon()`)
+* Rework or remove `print_config()`
 
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift
@@ -22,13 +22,4 @@
 * Support for selecting ARandr profiles
 * Config template loading
 * Implement SIGUSR1 to restart daemons
-* **Generalize Daemon Concept for Applications:**
-    * Required changes:
-        * `struct ddaemon`
-        * Parser for `struct ddaemon`
-        * `pademelon-settings`
-    * Application categories:
-        * Terminal
-        * Browser
-        * Pdf-Reader
-        * Editor
+* Rework and verify options for `pademelon-daemon`

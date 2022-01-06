@@ -95,7 +95,7 @@ class ApplicationSelectionBox(ApplicationBox):
         elif selected.settings.startswith('file://'):
             spawn(['xdg-open', selected.settings[len('file://'):]], check_dependency=True, parent=self.window)
         else:
-            spawn(selected.settings, check_dependency=True, parent=self.window)
+            spawn(['/bin/sh', '-c', selected.settings], check_dependency=True, parent=self.window)
 
     def on_combo_changed(self, combo):
         selected = self.selected_application();
