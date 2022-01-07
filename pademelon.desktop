@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Pademelon
+Comment=Pademelon desktop manager (uses configured WM)
+Exec=PREFIX/bin/pademelon-daemon
+TryExec=PREFIX/bin/pademelon-daemon
+Type=Application
+DesktopNames=Pademelon
