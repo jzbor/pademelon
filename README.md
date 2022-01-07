@@ -35,3 +35,4 @@ Still one important goal of this software is to provide a desktop that works out
 * **Xrandr**
 * **Imlib2**
 * **libinih**
+* **pkg-config** (only at build time)

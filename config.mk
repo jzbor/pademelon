@@ -6,7 +6,21 @@ CFLAGS 		= -std=c11 -pedantic -Wall -Werror -Wno-error=unused-function -Wno-erro
 LDFLAGS		=
 PREFIX		= /usr/local
 
-X11INC 		= -I/usr/X11R6/include
-X11LIB 		= -L/usr/X11R6/lib -lX11 -lXrandr
-INIHLIB		= -linih
-IMLIB2LIB	= -lImlib2
+# dependency lists
+DEPENDENCIES	= inih
+
+# x11 support
+DEPENDENCIES	+= x11
+CFLAGS		+= -DX11
+
+# xrandr support
+DEPENDENCIES	+= xrandr
+CFLAGS		+= -DXRANDR
+
+# imlib2 support
+DEPENDENCIES	+= imlib2
+CFLAGS		+= -DIMLIB2
+
+
+CFLAGS		+= `pkg-config --cflags $(DEPENDENCIES)`
+LIBS		+= `pkg-config --libs $(DEPENDENCIES)`

@@ -5,7 +5,7 @@ include config.mk
 all: pademelon-daemon pademelon-tools
 
 %.o:
-	$(CC) $(CPPFLAGS) $(CFLAGS) -g -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 common.o: src/common.c src/common.h src/signals.h
 desktop-application.o: src/desktop-application.c src/desktop-application.h src/common.h src/signals.h
@@ -16,13 +16,13 @@ signals.o: src/signals.c src/signals.h src/common.h
 tools.o: src/tools.c src/common.h src/x11-utils.h src/desktop-application.h
 
 x11-utils.o: src/x11-utils.c src/x11-utils.h src/common.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(X11INC) -g -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 pademelon-daemon: common.o desktop-application.o pademelon-daemon.o pademelon-config.o x11-utils.o tools.o signals.o
-	$(CC) $(LDFLAGS) $(INIHLIB) $(X11LIB) $(IMLIB2LIB) -o $@ $^
+	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
 pademelon-tools: pademelon-tools.o tools.o common.o x11-utils.o signals.o desktop-application.o
-	$(CC) $(LDFLAGS) $(INIHLIB) $(X11LIB) $(IMLIB2LIB) -o $@ $^
+	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:
 	rm -f common.o
