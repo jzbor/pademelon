@@ -349,26 +349,27 @@ int print_applications(void) {
     return 0;
 }
 
-struct dapplication *select_application(const char *user_preference, const char *category, int auto_fallback) {
+struct dapplication *select_application(struct category_option *co) {
     struct dcategory *c;
     struct dapplication *a;
-    /* @TODO use last *working* application instead of just last */
 
-    if (user_preference && strcmp(user_preference, PREFERENCE_NONE) == 0) {
-        fprintf(stderr, "%s %s %d -> null\n", user_preference, category, auto_fallback);
+    if (!co)
         return NULL;
-    } else if (user_preference && (a = find_application(user_preference, category, 0))) {
+
+    if (co->user_preference && strcmp(co->user_preference, PREFERENCE_NONE) == 0) {
+        return NULL;
+    } else if (co->user_preference && (a = find_application(co->user_preference, co->name, 0))) {
         return a;
-    } else if (!auto_fallback) {
+    } else if (!co->fallback) {
         return NULL;
-    } else if (user_preference) {
-        report_value(R_WARNING, "Preferred application not found - using fallback", user_preference, R_STRING);
+    } else if (co->user_preference) {
+        report_value(R_WARNING, "Preferred application not found - using fallback", co->user_preference, R_STRING);
     }
 
     /* preference was not found */
-    c = find_category(category);
+    c = find_category(co->name);
     if (!c) {
-        report_value(R_WARNING, "Unable to launch application - category empty", category, R_STRING);
+        report_value(R_WARNING, "Unable to launch application - category empty", co->name, R_STRING);
         return NULL;
     }
 

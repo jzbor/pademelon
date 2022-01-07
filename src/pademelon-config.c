@@ -6,62 +6,69 @@
 #include <string.h>
 
 #define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
-#define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
+#define PRINT_SECTION(S)            if (printf("\n[%s]\n", (S)) < 0) return -1;
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
+#define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
+#define PRINT_PROPERTY_CAT(C)       if (printf("%s = %s\n", (C)->name, (C)->user_preference) < 0) return -1;
+
+
+static struct category_option category_options[] = {
+    /* CONFIG_SECTION_DAEMONS */
+    { .name = "window-manager",     .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "compositor",         .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "hotkeys",            .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
+    { .name = "notifications",      .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "polkit",             .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "power",              .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "status",             .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
+    /* the "special ones" */
+    { .name = "applets",            .section = CONFIG_SECTION_DAEMONS, .optional = 1 },
+    { .name = "optional",           .section = CONFIG_SECTION_DAEMONS, .optional = 1 },
+
+    /* CONFIG_SECTION_APPLICATIONS */
+    { .name = "browser",            .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
+    { .name = "terminal",           .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
+    { .name = NULL },
+};
 
 
 void free_config(struct config *cfg) {
-    free(cfg->compositor_daemon);
-    free(cfg->hotkey_daemon);
-    free(cfg->notification_daemon);
-    free(cfg->polkit_daemon);
-    free(cfg->power_daemon);
-    free(cfg->status_daemon);
-    free(cfg->applets);
-    free(cfg->optional);
-
-    free(cfg->browser);
-    free(cfg->terminal);
+    int i;
+    for (i = 0; category_options[i].name; i++) {
+        free(category_options[i].user_preference);
+    }
 
     free(cfg->keyboard_settings);
     free(cfg);
 }
 
+struct category_option *get_category_option(const char *cname) {
+    int i;
+    for (i = 0; category_options[i].name; i++) {
+        if (strcmp(category_options[i].name, cname) == 0)
+            return &category_options[i];
+    }
+    return NULL;
+}
+
 int ini_config_callback(void* user, const char* section, const char* name, const char* value) {
     struct config *cfg = (struct config *) user;
+    struct category_option *co;
     char **write_to_str = NULL;
     int *write_to_int = NULL;
 
     report_value(R_DEBUG, "name", name, R_STRING);
 
     if (strcmp(section, CONFIG_SECTION_DAEMONS) == 0) {
-        if (strcmp(name, "window-manager") == 0) {
-            write_to_str = &cfg->window_manager;
-        } else if (strcmp(name, "compositor") == 0) {
-            write_to_str = &cfg->compositor_daemon;
-        } else if (strcmp(name, "hotkeys") == 0) {
-            write_to_str = &cfg->hotkey_daemon;
-        } else if (strcmp(name, "notifications") == 0) {
-            write_to_str = &cfg->notification_daemon;
-        } else if (strcmp(name, "polkit") == 0) {
-            write_to_str = &cfg->polkit_daemon;
-        } else if (strcmp(name, "power") == 0) {
-            write_to_str = &cfg->power_daemon;
-        } else if (strcmp(name, "status") == 0) {
-            write_to_str = &cfg->status_daemon;
-        } else if (strcmp(name, "applets") == 0) {
-            write_to_str = &cfg->applets;
-        } else if (strcmp(name, "optional") == 0) {
-            write_to_str = &cfg->optional;
-        }
-
-        if (write_to_str) {
-            *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
-            if (!*write_to_str)
+        co = get_category_option(name);
+        if (co && strcmp(CONFIG_SECTION_DAEMONS, co->section) == 0) {
+            co->user_preference = realloc(co->user_preference, sizeof(char) * (strlen(value) + 1));
+            if (!co->user_preference)
                 report(R_FATAL, "Unable to allocate memory for config");
-            strcpy(*write_to_str, value);
+            strcpy(co->user_preference, value);
             return 1;
         }
+
 
         /* boolean attributes */
         if (strcmp(name, "no-window-manager") == 0)
@@ -72,17 +79,12 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             return 1;
         }
     } else if (strcmp(section, CONFIG_SECTION_APPLICATIONS) == 0) {
-        if (strcmp(name, "browser") == 0) {
-            write_to_str = &cfg->browser;
-        } else if (strcmp(name, "terminal") == 0) {
-            write_to_str = &cfg->terminal;
-        }
-
-        if (write_to_str) {
-            *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
-            if (!*write_to_str)
+        co = get_category_option(name);
+        if (co && strcmp(CONFIG_SECTION_APPLICATIONS, co->section) == 0) {
+            co->user_preference = realloc(co->user_preference, sizeof(char) * (strlen(value) + 1));
+            if (!co->user_preference)
                 report(R_FATAL, "Unable to allocate memory for config");
-            strcpy(*write_to_str, value);
+            strcpy(co->user_preference, value);
             return 1;
         }
     } else if (strcmp(section, CONFIG_SECTION_INPUT) == 0) {
@@ -114,6 +116,21 @@ struct config *load_config(void) {
         return NULL;
     memcpy(cfg, &default_config, sizeof(struct config));
 
+    /* add category options */
+    /* CONFIG_SECTION_DAEMONS */
+    cfg->window_manager         = get_category_option("window-manager");
+    cfg->compositor_daemon      = get_category_option("compositor");
+    cfg->hotkey_daemon          = get_category_option("hotkeys");
+    cfg->notification_daemon    = get_category_option("notifications");
+    cfg->polkit_daemon          = get_category_option("polkit");
+    cfg->power_daemon           = get_category_option("power");
+    cfg->status_daemon          = get_category_option("status");
+    cfg->applets                = get_category_option("applets");
+    cfg->optional               = get_category_option("optional");
+    /* CONFIG_SECTION_APPLICATIONS */
+    cfg->browser                = get_category_option("browser");
+    cfg->terminal               = get_category_option("terminal");
+
     path = system_config_path("pademelon.conf");
     if (path) {
         status = ini_parse(path, &ini_config_callback, cfg);
@@ -133,23 +150,27 @@ struct config *load_config(void) {
 }
 
 int print_config(struct config *cfg) {
-    int status;
-    status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_DAEMONS, (void *)cfg);
-    if (status < 0)
-        return -1;
-
-    PRINT_PROPERTY_STR("window-manager", cfg->window_manager);
-    PRINT_PROPERTY_STR("compositor", cfg->compositor_daemon);
-    PRINT_PROPERTY_STR("hotkeys", cfg->hotkey_daemon);
-    PRINT_PROPERTY_STR("notifications", cfg->notification_daemon);
-    PRINT_PROPERTY_STR("polkit", cfg->polkit_daemon);
-    PRINT_PROPERTY_STR("power", cfg->power_daemon);
-    PRINT_PROPERTY_STR("status", cfg->status_daemon);
+    /* CONFIG_SECTION_DAEMONS */
+    PRINT_SECTION(CONFIG_SECTION_DAEMONS)
     PRINT_PROPERTY_BOOL("no-window-manager", cfg->no_window_manager);
+    PRINT_PROPERTY_CAT(cfg->window_manager);
+    PRINT_PROPERTY_CAT(cfg->compositor_daemon);
+    PRINT_PROPERTY_CAT(cfg->hotkey_daemon);
+    PRINT_PROPERTY_CAT(cfg->notification_daemon);
+    PRINT_PROPERTY_CAT(cfg->polkit_daemon);
+    PRINT_PROPERTY_CAT(cfg->power_daemon);
+    PRINT_PROPERTY_CAT(cfg->status_daemon);
+    PRINT_PROPERTY_CAT(cfg->power_daemon);
+    PRINT_PROPERTY_CAT(cfg->status_daemon);
+    PRINT_PROPERTY_CAT(cfg->applets);
+    PRINT_PROPERTY_CAT(cfg->optional);
 
-    status = printf("[%s]\t\t; %p\n", CONFIG_SECTION_INPUT, (void *)cfg);
-    if (status < 0)
-        return -1;
+    /* CONFIG_SECTION_APPLICATIONS */
+    PRINT_SECTION(CONFIG_SECTION_APPLICATIONS);
+    PRINT_PROPERTY_CAT(cfg->browser);
+    PRINT_PROPERTY_CAT(cfg->terminal);
+
+    PRINT_SECTION(CONFIG_SECTION_INPUT);
     PRINT_PROPERTY_STR("keyboard-layout", cfg->keyboard_settings);
 
     if (fflush(stdout) == EOF)

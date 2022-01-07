@@ -1,7 +1,7 @@
 CC 			= gcc
 EXTRAFLAGS 	= -g -Wshadow -Wformat=2 -Wconversion -Wextra
 CPPFLAGS	=
-CFLAGS 		= -std=c11 -pedantic -Wall -Werror -Wno-error=unused-function -Wno-error=unused-label \
+CFLAGS 		= -g -std=c11 -pedantic -Wall -Werror -Wno-error=unused-function -Wno-error=unused-label \
 		 	  -Wno-error=unused-value -Wno-error=unused-variable -D_XOPEN_SOURCE=700
 LDFLAGS		=
 PREFIX		= /usr/local

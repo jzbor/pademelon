@@ -1,6 +1,8 @@
 #ifndef H_DESKTOP_APPLICATION
 #define H_DESKTOP_APPLICATION
 
+#include "pademelon-config.h"
+
 #define APPLICATION_FILE_ENDING      ".dapp"
 
 struct dapplication {
@@ -33,7 +35,7 @@ void load_applications(void);
 void load_applications_from_dir(const char *dir);
 int print_application(struct dapplication *a);
 int print_applications(void);
-struct dapplication *select_application(const char *user_preference, const char *category, int auto_fallback);
+struct dapplication *select_application(struct category_option *co);
 int test_application(struct dapplication *application);
 
 
@@ -44,7 +46,6 @@ static const struct dapplication application_default = { /* do NOT define string
 static const struct dcategory category_default = { /* do NOT define strings here (invalid free) */
     0
 };
-
 
 /* The forbidden workaround: */
         /* /1* hacky workaround to avoid reallocing stuff in read-only segments *1/ */

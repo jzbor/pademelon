@@ -116,7 +116,7 @@ int tl_select_application(int argc, char *argv[]) {
     /*     return EXIT_FAILURE; */
     /* } */
 
-    a = select_application(NULL, argv[0], 1);
+    a = select_application(get_category_option(argv[0]));
     if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;

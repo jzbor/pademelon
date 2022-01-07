@@ -20,10 +20,12 @@
 
 static void load_keyboard(void);
 static void loop(void);
-void set_application(const char *preference, const char *category, const char *export_name, int auto_fallback);
+void set_application(struct category_option *co, const char *export_name);
 static void setup_signals(void);
 static void sigint_handler(int signal);
+void startup_application(struct category_option *co);
 static void startup_applications(void);
+void startup_optionals(struct category_option *co);
 
 static struct config *config;
 static int end = 0;
@@ -95,8 +97,8 @@ void loop(void) {
     }
 }
 
-void set_application(const char *preference, const char *category, const char *export_name, int auto_fallback) {
-    struct dapplication *a = select_application(preference, category, auto_fallback);
+void set_application(struct category_option *co, const char *export_name) {
+    struct dapplication *a = select_application(co);
     if (a && test_application(a))
         export_application(a, export_name);
 }
@@ -131,60 +133,57 @@ void sigint_handler(int signal) {
 	errno = errno_save;
 }
 
-void startup_application(const char *preference, const char *category, int auto_fallback) {
-    struct dapplication *a = select_application(preference, category, auto_fallback);
+void startup_application(struct category_option *co) {
+    struct dapplication *a = select_application(co);
     if (a && test_application(a))
         launch_application(a);
 }
 
 void startup_applications(void) {
-    struct dcategory *c;
-    struct dapplication *d;
-    char *s, *token;
-
     /* set default applications */
-    set_application(config->browser, "browser", "BROWSER", 1);
-    set_application(config->terminal, "terminal", "TERMINAL", 1);
+    set_application(config->browser, "BROWSER");
+    set_application(config->terminal, "TERMINAL");
 
     /* start window manager */
     if (!config->no_window_manager)
-        startup_application(config->window_manager, "window-manager", 1);
+        startup_application(config->window_manager);
 
     sleep(3);
 
     /* start daemons */
-    startup_application(config->compositor_daemon, "compositor", 1);
-    startup_application(config->hotkey_daemon, "hotkeys", 0);
-    startup_application(config->notification_daemon, "notifications", 1);
-    startup_application(config->polkit_daemon, "polkit", 1);
-    startup_application(config->power_daemon, "power", 1);
-    startup_application(config->status_daemon, "status", 0);
+    startup_application(config->compositor_daemon);
+    startup_application(config->hotkey_daemon);
+    startup_application(config->notification_daemon);
+    startup_application(config->polkit_daemon);
+    startup_application(config->power_daemon);
+    startup_application(config->status_daemon);
 
-    c = find_category("applets");
-    if (c && config->applets) {
-        s = strdup(config->applets);
-        if (!s)
-            report(R_FATAL, "Unable to allocate memory for applets");
-        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
-            d = find_application(token, "applets", 0);
-            if (d && test_application(d))
-                launch_application(d);
-        }
-        free(s);
-    }
+    /* start optional daemons */
+    startup_optionals(config->applets);
+    startup_optionals(config->optional);
+}
 
-    c = find_category("optional");
-    if (c && config->optional) {
-        s = strdup(config->optional);
+void startup_optionals(struct category_option *co) {
+    struct dcategory *c;
+    struct dapplication *d;
+    char *s, *token;
+
+    if (!co)
+        return;
+
+    c = find_category(co->name);
+    if (c && co->user_preference) {
+        s = strdup(config->applets->user_preference);
         if (!s)
             report(R_FATAL, "Unable to allocate memory for optional daemons");
         for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
-            d = find_application(token, "optional", 0);
+            d = find_application(token, co->name, 0);
             if (d && test_application(d))
                 launch_application(d);
         }
         free(s);
     }
+
 }
 
 int main(int argc, char *argv[]) {
@@ -205,7 +204,7 @@ int main(int argc, char *argv[]) {
             if (!argv[i + 1])
                 report(R_FATAL, "Not enough arguments for --window-manager");
             free(config->window_manager);
-            config->window_manager = strdup(argv[++i]);
+            config->window_manager->user_preference = strdup(argv[++i]);
             if (!config->window_manager)
                 report(R_FATAL, "Unable to allocate memory for settings");
         } else {
