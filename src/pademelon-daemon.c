@@ -3,7 +3,9 @@
 #include "pademelon-config.h"
 #include "signals.h"
 #include "tools.h"
+#ifdef X11
 #include "x11-utils.h"
+#endif /* X11 */
 #include <errno.h>
 #include <signal.h>
 #include <stddef.h>
@@ -73,12 +75,14 @@ void loop(void) {
             }
         }
 
+#ifdef X11
         if (x11_screen_has_changed()) {
             report(R_DEBUG, "Screen configuration has changed");
             wp_cycle_counter = SECS_TO_WALLPAPER_REFRESH / CYCLE_LENGTH;
             tl_save_display_conf(0, NULL);
             tl_load_wallpaper(0, NULL);
         }
+#endif /* X11 */
 
         /* supposed to workaround bugs but it does not seem to work */
         if (wp_cycle_counter == 0) {
@@ -185,7 +189,6 @@ void startup_applications(void) {
 
 int main(int argc, char *argv[]) {
     int i;
-    int print_only = 0;
 
     setup_signals();
 
@@ -217,16 +220,19 @@ int main(int argc, char *argv[]) {
     if (setenv("MOONWM_NO_STATUS", "1", 1) == -1)
         report(R_ERROR, "Unable to set env var");
 
-    if (!print_only) {
-        x11_init();
-        tl_load_wallpaper(0, NULL);
-        load_keyboard();
-        tl_load_display_conf(0, NULL);
-        startup_applications();
-        loop();
-        x11_deinit();
-    }
+#ifdef X11
+    x11_init();
+#endif /* X11 */
 
+    tl_load_wallpaper(0, NULL);
+    load_keyboard();
+    tl_load_display_conf(0, NULL);
+    startup_applications();
+    loop();
+
+#ifdef X11
+    x11_deinit();
+#endif /* X11 */
     plist_free();
     free_config(config);
     free_applications();

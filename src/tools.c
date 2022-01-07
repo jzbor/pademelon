@@ -1,7 +1,9 @@
 #include "common.h"
 #include "desktop-application.h"
 #include "tools.h"
+#ifdef X11
 #include "x11-utils.h"
+#endif /* X11 */
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
@@ -39,6 +41,14 @@ int tl_load_display_conf(int argc, char *argv[]) {
 
 
 int tl_load_wallpaper(int argc, char *argv[]) {
+#ifndef X11
+    fprintf(stderr, "load-wallpaper: missing dependency: x11\n");
+#endif /* X11 */
+#ifndef IMLIB2
+    fprintf(stderr, "load-wallpaper: missing dependency: imlib2\n");
+#endif /* IMLIB2 */
+#ifdef X11
+#ifdef IMLIB2
     char *path;
     path = wallpaper_path();
     /* @TODO check if path exists */
@@ -47,6 +57,8 @@ int tl_load_wallpaper(int argc, char *argv[]) {
             return EXIT_SUCCESS;
     }
     fprintf(stderr, "load-wallpaper: unable to set wallpaper to all screens\n");
+#endif /* IMLIB2 */
+#endif /* X11 */
     return EXIT_FAILURE;
 }
 
@@ -88,11 +100,20 @@ int tl_save_display_conf(int argc, char *argv[]) {
 }
 
 int tl_set_wallpaper(int argc, char *argv[]) {
+#ifndef X11
+    fprintf(stderr, "set-wallpaper: missing dependency: x11\n");
+#endif /* X11 */
+#ifndef IMLIB2
+    fprintf(stderr, "set-wallpaper: missing dependency: imlib2\n");
+#endif /* IMLIB2 */
+#ifdef X11
+#ifdef IMLIB2
     char buffer[BUFSIZE];
     int status;
     size_t n;
     char *path, *dirpath;
     FILE *source, *target;
+
 
     if (argc < 1) {
         fprintf(stderr, "set-wallpaper: not enough arguments\n");
@@ -152,6 +173,9 @@ int tl_set_wallpaper(int argc, char *argv[]) {
     fclose(target);
 
     return tl_load_wallpaper(0, NULL);
+#endif /* X11 */
+#endif /* IMLIB2 */
+    return EXIT_FAILURE;
 }
 
 int print_category(struct dcategory *c) {

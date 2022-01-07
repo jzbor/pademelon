@@ -1,5 +1,7 @@
 #include "tools.h"
+#ifdef X11
 #include "x11-utils.h"
+#endif /* X11 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +51,9 @@ int main(int argc, char *argv[]) {
         exit(status);
     }
 
+#ifdef X11
     x11_init();
+#endif /* X11 */
 
     for (i = 0; tools[i].name != NULL; i++) {
         if (strcmp(tools[i].name, argv[1]) == 0) {
@@ -62,7 +66,9 @@ int main(int argc, char *argv[]) {
     if (!tool_found)
         status = print_tools();
 
+#ifdef X11
     x11_deinit();
+#endif /* X11 */
 
     return status;
 }

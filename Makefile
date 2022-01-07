@@ -1,6 +1,14 @@
 include config.mk
 
 # VPATH		= src
+DAEMON_OBJ	= common.o desktop-application.o pademelon-daemon.o pademelon-config.o tools.o signals.o
+TOOLS_OBJ	= pademelon-tools.o tools.o common.o signals.o desktop-application.o
+
+ifdef X11_SUPPORT
+DAEMON_OBJ 	+= x11-utils.o
+TOOLS_OBJ 	+= x11-utils.o
+endif # X11_SUPPORT
+
 
 all: pademelon-daemon pademelon-tools
 
@@ -18,10 +26,10 @@ tools.o: src/tools.c src/common.h src/x11-utils.h src/desktop-application.h
 x11-utils.o: src/x11-utils.c src/x11-utils.h src/common.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-pademelon-daemon: common.o desktop-application.o pademelon-daemon.o pademelon-config.o x11-utils.o tools.o signals.o
+pademelon-daemon: $(DAEMON_OBJ)
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
-pademelon-tools: pademelon-tools.o tools.o common.o x11-utils.o signals.o desktop-application.o
+pademelon-tools: $(TOOLS_OBJ)
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:

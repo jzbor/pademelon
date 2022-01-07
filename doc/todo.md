@@ -12,6 +12,7 @@
 * ~~Check for freeing in ro segements (`free_ddaemon()`)~~
 * ~~Verify `no-window-manager` functionality~~
 * ~~introduce `none` value for application settings~~
+* ~~Make x11 and imlib2 support optional~~
 * use last *working* application instead of just last
 
 ## Before 0.2.0
@@ -23,7 +24,6 @@
 ## Before 1.0.0
 * Add "optional" daemon category for stuff like redshift
 * Add some more options for window-managers
-* Make x11 and imlib2 support optional
 * Support for selecting ARandr profiles
 * Config template loading
 * Implement SIGUSR1 to restart daemons

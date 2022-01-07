@@ -9,17 +9,25 @@ PREFIX		= /usr/local
 # dependency lists
 DEPENDENCIES	= inih
 
+# configure lib support (uncomment to disable)
+X11_SUPPORT		= true 		# requires xrandr
+IMLIB2_SUPPORT	= true
+
 # x11 support
-DEPENDENCIES	+= x11
+ifdef X11_SUPPORT
+DEPENDENCIES	+= x11 xrandr
 CFLAGS		+= -DX11
+endif
 
 # xrandr support
-DEPENDENCIES	+= xrandr
-CFLAGS		+= -DXRANDR
+ifdef XRANDR_SUPPORT
+endif
 
 # imlib2 support
+ifdef IMLIB2_SUPPORT
 DEPENDENCIES	+= imlib2
 CFLAGS		+= -DIMLIB2
+endif
 
 
 CFLAGS		+= `pkg-config --cflags $(DEPENDENCIES)`

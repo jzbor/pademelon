@@ -1,6 +1,10 @@
+#ifdef X11
+
 #include "common.h"
 #include "x11-utils.h"
+#ifdef IMLIB2
 #include <Imlib2.h>
+#endif /* IMLIB2 */
 #include <unistd.h>
 #include <stdio.h>
 #include <X11/Xatom.h>
@@ -91,6 +95,7 @@ int x11_screen_has_changed(void) {
 }
 
 int x11_wallpaper_all(const char *path) {
+#ifdef IMLIB2
     int dpy_width, dpy_height, new_width, new_height;
     int depth, color_map, screen, i, status;
     double screen_ratio, image_ratio;
@@ -173,6 +178,9 @@ int x11_wallpaper_all(const char *path) {
     imlib_free_image();
 
     return status;
+#else /* IMLIB2 */
+    return 0;
+#endif /* IMLIB2 */
 }
 
 void x11_deinit(void) {
@@ -180,3 +188,5 @@ void x11_deinit(void) {
         return;
     XCloseDisplay(display);
 }
+
+#endif /* X11 */
