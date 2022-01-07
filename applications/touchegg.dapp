@@ -2,6 +2,6 @@
 name = Touchegg
 description = Multitouch gesture recognizer
 category = optional
-command = /usr/bin/touchegg --daemon $TOUCHEGG_THRESHOLD & /usr/bin/touchegg --client
+command = sleep 2 && /usr/bin/touchegg --client
 test = test -x /usr/bin/touchegg
 default = False

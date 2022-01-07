@@ -1,0 +1,7 @@
+[touchegg-server]
+name = Touchegg (Server)
+description = Multitouch gesture recognizer
+category = optional
+command = pidof touchegg || rm -f ~/.config/touchegg/.touchegg.lock; /usr/bin/touchegg --daemon $TOUCHEGG_THRESHOLD
+test = test -x /usr/bin/touchegg
+default = False
