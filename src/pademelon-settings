@@ -353,7 +353,10 @@ class OptionalApplicationBox(ApplicationBox):
             if application.test():
                 self.inner_box.add(cb)
 
-        self.frame.add(self.inner_box)
+        if (len(self.inner_box.get_children()) == 0):
+            self.remove(self.frame)
+        else:
+            self.frame.add(self.inner_box)
 
     def on_button_toggled(self, button, name):
         global config
