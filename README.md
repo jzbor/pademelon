@@ -31,6 +31,7 @@ Still one important goal of this software is to provide a desktop that works out
 * **setxkbmap:** Set the keyboard map
 
 ### Libraries
-* **X11**
+* **XLib**
+* **Xrandr**
 * **Imlib2**
 * **libinih**
