@@ -99,6 +99,40 @@ int tl_save_display_conf(int argc, char *argv[]) {
         return EXIT_SUCCESS;
 }
 
+int tl_select_application(int argc, char *argv[]) {
+    struct dapplication *a;
+    struct config *cfg;
+    fprintf(stderr, "select-application: warning: user preferences and fallback ignores are not considered\n");
+
+    if (argc < 1) {
+        fprintf(stderr, "select-application: not enough arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    load_applications();
+    /* cfg = load_config(); */
+    /* if (!cfg) { */
+    /*     fprintf(stderr, "select-application: unable to load config\n"); */
+    /*     return EXIT_FAILURE; */
+    /* } */
+
+    a = select_application(NULL, argv[0], 1);
+    if (!a) {
+        fprintf(stderr, "select-application: no suitable application found\n");
+        return EXIT_FAILURE;
+    }
+
+    if (printf("%s\n", a->id_name) < 0) {
+        perror("select-application: unable to write to stdout");
+        return EXIT_FAILURE;
+    }
+    if (fflush(stderr) == EOF) {
+        perror("select-application: unable to flush stdout");
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
 int tl_set_wallpaper(int argc, char *argv[]) {
 #ifndef X11
     fprintf(stderr, "set-wallpaper: missing dependency: x11\n");

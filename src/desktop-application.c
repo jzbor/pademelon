@@ -353,11 +353,11 @@ struct dapplication *select_application(const char *user_preference, const char 
     struct dcategory *c;
     struct dapplication *a;
     /* @TODO use last *working* application instead of just last */
-    /* if (user_preference && strcmp(user_preference, PREFERENCE_NONE) == 0) { */
-    /*     fprintf(stderr, "%s %s %d -> null\n", user_preference, category, auto_fallback); */
-    /*     return NULL; */
 
-    if (user_preference && (a = find_application(user_preference, category, 0))) {
+    if (user_preference && strcmp(user_preference, PREFERENCE_NONE) == 0) {
+        fprintf(stderr, "%s %s %d -> null\n", user_preference, category, auto_fallback);
+        return NULL;
+    } else if (user_preference && (a = find_application(user_preference, category, 0))) {
         return a;
     } else if (!auto_fallback) {
         return NULL;
@@ -371,12 +371,26 @@ struct dapplication *select_application(const char *user_preference, const char 
         report_value(R_WARNING, "Unable to launch application - category empty", category, R_STRING);
         return NULL;
     }
-    for (a = c->applications; a->cnext; a = a->cnext) {
-        if (a->cdefault)
-            return a;
+
+    /* go through defaults */
+    for (a = c->applications; a; a = a->cnext) {
+        if (a->cdefault) {
+            if (test_application(a))
+                return a;
+            else
+                fprintf(stderr, "defaults: %s - not suitable\n", a->id_name);
+        }
     }
 
-    return a;
+    /* go through all applications */
+    for (a = c->applications; a; a = a->cnext) {
+        if (test_application(a))
+            return a;
+        else
+            fprintf(stderr, "other: %s - not suitable\n", a->id_name);
+    }
+
+    return NULL;
 }
 
 int test_application(struct dapplication *application) {
