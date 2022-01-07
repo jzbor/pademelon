@@ -206,6 +206,7 @@ class MainWindow(Gtk.Window):
 
         self.add(self.main_box)
         self.show_all()
+        self.set_position(Gtk.WindowPosition.CENTER)
         self.connect('destroy', Gtk.main_quit)
 
     def application_page(self):
