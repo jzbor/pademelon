@@ -78,6 +78,9 @@ int tl_print_applications(int argc, char *argv[]) {
     }
     if (fflush(stdout) == EOF)
         return EXIT_FAILURE;
+
+    free_applications();
+
     return EXIT_SUCCESS;
 }
 
@@ -129,6 +132,10 @@ int tl_select_application(int argc, char *argv[]) {
         perror("select-application: unable to flush stdout");
         return EXIT_FAILURE;
     }
+
+    free_applications();
+    free_config(cfg);
+
     return EXIT_SUCCESS;
 }
 
@@ -264,4 +271,6 @@ int tl_test_application(int argc, char *argv[]) {
         fflush(stdout);
         return EXIT_FAILURE;
     }
+
+    free_applications();
 }

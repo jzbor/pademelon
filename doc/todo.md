@@ -14,8 +14,8 @@
 * ~~introduce `none` value for application settings~~
 * ~~Make x11 and imlib2 support optional~~
 * ~~use last *working* application instead of just last~~
+* ~~`tl_application_select()` - load user preferences~~
 * add `free_applications()`
-* `tl_application_select()` - load user preferences
 
 ## Before 0.2.0
 * Implement basic external support for volume, backlight and ~~keyboard layout~~

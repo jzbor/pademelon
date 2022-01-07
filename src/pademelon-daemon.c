@@ -141,8 +141,6 @@ void startup_application(struct category_option *co) {
 }
 
 void startup_applications(void) {
-    struct dapplication *a;
-
     /* set default applications */
     set_application(config->browser, "BROWSER");
     set_application(config->terminal, "TERMINAL");
