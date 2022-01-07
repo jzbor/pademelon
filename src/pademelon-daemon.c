@@ -168,6 +168,19 @@ void startup_applications(void) {
         }
         free(s);
     }
+
+    c = find_category("optional");
+    if (c && config->optional) {
+        s = strdup(config->optional);
+        if (!s)
+            report(R_FATAL, "Unable to allocate memory for optional daemons");
+        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
+            d = find_application(token, "optional", 0);
+            if (d && test_application(d))
+                launch_application(d);
+        }
+        free(s);
+    }
 }
 
 int main(int argc, char *argv[]) {

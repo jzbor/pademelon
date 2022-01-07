@@ -27,6 +27,7 @@ pademelon-tools: pademelon-tools.o tools.o common.o x11-utils.o signals.o deskto
 clean:
 	rm -f common.o
 	rm -f desktop-application.o
+	rm -f desktop-daemon.o
 	rm -f pademelon-config.o
 	rm -f pademelon-daemon
 	rm -f pademelon-daemon.o

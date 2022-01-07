@@ -18,6 +18,7 @@ struct config {
     char *power_daemon;
     char *status_daemon;
     char *applets;
+    char *optional;
 
     /* CONFIG_SECTION_APPLICATIONS */
     char *browser;

@@ -18,6 +18,7 @@ void free_config(struct config *cfg) {
     free(cfg->power_daemon);
     free(cfg->status_daemon);
     free(cfg->applets);
+    free(cfg->optional);
 
     free(cfg->browser);
     free(cfg->terminal);
@@ -50,6 +51,8 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             write_to_str = &cfg->status_daemon;
         } else if (strcmp(name, "applets") == 0) {
             write_to_str = &cfg->applets;
+        } else if (strcmp(name, "optional") == 0) {
+            write_to_str = &cfg->optional;
         }
 
         if (write_to_str) {
