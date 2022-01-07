@@ -57,8 +57,6 @@ int ini_config_callback(void* user, const char* section, const char* name, const
     char **write_to_str = NULL;
     int *write_to_int = NULL;
 
-    report_value(R_DEBUG, "name", name, R_STRING);
-
     if (strcmp(section, CONFIG_SECTION_DAEMONS) == 0) {
         co = get_category_option(name);
         if (co && strcmp(CONFIG_SECTION_DAEMONS, co->section) == 0) {
