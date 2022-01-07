@@ -29,6 +29,7 @@ void startup_optionals(struct category_option *co);
 
 static struct config *config;
 static int end = 0;
+static int launch_setup = 0;
 
 
 void load_keyboard(void) {
@@ -140,13 +141,25 @@ void startup_application(struct category_option *co) {
 }
 
 void startup_applications(void) {
+    struct dapplication *a;
+
     /* set default applications */
     set_application(config->browser, "BROWSER");
     set_application(config->terminal, "TERMINAL");
 
     /* start window manager */
-    if (!config->no_window_manager)
+    if (launch_setup) {
+        /* a = find_application("pademelon-setup", NULL, 0); */
+        /* if (a && test_application(a)) */
+        /*     launch_application(a); */
+        /* else */
+        /*     return; */
+        char *args[] = { "/bin/sh", "-c", "pademelon-settings", NULL };
+        execvp(args[0], args);
+        exit(EXIT_FAILURE);
+    } else if (!config->no_window_manager) {
         startup_application(config->window_manager);
+    }
 
     sleep(3);
 
@@ -200,6 +213,8 @@ int main(int argc, char *argv[]) {
     for (i = 1; argv[i]; i++) {
         if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {
             config->no_window_manager = 1;
+        } else if (strcmp(argv[i], "--setup") == 0 || strcmp(argv[i], "-n") == 0) {
+            launch_setup = 1;
         } else if (strcmp(argv[i], "--window-manager") == 0 || strcmp(argv[i], "-w") == 0) {
             if (!argv[i + 1])
                 report(R_FATAL, "Not enough arguments for --window-manager");
@@ -208,7 +223,7 @@ int main(int argc, char *argv[]) {
             if (!config->window_manager)
                 report(R_FATAL, "Unable to allocate memory for settings");
         } else {
-            if (printf("Usage: %s [--no-window-manager] [--window-manager <window-manager>]\n", argv[0]) < 0)
+            if (printf("Usage: %s [--no-window-manager] [--window-manager <window-manager>] [--setup]\n", argv[0]) < 0)
                 report(R_FATAL, "Unable to write to stderr");
         }
     }

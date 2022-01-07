@@ -51,6 +51,7 @@ install: pademelon-daemon pademelon-tools
 	install -Dm755 src/pademelon-settings -t ${DESTDIR}${PREFIX}/bin
 	install -Dm755 pademelon-settings.desktop pademelon-wallpaper.desktop -t ${DESTDIR}${PREFIX}/share/applications
 	sed "s/PREFIX/$(shell echo "${PREFIX}" | sed 's/\//\\\//g')/g" < pademelon.desktop > ${DESTDIR}${PREFIX}/share/xsessions/pademelon.desktop
+	sed "s/PREFIX/$(shell echo "${PREFIX}" | sed 's/\//\\\//g')/g" < pademelon-setup.desktop > ${DESTDIR}${PREFIX}/share/xsessions/pademelon-setup.desktop
 
 install-applications:
 	install -Dm644 applications/* -t ${DESTDIR}${PREFIX}/share/pademelon/applications

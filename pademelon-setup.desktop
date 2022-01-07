@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Pademelon (Initial Setup)
+Comment=Pademelon desktop manager (launches straight into settings)
+Exec=PREFIX/bin/pademelon-daemon --setup
+TryExec=PREFIX/bin/pademelon-daemon
+Type=Application
+DesktopNames=Pademelon
