@@ -18,6 +18,7 @@ TEST_TIMEOUT = 1    # in seconds
 TITLE = 'Pademelon Settings'
 PREFERENCE_NONE = 'none'
 
+child_processes = []
 
 class ApplicationBox(Gtk.Box):
     def __init__(self, window, config_section, cname, clabel):
@@ -311,7 +312,7 @@ class MainWindow(Gtk.Window):
     def on_button_clicked(self, source):
         global config
         if source == self.arandr_button:
-            spawn("arandr", check_dependency=True, parent=self)
+            spawn(["arandr"], check_dependency=True, parent=self)
         elif source == self.wallpaper_button:
             dialog = Gtk.FileChooserDialog(title="Choose background image",
                     parent=self,
@@ -327,7 +328,7 @@ class MainWindow(Gtk.Window):
                 spawn(["pademelon-tools", "set-wallpaper", dialog.get_filename()], check_dependency=True, parent=self)
             dialog.destroy()
         elif source == self.lookandfeel_button:
-            spawn("lxappearance", check_dependency=True, parent=self)
+            spawn(["lxappearance"], check_dependency=True, parent=self)
         # action bar
         elif source == self.cancel_button:
             Gtk.main_quit()
@@ -457,14 +458,12 @@ def read_desktop_application_files(paths):
 
 
 def spawn(executable, check_dependency=False, parent=None):
+    global child_processes
     if check_dependency and not check_binary_dependency(executable, parent):
         return
-    if type(executable) == str:
-        temp = shutil.which(executable)
-    else:
-        temp = shutil.which(executable[0])
+    temp = shutil.which(executable[0])
     if temp != None:
-        subprocess.Popen(executable)
+        child_processes.append(subprocess.Popen(executable))
 
 
 def str_to_bool(s):
@@ -530,3 +529,5 @@ if __name__ == '__main__':
     config = read_config([system_config_path('pademelon.conf'), user_config_path('pademelon.conf')])
     MainWindow()
     Gtk.main()
+    for process in child_processes:
+        process.terminate()
