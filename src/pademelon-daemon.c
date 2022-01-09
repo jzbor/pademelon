@@ -21,15 +21,19 @@
 static void load_keyboard(void);
 static void loop(void);
 void set_application(struct category_option *co, const char *export_name);
+static void reload_config(void);
 static void setup_signals(void);
 static void sigint_handler(int signal);
-void startup_application(struct category_option *co);
-static void startup_applications(void);
-void startup_optionals(struct category_option *co);
+static void sigusr1_handler(int signal);
+static void sigusr2_handler(int signal);
+static void startup_daemons(int initial);
 
 static struct config *config;
 static int end = 0;
+static int ignore_wm_shutdown = 0;
 static int launch_setup = 0;
+static int restart_daemons = 0;
+static int restart_wm = 0;
 
 
 void load_keyboard(void) {
@@ -49,6 +53,16 @@ void loop(void) {
 
     while (!end) {
         while ((pl = plist_next_event(NULL)) != NULL) {
+            if (WIFEXITED(pl->status)|| WIFSIGNALED(pl->status)) {
+                if (((struct dapplication*) pl->content)
+                        && strcmp(((struct dapplication*) pl->content)->category->name, "window-manager") == 0) {
+                    if (ignore_wm_shutdown)
+                        ignore_wm_shutdown = 0;
+                    else
+                        end = 1;
+                }
+            }
+
             if (WIFEXITED(pl->status)) {
                 temp = WEXITSTATUS(pl->status);
                 report_value(R_DEBUG, "Process exited", &pl->pid, R_INTEGER);
@@ -70,29 +84,36 @@ void loop(void) {
                 report_value(R_DEBUG, "Process belongs to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
                 report_value(R_DEBUG, "Process continued", &pl->pid, R_INTEGER);
             }
-
-            if (WIFEXITED(pl->status)|| WIFSIGNALED(pl->status)) {
-                if (((struct dapplication*) pl->content) && strcmp(((struct dapplication*) pl->content)->category->name, "window-manager") == 0) {
-                    end = 1;
-                }
-            }
         }
 
 #ifdef X11
-        if (x11_screen_has_changed()) {
+        if (x11_screen_has_changed() || restart_wm) {
             report(R_DEBUG, "Screen configuration has changed");
             wp_cycle_counter = SECS_TO_WALLPAPER_REFRESH / CYCLE_LENGTH;
             tl_save_display_conf(0, NULL);
             tl_load_wallpaper(0, NULL);
         }
-#endif /* X11 */
-
         /* supposed to workaround bugs but it does not seem to work */
         if (wp_cycle_counter == 0) {
             tl_load_wallpaper(0, NULL);
         }
         if (wp_cycle_counter >= 0)
             wp_cycle_counter--;
+#endif /* X11 */
+
+        if (restart_daemons) {
+            restart_daemons = 0;
+            restart_wm = 0;
+            reload_config();
+            startup_daemons(0);
+        }
+        if (restart_wm) {
+            ignore_wm_shutdown = 1;
+            restart_wm = 0;
+            reload_config();
+            shutdown_daemon(config->window_manager);
+            startup_daemon(config->window_manager);
+        }
 
         sleep(CYCLE_LENGTH);
     }
@@ -104,9 +125,20 @@ void set_application(struct category_option *co, const char *export_name) {
         export_application(a, export_name);
 }
 
+void reload_config(void) {
+    struct config *new_config;
+    new_config = load_config();
+    if (new_config) {
+        free(config);
+        config = new_config;
+    }
+}
+
 static void setup_signals(void) {
 	int status;
 	struct sigaction sigaction_sigint_handler = { .sa_handler = &sigint_handler, .sa_flags = SA_NODEFER|SA_RESTART};
+	struct sigaction sigaction_sigusr1_handler = { .sa_handler = &sigusr1_handler, .sa_flags = SA_NODEFER|SA_RESTART};
+	struct sigaction sigaction_sigusr2_handler = { .sa_handler = &sigusr2_handler, .sa_flags = SA_NODEFER|SA_RESTART};
 
     /* handle SIGCHLD */
     if (!install_plist_sigchld_handler())
@@ -116,8 +148,23 @@ static void setup_signals(void) {
 	status = sigfillset(&sigaction_sigint_handler.sa_mask); // @TODO do I have to block anything here?
 	if (status == -1)
 		report(R_FATAL, "Unable to clear out a sigset");
-
 	status = sigaction(SIGINT, &sigaction_sigint_handler, NULL);
+	if (status == -1)
+		report(R_FATAL, "Unable to install signal handler");
+
+    /* handle SIGUSR1 */
+	status = sigfillset(&sigaction_sigusr1_handler.sa_mask); // @TODO do I have to block anything here?
+	if (status == -1)
+		report(R_FATAL, "Unable to clear out a sigset");
+	status = sigaction(SIGUSR1, &sigaction_sigusr1_handler, NULL);
+	if (status == -1)
+		report(R_FATAL, "Unable to install signal handler");
+
+    /* handle SIGUSR2 */
+	status = sigfillset(&sigaction_sigusr2_handler.sa_mask); // @TODO do I have to block anything here?
+	if (status == -1)
+		report(R_FATAL, "Unable to clear out a sigset");
+	status = sigaction(SIGUSR2, &sigaction_sigusr2_handler, NULL);
 	if (status == -1)
 		report(R_FATAL, "Unable to install signal handler");
 }
@@ -134,67 +181,77 @@ void sigint_handler(int signal) {
 	errno = errno_save;
 }
 
-void startup_application(struct category_option *co) {
-    struct dapplication *a = select_application(co);
-    if (a && test_application(a))
-        launch_application(a);
+void sigusr1_handler(int signal) {
+	int errno_save = errno;
+
+	if (signal != SIGUSR1) {
+		/* should not happen */
+		return;
+	}
+
+    restart_daemons = 1;
+	errno = errno_save;
 }
 
-void startup_applications(void) {
+void sigusr2_handler(int signal) {
+	int errno_save = errno;
+
+	if (signal != SIGUSR2) {
+		/* should not happen */
+		return;
+	}
+
+    restart_wm = 1;
+	errno = errno_save;
+}
+
+void startup_daemons(int initial) {
     /* set default applications */
     set_application(config->browser, "BROWSER");
     set_application(config->terminal, "TERMINAL");
 
-    /* start window manager */
-    if (launch_setup) {
-        /* a = find_application("pademelon-setup", NULL, 0); */
-        /* if (a && test_application(a)) */
-        /*     launch_application(a); */
-        /* else */
-        /*     return; */
-        char *args[] = { "/bin/sh", "-c", "pademelon-settings", NULL };
-        execvp(args[0], args);
-        exit(EXIT_FAILURE);
-    } else if (!config->no_window_manager) {
-        startup_application(config->window_manager);
+    if (initial) {
+        /* start window manager */
+        if (launch_setup) {
+            /* a = find_application("pademelon-setup", NULL, 0); */
+            /* if (a && test_application(a)) */
+            /*     launch_application(a); */
+            /* else */
+            /*     return; */
+            char *args[] = { "/bin/sh", "-c", "pademelon-settings", NULL };
+            execvp(args[0], args);
+            exit(EXIT_FAILURE);
+        } else if (!config->no_window_manager) {
+            startup_daemon(config->window_manager);
+            sleep(3);
+        }
     }
 
-    sleep(3);
+    if (!initial) {
+        /* shutdown daemons */
+        shutdown_daemon(config->compositor_daemon);
+        shutdown_daemon(config->hotkey_daemon);
+        shutdown_daemon(config->notification_daemon);
+        shutdown_daemon(config->polkit_daemon);
+        shutdown_daemon(config->power_daemon);
+        shutdown_daemon(config->status_daemon);
+
+        /* shutdown optional daemons */
+        shutdown_optionals(config->applets);
+        shutdown_optionals(config->optional);
+    }
 
     /* start daemons */
-    startup_application(config->compositor_daemon);
-    startup_application(config->hotkey_daemon);
-    startup_application(config->notification_daemon);
-    startup_application(config->polkit_daemon);
-    startup_application(config->power_daemon);
-    startup_application(config->status_daemon);
+    startup_daemon(config->compositor_daemon);
+    startup_daemon(config->hotkey_daemon);
+    startup_daemon(config->notification_daemon);
+    startup_daemon(config->polkit_daemon);
+    startup_daemon(config->power_daemon);
+    startup_daemon(config->status_daemon);
 
     /* start optional daemons */
     startup_optionals(config->applets);
     startup_optionals(config->optional);
-}
-
-void startup_optionals(struct category_option *co) {
-    struct dcategory *c;
-    struct dapplication *d;
-    char *s, *token;
-
-    if (!co)
-        return;
-
-    c = find_category(co->name);
-    if (c && co->user_preference) {
-        s = strdup(config->applets->user_preference);
-        if (!s)
-            report(R_FATAL, "Unable to allocate memory for optional daemons");
-        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
-            d = find_application(token, co->name, 0);
-            if (d && test_application(d))
-                launch_application(d);
-        }
-        free(s);
-    }
-
 }
 
 int main(int argc, char *argv[]) {
@@ -239,7 +296,7 @@ int main(int argc, char *argv[]) {
     tl_load_wallpaper(0, NULL);
     load_keyboard();
     tl_load_display_conf(0, NULL);
-    startup_applications();
+    startup_daemons(1);
     loop();
 
 #ifdef X11

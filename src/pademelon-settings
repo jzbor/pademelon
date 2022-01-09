@@ -7,16 +7,18 @@ from gi.repository import Gtk
 import os
 import os.path
 import shutil
+import signal
 import subprocess
 
-CONFIG_SECTION_DAEMONS = 'daemons'
-CONFIG_SECTION_APPLICATIONS = 'applications'
 CONFIG_SECTION_APPEARANCE = 'appearance'
+CONFIG_SECTION_APPLICATIONS = 'applications'
+CONFIG_SECTION_DAEMONS = 'daemons'
 CONFIG_SECTION_INPUT = 'input'
 DIRNAME = 'pademelon'
+PADEMELON_DAEMON_BINARY = "pademelon-daemon"
+PREFERENCE_NONE = 'none'
 TEST_TIMEOUT = 1    # in seconds
 TITLE = 'Pademelon Settings'
-PREFERENCE_NONE = 'none'
 
 child_processes = []
 
@@ -184,6 +186,10 @@ class MainWindow(Gtk.Window):
         self.main_box.set_orientation(Gtk.Orientation.VERTICAL)
         self.notebook = Gtk.Notebook()
         self.action_bar = Gtk.ActionBar()
+        self.restart_wm_button = Gtk.Button(label="Restart WM")
+        self.restart_wm_button.connect('clicked', self.on_button_clicked)
+        self.restart_daemons_button = Gtk.Button(label="Restart Daemons")
+        self.restart_daemons_button.connect('clicked', self.on_button_clicked)
         self.cancel_button = Gtk.Button(label="Cancel")
         self.cancel_button.connect('clicked', self.on_button_clicked)
         self.save_button = Gtk.Button(label="Save")
@@ -201,6 +207,9 @@ class MainWindow(Gtk.Window):
         # compose ui
         self.main_box.pack_start(self.notebook, True, True, 0)
         self.main_box.pack_end(self.action_bar, False, False, 0)
+        if (getpid(PADEMELON_DAEMON_BINARY) > 0):
+            self.action_bar.pack_start(self.restart_wm_button)
+            self.action_bar.pack_start(self.restart_daemons_button)
         self.action_bar.pack_end(self.quit_button)
         self.action_bar.pack_end(self.save_button)
         self.action_bar.pack_end(self.cancel_button)
@@ -330,6 +339,14 @@ class MainWindow(Gtk.Window):
         elif source == self.lookandfeel_button:
             spawn(["lxappearance"], check_dependency=True, parent=self)
         # action bar
+        elif source == self.restart_wm_button:
+            pid = getpid(PADEMELON_DAEMON_BINARY)
+            if (pid > 0):
+                os.kill(pid, signal.SIGUSR2)
+        elif source == self.restart_daemons_button:
+            pid = getpid(PADEMELON_DAEMON_BINARY)
+            if (pid > 0):
+                os.kill(pid, signal.SIGUSR1)
         elif source == self.cancel_button:
             Gtk.main_quit()
         elif source == self.save_button:
@@ -408,6 +425,21 @@ def check_binary_dependency(executable, parent=None):
         return False
     else:
         return True
+
+def getpid(pname):
+    for dirname in os.listdir('/proc'):
+        if dirname == 'curproc':
+            continue
+
+        try:
+            with open('/proc/{}/cmdline'.format(dirname), mode='rb') as fd:
+                content = fd.read().decode().split('\x00')
+        except Exception:
+            continue
+
+        if pname in content[0]:
+            return int(dirname)
+    return -1
 
 
 def read_config(paths):

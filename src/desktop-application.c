@@ -395,6 +395,84 @@ struct dapplication *select_application(struct category_option *co) {
     return NULL;
 }
 
+void shutdown_daemon(struct category_option *co) {
+    struct plist *pl;
+    pl = plist_search(NULL, co->name);
+    if (!pl)
+        return;
+
+    if (kill(pl->pid, SIGTERM) == -1)
+        return;
+    plist_wait(pl, 1000);
+    if (!pl->status_changed) {
+        if (kill(pl->pid, SIGKILL) == -1)
+            return;
+    }
+}
+
+void shutdown_optionals(struct category_option *co) {
+    struct plist *pl;
+    struct dcategory *c;
+    char *s, *token;
+
+    if (!co)
+        return;
+
+    c = find_category(co->name);
+    if (c && co->user_preference) {
+        s = strdup(co->user_preference);
+        if (!s)
+            report(R_FATAL, "Unable to allocate memory for optional daemons");
+        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
+            pl = plist_search(token, NULL);
+            if (!pl)
+                return;
+
+            if (kill(pl->pid, SIGTERM) == -1)
+                return;
+            plist_wait(pl, 1000);
+            if (!pl->status_changed) {
+                if (kill(pl->pid, SIGKILL) == -1)
+                    return;
+            }
+        }
+        free(s);
+    }
+}
+
+void startup_daemon(struct category_option *co) {
+    struct dapplication *a;
+
+    if (!co)
+        return;
+
+    a = select_application(co);
+    if (a && test_application(a))
+        launch_application(a);
+}
+
+void startup_optionals(struct category_option *co) {
+    struct dcategory *c;
+    struct dapplication *d;
+    char *s, *token;
+
+    if (!co)
+        return;
+
+    c = find_category(co->name);
+    if (c && co->user_preference) {
+        s = strdup(co->user_preference);
+        if (!s)
+            report(R_FATAL, "Unable to allocate memory for optional daemons");
+        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
+            d = find_application(token, co->name, 0);
+            if (d && test_application(d))
+                launch_application(d);
+        }
+        free(s);
+    }
+}
+
 int test_application(struct dapplication *application) {
     int status, wstatus;
     pid_t pid;

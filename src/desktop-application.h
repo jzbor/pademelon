@@ -36,6 +36,10 @@ void load_applications_from_dir(const char *dir);
 int print_application(struct dapplication *a);
 int print_applications(void);
 struct dapplication *select_application(struct category_option *co);
+void shutdown_daemon(struct category_option *co);
+void shutdown_optionals(struct category_option *co);
+void startup_daemon(struct category_option *co);
+void startup_optionals(struct category_option *co);
 int test_application(struct dapplication *application);
 
 

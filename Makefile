@@ -20,7 +20,7 @@ desktop-application.o: src/desktop-application.c src/desktop-application.h src/c
 pademelon-daemon.o: src/pademelon-daemon.c src/pademelon-config.h src/common.h src/tools.h src/signals.h
 pademelon-config.o: src/pademelon-config.c src/common.h
 pademelon-tools.o: src/pademelon-tools.c src/tools.h src/x11-utils.h
-signals.o: src/signals.c src/signals.h src/common.h
+signals.o: src/signals.c src/signals.h src/common.h src/desktop-application.h
 tools.o: src/tools.c src/common.h src/x11-utils.h src/desktop-application.h
 
 x11-utils.o: src/x11-utils.c src/x11-utils.h src/common.h

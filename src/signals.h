@@ -19,7 +19,8 @@ void plist_free(void);
 struct plist *plist_get(pid_t pid);
 struct plist *plist_next_event(struct plist *from);
 void plist_remove(pid_t pid);
-/* struct plist *plist_search(char *id_name, char *category); */
+struct plist *plist_search(char *id_name, char *category);
+void plist_wait(struct plist *pl, long timeout_milli);
 int restore_sigchld_handler(void);
 int unblock_signal(int signal);
 

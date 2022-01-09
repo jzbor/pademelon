@@ -1,11 +1,13 @@
 #include "common.h"
 #include "signals.h"
+#include "desktop-application.h"
 #include <errno.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 
 static void plist_sigchld_handler(int signal);
 
@@ -145,24 +147,24 @@ void plist_remove(pid_t pid) {
     free(pl_delete);
 }
 
-/* struct plist *plist_search(char *id_name, char *category) { */
-/*     struct plist *pl; */
+struct plist *plist_search(char *id_name, char *category) {
+    struct plist *pl;
 
-/*     block_signal(SIGCHLD); */
+    block_signal(SIGCHLD);
 
-/*     /1* go through list and check for matching values *1/ */
-/*     for (pl = plist_head; pl; pl = pl->next) { */
-/*         /1* @TODO check for access on NULL pointers *1/ */
-/*         if ((id_name && strcmp(id_name, ((struct ddaemon*) pl->content)->id_name) == 0) */
-/*                 || (category && strcmp(category, ((struct ddaemon*) pl->content)->category->name) == 0)) { */
-/*             unblock_signal(SIGCHLD); */
-/*             return pl; */
-/*         } */
-/*     } */
+    /* go through list and check for matching values */
+    for (pl = plist_head; pl; pl = pl->next) {
+        /* @TODO check for access on NULL pointers */
+        if ((id_name && strcmp(id_name, ((struct dapplication*) pl->content)->id_name) == 0)
+                || (category && strcmp(category, ((struct dapplication*) pl->content)->category->name) == 0)) {
+            unblock_signal(SIGCHLD);
+            return pl;
+        }
+    }
 
-/*     unblock_signal(SIGCHLD); */
-/*     return NULL; */
-/* } */
+    unblock_signal(SIGCHLD);
+    return NULL;
+}
 
 void plist_sigchld_handler(int signal) {
 	pid_t pid;
@@ -184,6 +186,17 @@ void plist_sigchld_handler(int signal) {
 	}
 
 	errno = errno_save;
+}
+
+void plist_wait(struct plist *pl, long timeout_milli) {
+    int status;
+    struct timespec ts = { .tv_sec = 0, .tv_nsec = timeout_milli + 1000 };
+    while (!pl->status_changed) {
+        status = nanosleep(&ts, &ts);
+        if (status == 0 /* time elapsed */
+                || (status == -1 && errno != EINTR)) /* real error */
+            break;
+    }
 }
 
 int restore_sigchld_handler(void) {
