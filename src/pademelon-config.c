@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
 #define PRINT_SECTION(S)            if (printf("\n[%s]\n", (S)) < 0) return -1;
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
 #define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
 #define PRINT_PROPERTY_CAT(C)       if (printf("%s = %s\n", (C)->name, (C)->user_preference) < 0) return -1;
 
+static inline int IS_TRUE(const char *s)       { return strcmp(s, "True") == 0 || strcmp(s, "true") == 0 || strcmp(s, "1") == 0; }
 
 static struct category_option category_options[] = {
     /* CONFIG_SECTION_DAEMONS */

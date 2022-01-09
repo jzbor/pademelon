@@ -1,6 +1,8 @@
 #ifndef H_COMMON
 #define H_COMMON
 
+#include <string.h>
+
 #define R_DEBUG                 0
 #define R_INFO                  1
 #define R_WARNING               2
@@ -13,9 +15,9 @@
 #define R_STRING                2
 #define R_INTEGER               3
 
-#define STR_STARTS_WITH(S, PRE) (strncmp((PRE), (S), strlen((PRE))) == 0)
-#define STR_ENDS_WITH(S, SUF) (strlen((S)) >= strlen((SUF)) \
-        && strncmp((SUF), &(S)[strlen((S)) - strlen((SUF))], strlen((SUF))) == 0)
+static inline int STR_STARTS_WITH(const char *s, const char *pre) { return strncmp(pre, s, strlen(pre)) == 0; }
+static inline int STR_ENDS_WITH(const char *s, const char *suf) { return strlen(s) >= strlen(suf)
+        && strncmp(suf, &s[strlen(s) - strlen(suf)], strlen(suf)) == 0; }
 
 /* returns -1 on error, return code else */
 int execute(const char *command);

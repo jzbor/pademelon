@@ -12,11 +12,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define IS_TRUE(S)                  (strcmp((S), "True") == 0 || strcmp((S), "true") == 0 || strcmp((S), "1") == 0)
 #define PRINT_PROPERTY_STR(K, V)    if (printf("%s = %s\n", (K), (V)) < 0) return -1;
 #define PRINT_PROPERTY_BOOL(K, V)   if (printf("%s = %s\n", (K), (V) ? "True" : "False") < 0) return -1;
 #define TEST_TIMEOUT                5   /* in seconds */
 #define PREFERENCE_NONE             "none"
+
+static inline int IS_TRUE(const char *s)       { return strcmp(s, "True") == 0 || strcmp(s, "true") == 0 || strcmp(s, "1") == 0; }
 
 struct dcategory *categories = NULL;
 struct dapplication *applications = NULL;

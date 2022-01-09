@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX(A, B)               ((A) > (B) ? (A) : (B))
-#define MIN(A, B)               ((A) < (B) ? (A) : (B))
-#define BETWEEN(X, A, B)        ((A) <= (X) && (X) <= (B))
+static inline int MAX_INT(int a, int b) { return a > b ? a : b; }
+static inline int MIN_INT(int a, int b) { return a < b ? a : b; }
+static inline int BET_INT(int x, int a, int b) { return a <= x && x <= b; }
 
 const char *name = "pademelon";
 const char *sysconf = "/etc/%s/%s";
