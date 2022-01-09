@@ -1,0 +1,7 @@
+[fluxbox]
+name = Fluxbox
+description = A lightweight and highly-configurable window manager
+category = window-manager
+command = /usr/bin/fluxbox
+test = test -x /usr/bin/fluxbox
+default = False
