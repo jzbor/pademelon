@@ -1,0 +1,7 @@
+[cairo-dock]
+name = Cairo Dock
+description = Light eye-candy fully themable animated dock
+category = dock
+command = /usr/bin/cairo-dock
+test = test -x /usr/bin/cairo-dock
+default = False

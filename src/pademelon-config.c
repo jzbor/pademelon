@@ -16,6 +16,7 @@ static struct category_option category_options[] = {
     /* CONFIG_SECTION_DAEMONS */
     { .name = "window-manager",     .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
     { .name = "compositor",         .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "dock",               .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
     { .name = "hotkeys",            .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
     { .name = "notifications",      .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
     { .name = "polkit",             .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
@@ -118,6 +119,7 @@ struct config *load_config(void) {
     /* CONFIG_SECTION_DAEMONS */
     cfg->window_manager         = get_category_option("window-manager");
     cfg->compositor_daemon      = get_category_option("compositor");
+    cfg->dock_daemon            = get_category_option("dock");
     cfg->hotkey_daemon          = get_category_option("hotkeys");
     cfg->notification_daemon    = get_category_option("notifications");
     cfg->polkit_daemon          = get_category_option("polkit");

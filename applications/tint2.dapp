@@ -1,0 +1,7 @@
+[tint2]
+name = Tint2
+description = Basic, good-looking task manager for WMs
+category = dock
+command = /usr/bin/tint2
+test = test -x /usr/bin/tint2
+default = False

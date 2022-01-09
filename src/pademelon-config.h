@@ -12,6 +12,7 @@ struct config {
     int no_window_manager;
     struct category_option *window_manager;
     struct category_option *compositor_daemon;
+    struct category_option *dock_daemon;
     struct category_option *hotkey_daemon;
     struct category_option *notification_daemon;
     struct category_option *polkit_daemon;

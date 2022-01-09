@@ -230,6 +230,7 @@ void startup_daemons(int initial) {
     if (!initial) {
         /* shutdown daemons */
         shutdown_daemon(config->compositor_daemon);
+        shutdown_daemon(config->dock_daemon);
         shutdown_daemon(config->hotkey_daemon);
         shutdown_daemon(config->notification_daemon);
         shutdown_daemon(config->polkit_daemon);
@@ -243,6 +244,7 @@ void startup_daemons(int initial) {
 
     /* start daemons */
     startup_daemon(config->compositor_daemon);
+    startup_daemon(config->dock_daemon);
     startup_daemon(config->hotkey_daemon);
     startup_daemon(config->notification_daemon);
     startup_daemon(config->polkit_daemon);

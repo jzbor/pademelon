@@ -249,6 +249,7 @@ class MainWindow(Gtk.Window):
         # create daemon frames
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'window-manager', 'Window Manager'))
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'compositor', 'Compositor'))
+        self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'dock', 'Dock'))
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'hotkeys', 'Hotkey Daemon'))
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'notifications', 'Notification Daemon'))
         self.daemon_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_DAEMONS, 'polkit', 'Polkit'))
