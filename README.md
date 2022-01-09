@@ -28,6 +28,7 @@ Still one important goal of this software is to provide a desktop that works out
 
 ### Dependencies on external executables
 * **ARandR:** Configure display layouts
+* **LXAppearance**: Customize Look and Feel
 * **setxkbmap:** Set the keyboard map
 
 ### Libraries
