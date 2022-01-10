@@ -379,8 +379,6 @@ struct dapplication *select_application(struct category_option *co) {
         if (a->cdefault) {
             if (test_application(a))
                 return a;
-            else
-                fprintf(stderr, "defaults: %s - not suitable\n", a->id_name);
         }
     }
 
@@ -388,8 +386,6 @@ struct dapplication *select_application(struct category_option *co) {
     for (a = c->applications; a; a = a->cnext) {
         if (test_application(a))
             return a;
-        else
-            fprintf(stderr, "other: %s - not suitable\n", a->id_name);
     }
 
     return NULL;

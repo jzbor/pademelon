@@ -18,6 +18,32 @@
 static char* wallpaper_path(void);
 static int print_category(struct dcategory *c);
 
+int tl_launch_application(int argc, char *argv[]) {
+    struct dapplication *a;
+    struct config *cfg;
+
+    if (argc < 1) {
+        fprintf(stderr, "select-application: not enough arguments\n");
+        return EXIT_FAILURE;
+    }
+
+    load_applications();
+    cfg = load_config();
+    if (!cfg) {
+        fprintf(stderr, "select-application: unable to load config\n");
+        return EXIT_FAILURE;
+    }
+
+    a = select_application(get_category_option(argv[0]));
+    if (!a) {
+        fprintf(stderr, "select-application: no suitable application found\n");
+        return EXIT_FAILURE;
+    }
+
+    launch_application(a);
+    return EXIT_SUCCESS;
+}
+
 int tl_load_display_conf(int argc, char *argv[]) {
     int status;
     char *path;
