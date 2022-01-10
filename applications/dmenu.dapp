@@ -1,0 +1,7 @@
+[dmenu]
+name = dmenu
+description = Generic menu for X
+category = dmenu
+command = /usr/bin/dmenu_run
+test = test -x /usr/bin/dmenu_run
+default = False
