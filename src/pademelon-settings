@@ -184,6 +184,7 @@ class MainWindow(Gtk.Window):
         # create ui elements
         self.main_box = Gtk.Box()
         self.main_box.set_orientation(Gtk.Orientation.VERTICAL)
+        self.scrolled_window = Gtk.ScrolledWindow()
         self.notebook = Gtk.Notebook()
         self.action_bar = Gtk.ActionBar()
         self.restart_wm_button = Gtk.Button(label="Restart WM")
@@ -214,7 +215,8 @@ class MainWindow(Gtk.Window):
         self.action_bar.pack_end(self.save_button)
         self.action_bar.pack_end(self.cancel_button)
 
-        self.add(self.main_box)
+        self.scrolled_window.add(self.main_box)
+        self.add(self.scrolled_window)
         self.show_all()
         self.set_position(Gtk.WindowPosition.CENTER)
         self.connect('destroy', Gtk.main_quit)
