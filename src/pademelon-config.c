@@ -28,6 +28,7 @@ static struct category_option category_options[] = {
 
     /* CONFIG_SECTION_APPLICATIONS */
     { .name = "browser",            .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
+    { .name = "dmenu",              .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
     { .name = "terminal",           .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
     { .name = NULL },
 };

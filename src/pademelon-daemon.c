@@ -208,6 +208,7 @@ void sigusr2_handler(int signal) {
 void startup_daemons(int initial) {
     /* set default applications */
     set_application(config->browser, "BROWSER");
+    set_application(config->dmenu, "DMENUCMD");
     set_application(config->terminal, "TERMINAL");
 
     if (initial) {
