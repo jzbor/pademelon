@@ -89,21 +89,18 @@ class ApplicationSelectionBox(ApplicationBox):
         if selected == None:
             return
         if selected.settings == '':
-            dialog = Gtk.MessageDialog(
-                    transient_for = self.window,
-                    message_type = Gtk.MessageType.ERROR,
-                    buttons = Gtk.ButtonsType.OK,
-                    text = 'No settings file or application found for "{}".'.format(selected.display_name))
-            dialog.set_title('No Settings Available')
-            dialog.show()
-            dialog.run()
-            dialog.destroy()
+            Dialog.no_settings_available(selected.display_name, self.window)
             return
         if selected.settings.startswith("config://"):
             path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+            if not os.path.exists(os.path.dirname(path)) and Dialog.create_parent_dir(self.window):   # give user chance to create parent dir
+                os.makedirs(os.path.dirname(path))
             spawn(['xdg-open', os.path.join(path, selected.settings[len('config://'):])], check_dependency=True, parent=self.window)
         elif selected.settings.startswith('file://'):
-            spawn(['xdg-open', selected.settings[len('file://'):]], check_dependency=True, parent=self.window)
+            path = selected.settings[len('file://'):]
+            if not os.path.exists(os.path.dirname(path)) and Dialog.create_parent_dir(self.window):   # give user chance to create parent dir
+                os.makedirs(os.path.dirname(path))
+            spawn(['xdg-open', path], check_dependency=True, parent=self.window)
         else:
             spawn(['/bin/sh', '-c', selected.settings], check_dependency=True, parent=self.window)
 
@@ -121,16 +118,7 @@ class ApplicationSelectionBox(ApplicationBox):
             self.settings_button.set_relief(Gtk.ReliefStyle.NONE)
         else:
             if not selected.test():
-                dialog = Gtk.MessageDialog(
-                        transient_for = self.window,
-                        message_type = Gtk.MessageType.WARNING,
-                        buttons = Gtk.ButtonsType.OK,
-                        text = 'You selected a program, that is not installed or not available: "{}". '.format(selected.display_name)
-                               + 'You might want want to either install that program or choose another one.')
-                dialog.set_title('Program not installed')
-                dialog.show()
-                dialog.run()
-                dialog.destroy()
+                Dialog.program_not_available(self.window)
             if self.config_section not in config:
                 config[self.config_section] = {}
             config[self.config_section][self.cname] = selected.id_name
@@ -146,7 +134,6 @@ class ApplicationSelectionBox(ApplicationBox):
             return None
         else:
             return self.applications[selection]
-
 
 
 class DesktopApplication():
@@ -178,6 +165,74 @@ class DesktopApplication():
             self.run_test()
         return self.test_result
 
+class Dialog():
+    @staticmethod
+    def create_parent_dir(parent=None):
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.QUESTION,
+                buttons = Gtk.ButtonsType.YES_NO,
+                text = 'Parent directory for config file does not exist. Create it now?')
+        dialog.set_title('Config Directory')
+        dialog.show()
+        response = dialog.run()
+        if response == Gtk.ResponseType.YES:
+            dialog.destroy()
+            return True
+        else:
+            dialog.destroy()
+            return False
+
+    @staticmethod
+    def missing_dependency(name, parent=None):
+        msg = "You are missing the binary dependency: {}\nPlease use your package manager to install it manually."
+        msg = msg.format(name)
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.ERROR,
+                buttons = Gtk.ButtonsType.OK,
+                text = msg)
+        dialog.set_title("Missing Binary Dependency")
+        dialog.show()
+        dialog.run()
+        dialog.destroy()
+
+    @staticmethod
+    def no_parent_dir(path, parent=None):
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.ERROR,
+                buttons = Gtk.ButtonsType.OK,
+                text = 'Unable to write config to "{}". Parent directory does not exist.'.format(path))
+        dialog.set_title('Unable to Write Config')
+        dialog.show()
+        dialog.run()
+        dialog.destroy()
+
+    @staticmethod
+    def no_settings_available(name, parent=None):
+            dialog = Gtk.MessageDialog(
+                    transient_for = parent,
+                    message_type = Gtk.MessageType.ERROR,
+                    buttons = Gtk.ButtonsType.OK,
+                    text = 'No settings file or application found for "{}".'.format(name))
+            dialog.set_title('No Settings Available')
+            dialog.show()
+            dialog.run()
+            dialog.destroy()
+
+    @staticmethod
+    def program_not_available(name, parent=None):
+        dialog = Gtk.MessageDialog(
+                transient_for = parent,
+                message_type = Gtk.MessageType.WARNING,
+                buttons = Gtk.ButtonsType.OK,
+                text = 'You selected a program, that is not installed or not available: "{}". '.format(selected.display_name)
+                + 'You might want want to either install that program or choose another one.')
+        dialog.set_title('Program not installed')
+        dialog.show()
+        dialog.run()
+        dialog.destroy()
 
 class MainWindow(Gtk.Window):
     def __init__(self):
@@ -420,17 +475,7 @@ def check_binary_dependency(executable, parent=None):
     else:
         temp = shutil.which(executable[0])
     if temp == None:
-        msg = "You are missing the binary dependency: {}\nPlease use your package manager to install it manually."
-        msg = msg.format(executable)
-        dialog = Gtk.MessageDialog(
-                transient_for = parent,
-                message_type = Gtk.MessageType.ERROR,
-                buttons = Gtk.ButtonsType.OK,
-                text = msg)
-        dialog.set_title("Missing Binary Dependency")
-        dialog.show()
-        dialog.run()
-        dialog.destroy()
+        Dialog.missing_dependency(executable, parent)
         return False
     else:
         return True
@@ -534,28 +579,10 @@ def user_data_path(file=''):
 
 
 def write_config(config, path, parent=None):
-    if not os.path.exists(os.path.dirname(path)):   # give user chance to create parent dir
-        dialog = Gtk.MessageDialog(
-                transient_for = parent,
-                message_type = Gtk.MessageType.QUESTION,
-                buttons = Gtk.ButtonsType.YES_NO,
-                text = 'Parent directory for config file does not exist. Create it now?')
-        dialog.set_title('Config Directory')
-        dialog.show()
-        response = dialog.run()
-        if response == Gtk.ResponseType.YES:
-            os.makedirs(os.path.dirname(path))
-        dialog.destroy()
+    if not os.path.exists(os.path.dirname(path)) and Dialog.create_parent_dir(parent):   # give user chance to create parent dir
+        os.makedirs(os.path.dirname(path))
     if not os.path.exists(os.path.dirname(path)):
-        dialog = Gtk.MessageDialog(
-                transient_for = parent,
-                message_type = Gtk.MessageType.ERROR,
-                buttons = Gtk.ButtonsType.OK,
-                text = 'Unable to write config to "{}". Parent directory does not exist.'.format(path))
-        dialog.set_title('Unable to Write Config')
-        dialog.show()
-        dialog.run()
-        dialog.destroy()
+        Dialog.no_parent_dir(path, parent)
         return
     if os.path.exists(path):
         pass # file already exists - overwrite?
