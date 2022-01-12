@@ -118,6 +118,7 @@ class ApplicationSelectionBox(ApplicationBox):
                 if self.config_section in config and self.cname in config[self.config_section]:
                     config.remove_option(self.config_section, self.cname)
                 self.application_selection_box.set_has_tooltip(False)
+            self.settings_button.set_relief(Gtk.ReliefStyle.NONE)
         else:
             if not selected.test():
                 dialog = Gtk.MessageDialog(
@@ -134,6 +135,10 @@ class ApplicationSelectionBox(ApplicationBox):
                 config[self.config_section] = {}
             config[self.config_section][self.cname] = selected.id_name
             self.application_selection_box.set_tooltip_text(selected.desc)
+            if selected.settings == '':
+                self.settings_button.set_relief(Gtk.ReliefStyle.NONE)
+            else:
+                self.settings_button.set_relief(Gtk.ReliefStyle.NORMAL)
 
     def selected_application(self):
         selection = self.application_selection_box.get_active()
