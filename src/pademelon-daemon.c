@@ -49,8 +49,6 @@ void loop(void) {
     int temp, wp_cycle_counter;
     struct plist *pl;
 
-    wp_cycle_counter = -1;
-
     while (!end) {
         while ((pl = plist_next_event(NULL)) != NULL) {
             if (WIFEXITED(pl->status)|| WIFSIGNALED(pl->status)) {
@@ -89,16 +87,9 @@ void loop(void) {
 #ifdef X11
         if (x11_screen_has_changed() || restart_wm) {
             report(R_DEBUG, "Screen configuration has changed");
-            wp_cycle_counter = SECS_TO_WALLPAPER_REFRESH / CYCLE_LENGTH;
             tl_save_display_conf(0, NULL);
             tl_load_wallpaper(0, NULL);
         }
-        /* supposed to workaround bugs but it does not seem to work */
-        if (wp_cycle_counter == 0) {
-            tl_load_wallpaper(0, NULL);
-        }
-        if (wp_cycle_counter >= 0)
-            wp_cycle_counter--;
 #endif /* X11 */
 
         if (restart_daemons) {
@@ -296,9 +287,12 @@ int main(int argc, char *argv[]) {
     x11_init();
 #endif /* X11 */
 
-    tl_load_wallpaper(0, NULL);
     load_keyboard();
+#ifdef X11
     tl_load_display_conf(0, NULL);
+    x11_screen_has_changed(); /* clear event queue */
+    tl_load_wallpaper(0, NULL);
+#endif /* X11 */
     startup_daemons(1);
     loop();
 

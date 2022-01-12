@@ -105,36 +105,41 @@ int x11_wallpaper_all(const char *path) {
     Imlib_Image image, cropped_image;
     XRRScreenResources *screen_res;
     XRRCrtcInfo *crtc_info;
+    Display *dpy;
 
-    if (!display)
+    dpy = XOpenDisplay(NULL);
+    if (!dpy)
         return 0;
+
+    /* if (!display) */
+    /*     return 0; */
 
     image = imlib_load_image(path);
     if (!image)
         return 0;
 
-    screen = DefaultScreen(display);
+    screen = DefaultScreen(dpy);
 
-    dpy_width = DisplayWidth(display, screen);
-    dpy_height = DisplayHeight(display, screen);
-    depth = DefaultDepth(display, screen);
-    color_map = DefaultColormap(display, screen);
-    vis = DefaultVisual(display, screen);
+    dpy_width = DisplayWidth(dpy, screen);
+    dpy_height = DisplayHeight(dpy, screen);
+    depth = DefaultDepth(dpy, screen);
+    color_map = DefaultColormap(dpy, screen);
+    vis = DefaultVisual(dpy, screen);
 
-    root = RootWindow(display, screen);
-    pixmap = XCreatePixmap(display, root, dpy_width, dpy_height, depth);
+    root = RootWindow(dpy, screen);
+    pixmap = XCreatePixmap(dpy, root, dpy_width, dpy_height, depth);
 
-    imlib_context_set_display(display);
+    imlib_context_set_display(dpy);
     imlib_context_set_visual(vis);
     imlib_context_set_colormap(color_map);
     imlib_context_set_drawable(pixmap);
     imlib_context_set_color_range(imlib_create_color_range());
     imlib_context_set_image(image);
 
-    screen_res = XRRGetScreenResources(display, DefaultRootWindow(display));
+    screen_res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
     status = 1;
     for (i = 0; i < screen_res->noutput; i++) {
-        crtc_info = XRRGetCrtcInfo(display, screen_res, screen_res->crtcs[i]);
+        crtc_info = XRRGetCrtcInfo(dpy, screen_res, screen_res->crtcs[i]);
         if (crtc_info->width > 0 && crtc_info->height > 0) {
             screen_ratio = ((double) crtc_info->width) / ((double) crtc_info->height);
             image_ratio = ((double) imlib_image_get_width()) / ((double) imlib_image_get_height());
@@ -166,16 +171,18 @@ int x11_wallpaper_all(const char *path) {
     }
     XRRFreeScreenResources(screen_res);
 
-    reset_root_atoms(display, root, pixmap);
-    XKillClient(display, AllTemporary);
-    XSetCloseDownMode(display, RetainTemporary);
-    XSetWindowBackgroundPixmap(display, root, pixmap);
-    XClearWindow(display, root);
-    XFlush(display);
-    XSync(display, False);
+    /* XKillClient(dpy , AllTemporary); */
+    XSetCloseDownMode(dpy, RetainPermanent);
+    XSetWindowBackgroundPixmap(dpy, root, pixmap);
+    XClearWindow(dpy, root);
+    XFlush(dpy);
+    XSync(dpy, False);
+    reset_root_atoms(dpy, root, pixmap);
 
     imlib_free_color_range();
     imlib_free_image();
+
+    XCloseDisplay(dpy);
 
     return status;
 #else /* IMLIB2 */
