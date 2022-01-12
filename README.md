@@ -25,6 +25,7 @@ Still one important goal of this software is to provide a desktop that works out
 * **Notifications:** xfce4-notifyd
 * **Power Management:** xfce4-power-manager
 * **Polkit:** gnome-polkit
+* **Display Manager:** LightDM
 
 ### Dependencies on external executables
 * **ARandR:** Configure display layouts

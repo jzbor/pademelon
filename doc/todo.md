@@ -6,8 +6,10 @@
 * Add `print_config()` to tools
 * Timeout for test command
 * Add `pademelon-tools launch-application`
+* pademelon-settings: no settings for Default and None
 
 ## Before 1.0.0
+* Add power-profiles-daemon integration in settings
 * Add "optional" daemon category for stuff like redshift
 * Add some more options for window-managers
 * Support for selecting ARandr profiles
