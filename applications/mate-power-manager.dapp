@@ -4,5 +4,5 @@ description = mate-power-manager
 category = power
 command = /usr/bin/mate-power-manager
 test = test -x /usr/bin/mate-power-manager
-settings = /usr/bin/mate-power-settings
+settings = /usr/bin/mate-power-preferences
 default = False
