@@ -18,12 +18,12 @@
 static char* wallpaper_path(void);
 static int print_category(struct dcategory *c);
 
-int tl_launch_application(int argc, char *argv[]) {
+int tl_launch_application(const char *category) {
     struct dapplication *a;
     struct config *cfg;
 
-    if (argc < 1) {
-        fprintf(stderr, "select-application: not enough arguments\n");
+    if (!category) {
+        fprintf(stderr, "select-application: no category supplied\n");
         return EXIT_FAILURE;
     }
 
@@ -34,7 +34,7 @@ int tl_launch_application(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    a = select_application(get_category_option(argv[0]));
+    a = select_application(get_category_option(category));
     if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
@@ -44,12 +44,9 @@ int tl_launch_application(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-int tl_load_display_conf(int argc, char *argv[]) {
+int tl_load_display_conf(const char *path) {
     int status;
-    char *path;
-    if (argc > 0) {
-        path = argv[0];
-    } else {
+    if (!path) {
         path = user_data_path(DISPLAY_CONF_FILE);
         if (!path)
             return EXIT_FAILURE;
@@ -58,15 +55,18 @@ int tl_load_display_conf(int argc, char *argv[]) {
     status = execute(path);
     if (status == -1) {
         return EXIT_FAILURE;
-    } else {
-        if (chmod(path, S_IRWXU|S_IRGRP|S_IROTH) == -1)
-            return EXIT_FAILURE;
-        return status;
     }
+    /* else { */
+    /*     if (chmod(path, S_IRWXU|S_IRGRP|S_IROTH) == -1) */
+    /*         return EXIT_FAILURE; */
+    /*     return status; */
+    /* } */
+    return EXIT_SUCCESS;
 }
 
 
-int tl_load_wallpaper(int argc, char *argv[]) {
+int tl_load_wallpaper(void) {
+    char *path;
 #ifndef X11
     fprintf(stderr, "load-wallpaper: missing dependency: x11\n");
 #endif /* X11 */
@@ -75,7 +75,6 @@ int tl_load_wallpaper(int argc, char *argv[]) {
 #endif /* IMLIB2 */
 #ifdef X11
 #ifdef IMLIB2
-    char *path;
     path = wallpaper_path();
     /* @TODO check if path exists */
     if (path) {
@@ -88,7 +87,7 @@ int tl_load_wallpaper(int argc, char *argv[]) {
     return EXIT_FAILURE;
 }
 
-int tl_print_applications(int argc, char *argv[]) {
+int tl_print_applications(void) {
     struct dcategory *c;
 
     load_applications();
@@ -111,7 +110,7 @@ int tl_print_applications(int argc, char *argv[]) {
 }
 
 
-int tl_save_display_conf(int argc, char *argv[]) {
+int tl_save_display_conf(void) {
     int status;
     char *path = user_data_path(DISPLAY_CONF_FILE);
     if (!path)
@@ -128,11 +127,11 @@ int tl_save_display_conf(int argc, char *argv[]) {
         return EXIT_SUCCESS;
 }
 
-int tl_select_application(int argc, char *argv[]) {
+int tl_select_application(const char *category) {
     struct dapplication *a;
     struct config *cfg;
 
-    if (argc < 1) {
+    if (!category) {
         fprintf(stderr, "select-application: not enough arguments\n");
         return EXIT_FAILURE;
     }
@@ -144,7 +143,7 @@ int tl_select_application(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    a = select_application(get_category_option(argv[0]));
+    a = select_application(get_category_option(category));
     if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
@@ -165,7 +164,7 @@ int tl_select_application(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-int tl_set_wallpaper(int argc, char *argv[]) {
+int tl_set_wallpaper(const char *input_path) {
 #ifndef X11
     fprintf(stderr, "set-wallpaper: missing dependency: x11\n");
 #endif /* X11 */
@@ -181,7 +180,7 @@ int tl_set_wallpaper(int argc, char *argv[]) {
     FILE *source, *target;
 
 
-    if (argc < 1) {
+    if (!input_path) {
         fprintf(stderr, "set-wallpaper: not enough arguments\n");
         return EXIT_FAILURE;
     }
@@ -193,7 +192,7 @@ int tl_set_wallpaper(int argc, char *argv[]) {
     }
 
     /* open input file */
-    source = fopen(argv[0], "r");
+    source = fopen(input_path, "r");
     if (!source) {
         fprintf(stderr, "set-wallpaper: unable to open file\n");
         return EXIT_FAILURE;
@@ -238,7 +237,7 @@ int tl_set_wallpaper(int argc, char *argv[]) {
     fclose(source);
     fclose(target);
 
-    return tl_load_wallpaper(0, NULL);
+    return tl_load_wallpaper();
 #endif /* X11 */
 #endif /* IMLIB2 */
     return EXIT_FAILURE;
@@ -271,16 +270,16 @@ char* wallpaper_path(void) {
     return user_data_path(WALLPAPER_FILE_NAME);
 }
 
-int tl_test_application(int argc, char *argv[]) {
+int tl_test_application(const char *id_name) {
     struct dapplication *a;
 
-    if (argc < 1) {
+    if (!id_name) {
         fprintf(stderr, "test-application: not enough arguments\n");
         return EXIT_FAILURE;
     }
 
     load_applications();
-    a = find_application(argv[0], NULL, 0);
+    a = find_application(id_name, NULL, 0);
     if (!a) {
         fprintf(stderr, "test-application: application not found\n");
         return EXIT_FAILURE;

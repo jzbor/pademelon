@@ -3,13 +3,13 @@
 
 #define WALLPAPER_FILE_NAME     "wallpaper"
 
-int tl_launch_application(int argc, char *argv[]);
-int tl_load_display_conf(int argc, char *argv[]);
-int tl_load_wallpaper(int argc, char *argv[]);
-int tl_print_applications(int argc, char *argv[]);
-int tl_save_display_conf(int argc, char *argv[]);
-int tl_select_application(int argc, char *argv[]);
-int tl_set_wallpaper(int argc, char *argv[]);
-int tl_test_application(int argc, char *argv[]);
+int tl_launch_application(const char *category);
+int tl_load_display_conf(const char *path);
+int tl_load_wallpaper(void);
+int tl_print_applications(void);
+int tl_save_display_conf(void);
+int tl_select_application(const char *category);
+int tl_set_wallpaper(const char *input_path);
+int tl_test_application(const char *id_name);
 
 #endif /* H_PADEMELON_TOOLS */

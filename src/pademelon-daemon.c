@@ -46,7 +46,7 @@ void load_keyboard(void) {
 }
 
 void loop(void) {
-    int temp, wp_cycle_counter;
+    int temp;
     struct plist *pl;
 
     while (!end) {
@@ -87,8 +87,8 @@ void loop(void) {
 #ifdef X11
         if (x11_screen_has_changed() || restart_wm) {
             report(R_DEBUG, "Screen configuration has changed");
-            tl_save_display_conf(0, NULL);
-            tl_load_wallpaper(0, NULL);
+            tl_save_display_conf();
+            tl_load_wallpaper();
         }
 #endif /* X11 */
 
@@ -289,9 +289,9 @@ int main(int argc, char *argv[]) {
 
     load_keyboard();
 #ifdef X11
-    tl_load_display_conf(0, NULL);
+    tl_load_display_conf(NULL);
     x11_screen_has_changed(); /* clear event queue */
-    tl_load_wallpaper(0, NULL);
+    tl_load_wallpaper();
 #endif /* X11 */
     startup_daemons(1);
     loop();
