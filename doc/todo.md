@@ -1,8 +1,8 @@
 # Tasks
 
 ## Before 0.3.0
-* Proper help screens for tools
-* Only scan dapp files
+* ~~Proper help screens for tools~~
+* ~~Only scan dapp files~~
 * `xbacklight` integration
 
 ## Before 0.4.0

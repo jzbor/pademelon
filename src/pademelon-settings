@@ -10,6 +10,7 @@ import shutil
 import signal
 import subprocess
 
+APPLICATION_FILE_ENDING = ".dapp"
 CONFIG_SECTION_APPEARANCE = 'appearance'
 CONFIG_SECTION_APPLICATIONS = 'applications'
 CONFIG_SECTION_DAEMONS = 'daemons'
@@ -507,7 +508,7 @@ def read_desktop_application_files(paths):
 
     for path in paths:
         if (os.path.exists(path)):
-            files.extend([f.path for f in os.scandir(path) if f.is_file()])
+            files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(APPLICATION_FILE_ENDING)])
 
     # read config files
     config = configparser.ConfigParser()
