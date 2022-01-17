@@ -3,7 +3,7 @@
 ## Before 0.3.0
 * ~~Proper help screens for tools~~
 * ~~Only scan dapp files~~
-* `xbacklight` integration
+* ~~`xbacklight` integration~~
 
 ## Before 0.4.0
 * Add `print_config()` to tools
