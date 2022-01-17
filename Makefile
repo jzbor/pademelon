@@ -10,6 +10,7 @@ TOOLS_OBJ 	+= x11-utils.o
 endif # X11_SUPPORT
 
 
+
 all: pademelon-daemon pademelon-tools
 
 %.o:

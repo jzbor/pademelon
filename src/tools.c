@@ -4,21 +4,42 @@
 #ifdef X11
 #include "x11-utils.h"
 #endif /* X11 */
+#ifdef CANBERRA
+#include <canberra.h>
+#endif /* CANBERRA */
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
-#define BUFSIZE             512
-#define UNXRANDR_CMD        "unxrandr"
-#define DISPLAY_CONF_FILE   "displayconfiguration"
+#define BUFSIZE                 512
+#define UNXRANDR_CMD            "unxrandr"
+#define DISPLAY_CONF_FILE       "displayconfiguration"
+#define CANBERRA_HINT           "pademelon"
+#define CANBERRA_VOLUME_CHANGE  "audio-volume-change"
 
-int get_pa_volume(int *volume);
-int set_pa_volume(int volume);
+#ifdef CANBERRA
+static void canberra_play(const char *sound);
+#endif /* CANBERRA */
+static int get_pa_volume(int *volume);
+static int set_pa_volume(int volume);
 static char* wallpaper_path(void);
 static int print_category(struct dcategory *c);
+
+
+#ifdef CANBERRA
+static void canberra_play(const char *sound) {
+    ca_context *cc;
+    ca_context_create (&cc);
+    ca_context_play (cc, 0,
+            CA_PROP_EVENT_ID, sound,
+            CA_PROP_EVENT_DESCRIPTION, CANBERRA_HINT,
+            NULL);
+}
+#endif /* CANBERRA */
 
 int get_pa_volume(int *volume) {
     char cmd[] = "pactl get-sink-volume @DEFAULT_SINK@";
@@ -27,6 +48,8 @@ int get_pa_volume(int *volume) {
     FILE *fp;
 
     fp = popen(cmd, "r");
+    if (!fp)
+        return 0;
     if (fgets(buffer, 100, fp) == NULL) {
         pclose(fp);
         return 0;
@@ -374,11 +397,18 @@ int tl_test_application(const char *id_name) {
 }
 
 int tl_volume_dec(int percentage) {
-    int volume;
+    int volume, status;
     if (!get_pa_volume(&volume))
         return EXIT_FAILURE;
     else {
-        return set_pa_volume(volume - percentage);
+        status = set_pa_volume(volume - percentage);
+#ifdef CANBERRA
+        if (status == EXIT_SUCCESS) {
+            canberra_play(CANBERRA_VOLUME_CHANGE);
+            sleep(1);
+        }
+#endif /* CANBERRA */
+        return status;
     }
 }
 
@@ -396,11 +426,18 @@ int tl_volume_print(void) {
 }
 
 int tl_volume_inc(int percentage) {
-    int volume;
+    int volume, status;
     if (!get_pa_volume(&volume))
         return EXIT_FAILURE;
     else {
-        return set_pa_volume(volume + percentage);
+        status = set_pa_volume(volume + percentage);
+#ifdef CANBERRA
+        if (status == EXIT_SUCCESS) {
+            canberra_play(CANBERRA_VOLUME_CHANGE);
+            sleep(1);
+        }
+#endif /* CANBERRA */
+        return status;
     }
 }
 

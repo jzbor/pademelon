@@ -10,8 +10,9 @@ PREFIX		= /usr/local
 DEPENDENCIES	= inih
 
 # configure lib support (uncomment to disable)
-X11_SUPPORT		= true 		# requires xrandr
-IMLIB2_SUPPORT	= true
+X11_SUPPORT			= true 		# requires xrandr
+IMLIB2_SUPPORT		= true
+CANBERRA_SUPPORT	= true
 
 # x11 support
 ifdef X11_SUPPORT
@@ -27,6 +28,12 @@ endif
 ifdef IMLIB2_SUPPORT
 DEPENDENCIES	+= imlib2
 CFLAGS		+= -DIMLIB2
+endif
+
+# libcanberra support
+ifdef CANBERRA_SUPPORT
+DEPENDENCIES	+= libcanberra
+CFLAGS		+= -DCANBERRA
 endif
 
 

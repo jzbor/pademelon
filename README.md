@@ -35,9 +35,10 @@ Still one important goal of this software is to provide a desktop that works out
 * **libpulse (`pactl`):** Volume control
 
 ### Libraries
+* **Imlib2**
 * **XLib**
 * **Xrandr**
-* **Imlib2**
+* **libcanberra**
 * **libinih**
 * **pkg-config** (only at build time)
 * **python-gobject**
