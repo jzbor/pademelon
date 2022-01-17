@@ -42,6 +42,7 @@ void report(int mode, const char *msg);
  */
 void report_value(int mode, const char *msg, const void *value, int type);
 
+int str_to_int(const char *str, int *integer);
 /*
  * get a user config file or the user config file path
  *

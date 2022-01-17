@@ -99,6 +99,20 @@ void report_value(int mode, const char *msg, const void *value, int type) {
     errno = 0;
 }
 
+int str_to_int(const char *str, int *integer) {
+    char *endptr;
+    long ltemp;
+    int val;
+    errno = 0;
+    ltemp = strtol(str, &endptr, 0);
+    val = ltemp;
+    if (val != ltemp || (ltemp == 0 && errno != 0) || str == endptr || (*endptr) != '\0') {
+        return 0;
+    }
+    *integer = val;
+    return 1;
+}
+
 char *system_config_path(char *file) {
     char *path, *file_cpy;
     file_cpy = file ? file : "";

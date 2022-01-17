@@ -41,6 +41,7 @@ int wr_save_display_conf(int argc, char *argv[]);
 int wr_select_application(int argc, char *argv[]);
 int wr_set_wallpaper(int argc, char *argv[]);
 int wr_test_application(int argc, char *argv[]);
+int wr_volume(int argc, char *argv[]);
 
 const struct clitool ct_last = {0};
 
@@ -131,6 +132,21 @@ const struct clitool ct_test_application = {
     .execute = wr_test_application,
 };
 
+CliArgument args_volume[] = {
+    { ArgTypeFlag, ARG_GET_LONG, ARG_GET_SHORT },
+    { ArgTypeInteger, ARG_SET_LONG, ARG_SET_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    { ArgTypeInteger, ARG_INC_LONG, ARG_INC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    { ArgTypeInteger, ARG_DEC_LONG, ARG_DEC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    {0},
+};
+CliOperand ops_volume[] = { {0} };
+const struct clitool ct_volume = {
+    .cliapp = { "volume", "control pulse audio master volume" },
+    .args = args_volume,
+    .ops = ops_volume,
+    .execute = wr_volume,
+};
+
 struct clitool clitools[] = {
     ct_backlight,
     ct_launch_application,
@@ -141,6 +157,7 @@ struct clitool clitools[] = {
     ct_select_application,
     ct_set_wallpaper,
     ct_test_application,
+    ct_volume,
     ct_last,
 };
 
@@ -182,7 +199,7 @@ int wr_backlight(int argc, char *argv[]) {
 
     ;
     if ((val = cli_get_argument(ARG_GET_LONG, ct_backlight.args)) && val->f) {
-        return tl_backlight_get();
+        return tl_backlight_print();
     } else if ((val = cli_get_argument(ARG_SET_LONG, ct_backlight.args))) {
         return tl_backlight_set(val->i);
     } else if ((val = cli_get_argument(ARG_INC_LONG, ct_backlight.args))) {
@@ -385,6 +402,39 @@ int wr_test_application(int argc, char *argv[]) {
     return tl_test_application(val_id_name->s);
 }
 
+int wr_volume(int argc, char *argv[]) {
+    int status;
+    ArgValue *val;
+    CliError err;
+    status = cli_parse(argc, argv, ct_volume.cliapp,
+            ct_volume.args, ct_volume.ops, &err);
+    if (!status) {
+        if (err == CliErrHelp) {
+            cli_print_help(ct_volume.cliapp, ct_volume.args, ct_volume.ops);
+            return EXIT_SUCCESS;
+        } else {
+            cli_print_error(err);
+            cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
+                    ct_volume.ops);
+            return EXIT_FAILURE;
+        }
+    }
+
+    ;
+    if ((val = cli_get_argument(ARG_GET_LONG, ct_volume.args)) && val->f) {
+        return tl_volume_print();
+    } else if ((val = cli_get_argument(ARG_SET_LONG, ct_volume.args))) {
+        return tl_volume_set(val->i);
+    } else if ((val = cli_get_argument(ARG_INC_LONG, ct_volume.args))) {
+        return tl_volume_inc(val->i);
+    } else if ((val = cli_get_argument(ARG_DEC_LONG, ct_volume.args))) {
+        return tl_volume_dec(val->i);
+    }
+
+    cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
+            ct_volume.ops);
+    return EXIT_FAILURE;
+}
 
 
 int main(int argc, char *argv[]) {

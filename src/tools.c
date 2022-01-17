@@ -15,9 +15,37 @@
 #define UNXRANDR_CMD        "unxrandr"
 #define DISPLAY_CONF_FILE   "displayconfiguration"
 
+int get_pa_volume(int *volume);
+int set_pa_volume(int volume);
 static char* wallpaper_path(void);
 static int print_category(struct dcategory *c);
 
+int get_pa_volume(int *volume) {
+    char cmd[] = "pactl get-sink-volume @DEFAULT_SINK@";
+    char buffer[100];
+    char *from, *to;
+    FILE *fp;
+
+    fp = popen(cmd, "r");
+    if (fgets(buffer, 100, fp) == NULL) {
+        pclose(fp);
+        return 0;
+    }
+    pclose(fp);
+
+    from = strchr(buffer, '/');
+    if (!from)
+        return 0;
+    for (from++; from[0] == ' '; from++);
+    if (from[0] == '\0')
+        return 0;
+
+    to = strchr(from, '%');
+    if (!to)
+        return 0;
+    to[0] = '\0';
+    return str_to_int(from, volume);
+}
 
 int tl_backlight_dec(int percentage) {
     char cmd_template[] = "xbacklight -dec %d";
@@ -29,7 +57,7 @@ int tl_backlight_dec(int percentage) {
     return system(temp);
 }
 
-int tl_backlight_get(void) {
+int tl_backlight_print(void) {
     return system("xbacklight -get");
 }
 
@@ -301,6 +329,16 @@ int print_category(struct dcategory *c) {
     return 0;
 }
 
+int set_pa_volume(int volume) {
+    char cmd_template[] = "pactl set-sink-volume @DEFAULT_SINK@ %d%%";
+    size_t tempsize = strlen(cmd_template) + 5;
+    char temp[tempsize];
+    volume = MIN_INT(volume, 100);
+    volume = MAX_INT(volume, 0);
+    snprintf(temp, tempsize, cmd_template, volume);
+    return system(temp);
+}
+
 char* wallpaper_path(void) {
     return user_data_path(WALLPAPER_FILE_NAME);
 }
@@ -334,3 +372,40 @@ int tl_test_application(const char *id_name) {
 
     free_applications();
 }
+
+int tl_volume_dec(int percentage) {
+    int volume;
+    if (!get_pa_volume(&volume))
+        return EXIT_FAILURE;
+    else {
+        return set_pa_volume(volume - percentage);
+    }
+}
+
+int tl_volume_print(void) {
+    int volume;
+    if (!get_pa_volume(&volume))
+        return EXIT_FAILURE;
+    else {
+        if (printf("%d\n", volume) < 0)
+            return EXIT_FAILURE;
+        if (fflush(stdout) == EOF)
+            return EXIT_FAILURE;
+        return EXIT_SUCCESS;
+    }
+}
+
+int tl_volume_inc(int percentage) {
+    int volume;
+    if (!get_pa_volume(&volume))
+        return EXIT_FAILURE;
+    else {
+        return set_pa_volume(volume + percentage);
+    }
+}
+
+int tl_volume_set(int percentage) {
+    fprintf(stderr, "%d\n", percentage);
+    return set_pa_volume(percentage);
+}
+
