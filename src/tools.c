@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #define BUFSIZE                 512
 #define UNXRANDR_CMD            "unxrandr"
@@ -396,16 +395,29 @@ int tl_test_application(const char *id_name) {
     free_applications();
 }
 
-int tl_volume_dec(int percentage) {
+int tl_volume_dec(int percentage, int play_sound) {
     int volume, status;
     if (!get_pa_volume(&volume))
         return EXIT_FAILURE;
     else {
         status = set_pa_volume(volume - percentage);
 #ifdef CANBERRA
-        if (status == EXIT_SUCCESS) {
+        if (status == EXIT_SUCCESS && play_sound)
             canberra_play(CANBERRA_VOLUME_CHANGE);
-            sleep(1);
+#endif /* CANBERRA */
+        return status;
+    }
+}
+
+int tl_volume_inc(int percentage, int play_sound) {
+    int volume, status;
+    if (!get_pa_volume(&volume))
+        return EXIT_FAILURE;
+    else {
+        status = set_pa_volume(volume + percentage);
+#ifdef CANBERRA
+        if (status == EXIT_SUCCESS && play_sound) {
+            canberra_play(CANBERRA_VOLUME_CHANGE);
         }
 #endif /* CANBERRA */
         return status;
@@ -422,22 +434,6 @@ int tl_volume_print(void) {
         if (fflush(stdout) == EOF)
             return EXIT_FAILURE;
         return EXIT_SUCCESS;
-    }
-}
-
-int tl_volume_inc(int percentage) {
-    int volume, status;
-    if (!get_pa_volume(&volume))
-        return EXIT_FAILURE;
-    else {
-        status = set_pa_volume(volume + percentage);
-#ifdef CANBERRA
-        if (status == EXIT_SUCCESS) {
-            canberra_play(CANBERRA_VOLUME_CHANGE);
-            sleep(1);
-        }
-#endif /* CANBERRA */
-        return status;
     }
 }
 

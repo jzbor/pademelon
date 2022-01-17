@@ -15,8 +15,8 @@ int tl_save_display_conf(void);
 int tl_select_application(const char *category);
 int tl_set_wallpaper(const char *input_path);
 int tl_test_application(const char *id_name);
-int tl_volume_dec(int percentage);
-int tl_volume_inc(int percentage);
+int tl_volume_dec(int percentage, int play_sound);
+int tl_volume_inc(int percentage, int play_sound);
 int tl_volume_print(void);
 int tl_volume_set(int percentage);
 

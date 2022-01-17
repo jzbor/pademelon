@@ -6,7 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#define ARG_QUIET_LONG              "--quiet"
+#define ARG_QUIET_SHORT             "-q"
 #define ARG_DEC_LONG                "--dec"
 #define ARG_DEC_SHORT               "-d"
 #define ARG_GET_LONG                "--get"
@@ -137,6 +140,7 @@ CliArgument args_volume[] = {
     { ArgTypeInteger, ARG_SET_LONG, ARG_SET_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
     { ArgTypeInteger, ARG_INC_LONG, ARG_INC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
     { ArgTypeInteger, ARG_DEC_LONG, ARG_DEC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    { ArgTypeFlag, ARG_QUIET_LONG, ARG_QUIET_SHORT },
     {0},
 };
 CliOperand ops_volume[] = { {0} };
@@ -403,7 +407,7 @@ int wr_test_application(int argc, char *argv[]) {
 }
 
 int wr_volume(int argc, char *argv[]) {
-    int status;
+    int status, play_sound;
     ArgValue *val;
     CliError err;
     status = cli_parse(argc, argv, ct_volume.cliapp,
@@ -420,20 +424,29 @@ int wr_volume(int argc, char *argv[]) {
         }
     }
 
-    ;
+    play_sound = !((val = cli_get_argument(ARG_QUIET_LONG, ct_volume.args)) && val->f);
+
     if ((val = cli_get_argument(ARG_GET_LONG, ct_volume.args)) && val->f) {
-        return tl_volume_print();
+        status = tl_volume_print();
     } else if ((val = cli_get_argument(ARG_SET_LONG, ct_volume.args))) {
-        return tl_volume_set(val->i);
+        status = tl_volume_set(val->i);
     } else if ((val = cli_get_argument(ARG_INC_LONG, ct_volume.args))) {
-        return tl_volume_inc(val->i);
+        status = tl_volume_inc(val->i, play_sound);
+#ifdef CANBERRA
+        sleep(1);
+#endif /* CANBERRA */
     } else if ((val = cli_get_argument(ARG_DEC_LONG, ct_volume.args))) {
-        return tl_volume_dec(val->i);
+        status = tl_volume_dec(val->i, play_sound);
+#ifdef CANBERRA
+        sleep(1);
+#endif /* CANBERRA */
+    } else {
+        cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
+                ct_volume.ops);
+        return EXIT_FAILURE;
     }
 
-    cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
-            ct_volume.ops);
-    return EXIT_FAILURE;
+    return status;
 }
 
 
