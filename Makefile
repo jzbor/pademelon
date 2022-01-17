@@ -34,6 +34,7 @@ pademelon-tools: $(TOOLS_OBJ)
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:
+	rm -f cliparse.o
 	rm -f common.o
 	rm -f desktop-application.o
 	rm -f desktop-daemon.o

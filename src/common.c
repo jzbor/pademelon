@@ -6,10 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static inline int MAX_INT(int a, int b) { return a > b ? a : b; }
-static inline int MIN_INT(int a, int b) { return a < b ? a : b; }
-static inline int BET_INT(int x, int a, int b) { return a <= x && x <= b; }
-
 const char *name = "pademelon";
 const char *sysconf = "/etc/%s/%s";
 const char *sysdata = "/usr/share/%s/%s";

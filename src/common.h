@@ -18,6 +18,9 @@
 static inline int STR_STARTS_WITH(const char *s, const char *pre) { return strncmp(pre, s, strlen(pre)) == 0; }
 static inline int STR_ENDS_WITH(const char *s, const char *suf) { return strlen(s) >= strlen(suf)
         && strncmp(suf, &s[strlen(s) - strlen(suf)], strlen(suf)) == 0; }
+static inline int MAX_INT(int a, int b) { return a > b ? a : b; }
+static inline int MIN_INT(int a, int b) { return a < b ? a : b; }
+static inline int BET_INT(int x, int a, int b) { return a <= x && x <= b; }
 
 /* returns -1 on error, return code else */
 int execute(const char *command);

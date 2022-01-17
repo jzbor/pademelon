@@ -18,6 +18,41 @@
 static char* wallpaper_path(void);
 static int print_category(struct dcategory *c);
 
+
+int tl_backlight_dec(int percentage) {
+    char cmd_template[] = "xbacklight -dec %d";
+    size_t tempsize = strlen(cmd_template) + 5;
+    char temp[tempsize];
+    percentage = MIN_INT(percentage, 100);
+    percentage = MAX_INT(percentage, 0);
+    snprintf(temp, tempsize, cmd_template, percentage);
+    return system(temp);
+}
+
+int tl_backlight_get(void) {
+    return system("xbacklight -get");
+}
+
+int tl_backlight_inc(int percentage) {
+    char cmd_template[] = "xbacklight -inc %d";
+    size_t tempsize = strlen(cmd_template) + 5;
+    char temp[tempsize];
+    percentage = MIN_INT(percentage, 100);
+    percentage = MAX_INT(percentage, 0);
+    snprintf(temp, tempsize, cmd_template, percentage);
+    return system(temp);
+}
+
+int tl_backlight_set(int percentage) {
+    char cmd_template[] = "xbacklight -set %d";
+    size_t tempsize = strlen(cmd_template) + 5;
+    char temp[tempsize];
+    percentage = MIN_INT(percentage, 100);
+    percentage = MAX_INT(percentage, 0);
+    snprintf(temp, tempsize, cmd_template, percentage);
+    return system(temp);
+}
+
 int tl_launch_application(const char *category) {
     struct dapplication *a;
     struct config *cfg;

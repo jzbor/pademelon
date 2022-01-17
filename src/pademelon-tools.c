@@ -7,12 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ARG_PATH_LONG           "--path"
-#define ARG_PATH_SHORT          "-p"
-#define ARG_PATH_PLACEHOLDER    "path"
-#define OP_CATEGORY             "category"
-#define OP_ID_NAME              "id-name"
-#define OP_PATH                 "path"
+#define ARG_DEC_LONG                "--dec"
+#define ARG_DEC_SHORT               "-d"
+#define ARG_GET_LONG                "--get"
+#define ARG_GET_SHORT               "-g"
+#define ARG_INC_LONG                "--inc"
+#define ARG_INC_SHORT               "-i"
+#define ARG_PATH_LONG               "--path"
+#define ARG_PATH_PLACEHOLDER        "path"
+#define ARG_PATH_SHORT              "-p"
+#define ARG_PERCENTAGE_PLACEHOLDER  "percentage"
+#define ARG_SET_LONG                "--set"
+#define ARG_SET_SHORT               "-s"
+#define OP_CATEGORY                 "category"
+#define OP_ID_NAME                  "id-name"
+#define OP_PATH                     "path"
 
 typedef int (*ToolFunction)(int argc, char *argv[]);
 struct clitool {
@@ -23,6 +32,7 @@ struct clitool {
 };
 
 static int print_tools(void);
+int wr_backlight(int argc, char *argv[]);
 int wr_launch_application(int argc, char *argv[]);
 int wr_load_display_conf(int argc, char *argv[]);
 int wr_load_wallpaper(int argc, char *argv[]);
@@ -33,6 +43,21 @@ int wr_set_wallpaper(int argc, char *argv[]);
 int wr_test_application(int argc, char *argv[]);
 
 const struct clitool ct_last = {0};
+
+CliArgument args_backlight[] = {
+    { ArgTypeFlag, ARG_GET_LONG, ARG_GET_SHORT },
+    { ArgTypeInteger, ARG_SET_LONG, ARG_SET_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    { ArgTypeInteger, ARG_INC_LONG, ARG_INC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    { ArgTypeInteger, ARG_DEC_LONG, ARG_DEC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
+    {0},
+};
+CliOperand ops_backlight[] = { {0} };
+const struct clitool ct_backlight = {
+    .cliapp = { "backlight", "control screen backlight" },
+    .args = args_backlight,
+    .ops = ops_backlight,
+    .execute = wr_backlight,
+};
 
 CliArgument args_launch_application[] = { {0} };
 CliOperand ops_launch_application[] = { { ArgTypeString, OP_CATEGORY }, {0}  };
@@ -107,7 +132,7 @@ const struct clitool ct_test_application = {
 };
 
 struct clitool clitools[] = {
-    ct_launch_application,
+    ct_backlight,
     ct_launch_application,
     ct_load_display_conf,
     ct_load_wallpaper,
@@ -135,6 +160,40 @@ int print_tools(void) {
             return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
+}
+
+int wr_backlight(int argc, char *argv[]) {
+    int status;
+    ArgValue *val;
+    CliError err;
+    status = cli_parse(argc, argv, ct_backlight.cliapp,
+            ct_backlight.args, ct_backlight.ops, &err);
+    if (!status) {
+        if (err == CliErrHelp) {
+            cli_print_help(ct_backlight.cliapp, ct_backlight.args, ct_backlight.ops);
+            return EXIT_SUCCESS;
+        } else {
+            cli_print_error(err);
+            cli_print_usage(binary_name, ct_backlight.cliapp, ct_backlight.args,
+                    ct_backlight.ops);
+            return EXIT_FAILURE;
+        }
+    }
+
+    ;
+    if ((val = cli_get_argument(ARG_GET_LONG, ct_backlight.args)) && val->f) {
+        return tl_backlight_get();
+    } else if ((val = cli_get_argument(ARG_SET_LONG, ct_backlight.args))) {
+        return tl_backlight_set(val->i);
+    } else if ((val = cli_get_argument(ARG_INC_LONG, ct_backlight.args))) {
+        return tl_backlight_inc(val->i);
+    } else if ((val = cli_get_argument(ARG_DEC_LONG, ct_backlight.args))) {
+        return tl_backlight_dec(val->i);
+    }
+
+    cli_print_usage(binary_name, ct_backlight.cliapp, ct_backlight.args,
+            ct_backlight.ops);
+    return EXIT_FAILURE;
 }
 
 int wr_launch_application(int argc, char *argv[]) {
