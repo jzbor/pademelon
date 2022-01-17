@@ -8,7 +8,7 @@ static int str_to_int(const char *str, int *integer);
 
 static inline int count_args(CliArgument *arguments) {
     int nargs;
-    for (nargs = 0; strncmp((char*) &arguments[nargs], (char *) &((CliArgument){0}), sizeof(CliArgument)) != 0; nargs++);
+    for (nargs = 0; memcmp((char*) &arguments[nargs], (char *) &((CliArgument){0}), sizeof(CliArgument)) != 0; nargs++);
     return nargs;
 }
 
@@ -66,7 +66,7 @@ int cli_parse(int argc, char *argv[], CliApplication cli_application, CliArgumen
             *err = CliErrHelp;
             return 0;
         }
-        for (j = 0; i < nargs; i++) {
+        for (j = 0; j < nargs; j++) {
             if (strcmp(argv[i], arguments[j].long_name) == 0
                     || strcmp(argv[i], arguments[j].short_name) == 0) {
                 if (arguments[j].type == ArgTypeFlag) {
@@ -201,7 +201,7 @@ void cli_print_help(CliApplication cli_application, CliArgument *arguments, CliO
 void cli_print_usage(const char *binary_name, CliApplication cli_application, CliArgument *arguments,
         CliOperand *operands) {
     int i, nargs, nops;
-    printf("%s ", binary_name);
+    printf("\nUsage:\n%s ", binary_name);
 
     /* get argument and operand count */
     nargs = count_args(arguments);
@@ -214,7 +214,6 @@ void cli_print_usage(const char *binary_name, CliApplication cli_application, Cl
         } else {
             printf("[ %s | %s ] ", arguments[i].short_name ? arguments[i].short_name : "",
                     arguments[i].long_name ? arguments[i].long_name : "");
-
         }
     }
 
