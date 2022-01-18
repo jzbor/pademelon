@@ -141,7 +141,7 @@ int x11_wallpaper_all(const char *path) {
     status = 1;
     for (i = 0; i < screen_res->noutput; i++) {
         output_info = XRRGetOutputInfo(display, screen_res, screen_res->outputs[i]);
-        if (output_info == NULL || output_info->connection != RR_Connected)
+        if (output_info == NULL || output_info->connection != RR_Connected || output_info->crtc == 0)
             continue;
         crtc_info = XRRGetCrtcInfo(dpy, screen_res, output_info->crtc);
         if (crtc_info->width > 0 && crtc_info->height > 0) {
