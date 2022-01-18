@@ -105,6 +105,7 @@ int x11_wallpaper_all(const char *path) {
     Imlib_Image image, cropped_image;
     XRRScreenResources *screen_res;
     XRRCrtcInfo *crtc_info;
+    XRROutputInfo *output_info;
     Display *dpy;
 
     dpy = XOpenDisplay(NULL);
@@ -139,7 +140,10 @@ int x11_wallpaper_all(const char *path) {
     screen_res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
     status = 1;
     for (i = 0; i < screen_res->noutput; i++) {
-        crtc_info = XRRGetCrtcInfo(dpy, screen_res, screen_res->crtcs[i]);
+        output_info = XRRGetOutputInfo(display, screen_res, screen_res->outputs[i]);
+        if (output_info == NULL || output_info->connection != RR_Connected)
+            continue;
+        crtc_info = XRRGetCrtcInfo(dpy, screen_res, output_info->crtc);
         if (crtc_info->width > 0 && crtc_info->height > 0) {
             screen_ratio = ((double) crtc_info->width) / ((double) crtc_info->height);
             image_ratio = ((double) imlib_image_get_width()) / ((double) imlib_image_get_height());
