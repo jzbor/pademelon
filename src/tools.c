@@ -424,6 +424,26 @@ int tl_volume_inc(int percentage, int play_sound) {
     }
 }
 
+int tl_volume_mute_input(int i) {
+    if (i < 0) {
+        return system("pactl set-source-mute @DEFAULT_SOURCE@ toggle");
+    } else if (i) {
+        return system("pactl set-source-mute @DEFAULT_SOURCE@ 1");
+    } else {
+        return system("pactl set-source-mute @DEFAULT_SOURCE@ 0");
+    }
+}
+
+int tl_volume_mute_output(int i) {
+    if (i < 0) {
+        return system("pactl set-sink-mute @DEFAULT_SINK@ toggle");
+    } else if (i) {
+        return system("pactl set-sink-mute @DEFAULT_SINK@ 1");
+    } else {
+        return system("pactl set-sink-mute @DEFAULT_SINK@ 0");
+    }
+}
+
 int tl_volume_print(void) {
     int volume;
     if (!get_pa_volume(&volume))

@@ -10,6 +10,11 @@
 
 #define ARG_QUIET_LONG              "--quiet"
 #define ARG_QUIET_SHORT             "-q"
+#define ARG_MUTE_OUT_LONG           "--mute"
+#define ARG_MUTE_OUT_SHORT          "-m"
+#define ARG_MUTE_PLACEHOLDER        "0_or_1_or_toggle"
+#define ARG_MUTE_IN_LONG            "--mute-input"
+#define ARG_MUTE_IN_SHORT           "-n"
 #define ARG_DEC_LONG                "--dec"
 #define ARG_DEC_SHORT               "-d"
 #define ARG_GET_LONG                "--get"
@@ -141,6 +146,8 @@ CliArgument args_volume[] = {
     { ArgTypeInteger, ARG_INC_LONG, ARG_INC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
     { ArgTypeInteger, ARG_DEC_LONG, ARG_DEC_SHORT, ARG_PERCENTAGE_PLACEHOLDER },
     { ArgTypeFlag, ARG_QUIET_LONG, ARG_QUIET_SHORT },
+    { ArgTypeString, ARG_MUTE_OUT_LONG, ARG_MUTE_OUT_SHORT, ARG_MUTE_PLACEHOLDER },
+    { ArgTypeString, ARG_MUTE_IN_LONG, ARG_MUTE_IN_SHORT, ARG_MUTE_PLACEHOLDER},
     {0},
 };
 CliOperand ops_volume[] = { {0} };
@@ -440,6 +447,42 @@ int wr_volume(int argc, char *argv[]) {
 #ifdef CANBERRA
         sleep(1);
 #endif /* CANBERRA */
+    } else if ((val = cli_get_argument(ARG_MUTE_OUT_LONG, ct_volume.args)) && val->s) {
+        if (strcmp(val->s, "mute") == 0
+                || strcmp(val->s, "1") == 0
+                || strcmp(val->s, "true") == 0
+                || strcmp(val->s, "True") == 0) {
+            status = tl_volume_mute_output(1);
+        } else if (strcmp(val->s, "unmute") == 0
+                || strcmp(val->s, "0") == 0
+                || strcmp(val->s, "false") == 0
+                || strcmp(val->s, "False") == 0) {
+            status = tl_volume_mute_output(0);
+        } else if (strcmp(val->s, "toggle") == 0
+                || strcmp(val->s, "t") == 0) {
+            status = tl_volume_mute_output(-1);
+        } else {
+            fprintf(stderr, "Value '%s' not valid for option '%s'\n", val->s, ARG_MUTE_OUT_LONG);
+            return EXIT_FAILURE;
+        }
+    } else if ((val = cli_get_argument(ARG_MUTE_IN_LONG, ct_volume.args)) && val->s) {
+        if (strcmp(val->s, "mute") == 0
+                || strcmp(val->s, "1") == 0
+                || strcmp(val->s, "true") == 0
+                || strcmp(val->s, "True") == 0) {
+            status = tl_volume_mute_input(1);
+        } else if (strcmp(val->s, "unmute") == 0
+                || strcmp(val->s, "0") == 0
+                || strcmp(val->s, "false") == 0
+                || strcmp(val->s, "False") == 0) {
+            status = tl_volume_mute_input(0);
+        } else if (strcmp(val->s, "toggle") == 0
+                || strcmp(val->s, "t") == 0) {
+            status = tl_volume_mute_input(-1);
+        } else {
+            fprintf(stderr, "Value '%s' not valid for option '%s'\n", val->s, ARG_MUTE_IN_LONG);
+            return EXIT_FAILURE;
+        }
     } else {
         cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
                 ct_volume.ops);
