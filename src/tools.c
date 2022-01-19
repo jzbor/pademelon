@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
 
 #define BUFSIZE                 512
 #define UNXRANDR_CMD            "unxrandr"
@@ -21,7 +23,7 @@
 #define CANBERRA_VOLUME_CHANGE  "audio-volume-change"
 
 #ifdef CANBERRA
-static void canberra_play(const char *sound);
+static void canberra_play_async(const char *sound);
 #endif /* CANBERRA */
 static int get_pa_volume(int *volume);
 static int set_pa_volume(int volume);
@@ -30,13 +32,23 @@ static int print_category(struct dcategory *c);
 
 
 #ifdef CANBERRA
-static void canberra_play(const char *sound) {
-    ca_context *cc;
-    ca_context_create (&cc);
-    ca_context_play (cc, 0,
-            CA_PROP_EVENT_ID, sound,
-            CA_PROP_EVENT_DESCRIPTION, CANBERRA_HINT,
-            NULL);
+static void canberra_play_async(const char *sound) {
+    int status;
+    status = fork();
+    /* status = -1; */
+    if (status == 0 || status == -1) { /* child or no fork */
+        ca_context *cc;
+        ca_context_create (&cc);
+        ca_context_play (cc, 0,
+                CA_PROP_EVENT_ID, sound,
+                CA_PROP_EVENT_DESCRIPTION, CANBERRA_HINT,
+                NULL);
+    }
+
+    if (status == 0) {/* exit child */
+        sleep(1);
+        exit(EXIT_SUCCESS);
+    }
 }
 #endif /* CANBERRA */
 
@@ -400,11 +412,11 @@ int tl_volume_dec(int percentage, int play_sound) {
     if (!get_pa_volume(&volume))
         return EXIT_FAILURE;
     else {
-        status = set_pa_volume(volume - percentage);
 #ifdef CANBERRA
-        if (status == EXIT_SUCCESS && play_sound)
-            canberra_play(CANBERRA_VOLUME_CHANGE);
+        if (play_sound)
+            canberra_play_async(CANBERRA_VOLUME_CHANGE);
 #endif /* CANBERRA */
+        status = set_pa_volume(volume - percentage);
         return status;
     }
 }
@@ -414,12 +426,12 @@ int tl_volume_inc(int percentage, int play_sound) {
     if (!get_pa_volume(&volume))
         return EXIT_FAILURE;
     else {
-        status = set_pa_volume(volume + percentage);
 #ifdef CANBERRA
-        if (status == EXIT_SUCCESS && play_sound) {
-            canberra_play(CANBERRA_VOLUME_CHANGE);
+        if (play_sound) {
+            canberra_play_async(CANBERRA_VOLUME_CHANGE);
         }
 #endif /* CANBERRA */
+        status = set_pa_volume(volume + percentage);
         return status;
     }
 }
