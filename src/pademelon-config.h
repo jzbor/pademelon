@@ -24,6 +24,7 @@ struct config {
     /* CONFIG_SECTION_APPLICATIONS */
     struct category_option *browser;
     struct category_option *dmenu;
+    struct category_option *filemanager;
     struct category_option *terminal;
 
     /* CONFIG_SECTION_INPUT */

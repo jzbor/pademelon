@@ -29,6 +29,7 @@ static struct category_option category_options[] = {
     /* CONFIG_SECTION_APPLICATIONS */
     { .name = "browser",            .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
     { .name = "dmenu",              .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
+    { .name = "filemanager",        .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
     { .name = "terminal",           .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
     { .name = NULL },
 };
@@ -130,6 +131,8 @@ struct config *load_config(void) {
     cfg->optional               = get_category_option("optional");
     /* CONFIG_SECTION_APPLICATIONS */
     cfg->browser                = get_category_option("browser");
+    cfg->dmenu                  = get_category_option("dmenu");
+    cfg->filemanager            = get_category_option("filemanager");
     cfg->terminal               = get_category_option("terminal");
 
     path = system_config_path("pademelon.conf");
@@ -169,6 +172,8 @@ int print_config(struct config *cfg) {
     /* CONFIG_SECTION_APPLICATIONS */
     PRINT_SECTION(CONFIG_SECTION_APPLICATIONS);
     PRINT_PROPERTY_CAT(cfg->browser);
+    PRINT_PROPERTY_CAT(cfg->dmenu);
+    PRINT_PROPERTY_CAT(cfg->filemanager);
     PRINT_PROPERTY_CAT(cfg->terminal);
 
     PRINT_SECTION(CONFIG_SECTION_INPUT);

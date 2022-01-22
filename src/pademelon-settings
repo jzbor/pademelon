@@ -291,6 +291,7 @@ class MainWindow(Gtk.Window):
 
         # create application frames
         self.application_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_APPLICATIONS, 'terminal', 'Terminal Emulator'))
+        self.application_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_APPLICATIONS, 'filemanager', 'File Manager'))
         self.application_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_APPLICATIONS, 'browser', 'Web Browser'))
         self.application_rows.append(ApplicationSelectionBox(self, CONFIG_SECTION_APPLICATIONS, 'dmenu', 'Application Menu'))
 

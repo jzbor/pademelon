@@ -200,6 +200,7 @@ void startup_daemons(int initial) {
     /* set default applications */
     set_application(config->browser, "BROWSER");
     set_application(config->dmenu, "DMENUCMD");
+    set_application(config->filemanager, "FILEMANAGER");
     set_application(config->terminal, "TERMINAL");
 
     if (initial) {
