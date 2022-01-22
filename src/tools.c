@@ -117,6 +117,7 @@ int tl_backlight_set(int percentage) {
 
 int tl_launch_application(const char *category) {
     struct dapplication *a;
+    struct category_option *c;
     struct config *cfg;
 
     if (!category) {
@@ -131,7 +132,13 @@ int tl_launch_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    a = select_application(get_category_option(category));
+    c = get_category_option(category);
+    if (!c) {
+        fprintf(stderr, "select-application: category not found\n");
+        return EXIT_FAILURE;
+    }
+
+    a = select_application(c);
     if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
@@ -226,6 +233,7 @@ int tl_save_display_conf(void) {
 
 int tl_select_application(const char *category) {
     struct dapplication *a;
+    struct category_option *c;
     struct config *cfg;
 
     if (!category) {
@@ -240,7 +248,13 @@ int tl_select_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    a = select_application(get_category_option(category));
+    c = get_category_option(category);
+    if (!c) {
+        fprintf(stderr, "select-application: category not found\n");
+        return EXIT_FAILURE;
+    }
+
+    a = select_application(c);
     if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
