@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CYCLE_LENGTH                1   /* seconds */
+#define CYCLE_LENGTH                2   /* seconds */
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
 
 static void load_keyboard(void);
@@ -89,6 +89,11 @@ void loop(void) {
             report(R_DEBUG, "Screen configuration has changed");
             tl_save_display_conf();
             tl_load_wallpaper();
+        }
+
+        if (x11_keyboard_has_changed() || restart_wm) {
+            report(R_DEBUG, "Keyboard configuration has changed");
+            load_keyboard();
         }
 #endif /* X11 */
 
@@ -286,10 +291,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef X11
     x11_init();
-#endif /* X11 */
-
     load_keyboard();
-#ifdef X11
     tl_load_display_conf(NULL);
     x11_screen_has_changed(); /* clear event queue */
     tl_load_wallpaper();

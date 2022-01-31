@@ -10,6 +10,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
+#include <X11/extensions/XInput2.h>
 
 
 static void reset_root_atoms(Display *display, Window root, Pixmap pixmap);
@@ -54,6 +55,9 @@ void reset_root_atoms(Display *display, Window root, Pixmap pixmap) {
 }
 
 int x11_init(void) {
+    XIEventMask ximask;
+    unsigned char mask[2] = { 0 };
+
     if (x11_initialized)
         return 1;
 
@@ -68,6 +72,14 @@ int x11_init(void) {
             RRScreenChangeNotifyMask | RRCrtcChangeNotifyMask |
             RROutputChangeNotifyMask | RROutputPropertyNotifyMask);
 
+    /* subscribe to XI events */
+    XISetMask(mask, XI_HierarchyChanged);
+    ximask.deviceid = XIAllDevices;
+    ximask.mask_len = sizeof(mask);
+    ximask.mask = mask;
+    XISelectEvents(display, XDefaultRootWindow(display), &ximask, 1);
+
+    XFlush(display);
     x11_initialized = 1;
     return 1;
 }
@@ -92,6 +104,29 @@ int x11_screen_has_changed(void) {
         screen_changed = 1;
     }
     return screen_changed;
+}
+
+int x11_keyboard_has_changed(void) {
+    int have_xi, xi_op, ignore;
+    int keyboard_changed = 0;
+    XIHierarchyEvent *hev;
+
+    if (!display)
+        return 0;
+    XEvent event;
+    have_xi = XQueryExtension(display, "XInputExtension", &xi_op, &ignore, &ignore);
+    if (!have_xi)
+        return 0;
+    while (XCheckTypedEvent(display, GenericEvent, &event)) {
+        if (event.xcookie.extension == xi_op
+                && event.xcookie.evtype == XI_HierarchyChanged
+                && XGetEventData(display, &event.xcookie)) {
+            hev = event.xcookie.data;
+            if (hev->flags & XIDeviceEnabled)
+                keyboard_changed = 1;
+        }
+    }
+    return keyboard_changed;
 }
 
 int x11_wallpaper_all(const char *path) {

@@ -16,7 +16,7 @@ CANBERRA_SUPPORT	= true
 
 # x11 support
 ifdef X11_SUPPORT
-DEPENDENCIES	+= x11 xrandr
+DEPENDENCIES	+= x11 xrandr xi
 CFLAGS		+= -DX11
 endif
 
