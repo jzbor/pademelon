@@ -54,7 +54,6 @@ class ApplicationSelectionBox(ApplicationBox):
         self.settings_button = Gtk.Button(label='Settings')
         self.settings_button.connect('clicked', self.on_button_clicked)
         self.application_selection_box = Gtk.ComboBoxText()
-        self.application_selection_box.connect("changed", self.on_combo_changed)
 
         select = len(self.applications) + 1      # select default item
         for application in self.applications:
@@ -72,6 +71,7 @@ class ApplicationSelectionBox(ApplicationBox):
         self.application_selection_box.append_text('None')
         self.application_selection_box.append_text('Default')
         self.application_selection_box.set_active(select)
+        self.application_selection_box.connect("changed", self.on_combo_changed)
 
         self.inner_box.pack_start(self.application_selection_box, True, True, 5)
         self.inner_box.pack_end(self.settings_button, False, False, 5)
@@ -119,7 +119,7 @@ class ApplicationSelectionBox(ApplicationBox):
             self.settings_button.set_relief(Gtk.ReliefStyle.NONE)
         else:
             if not selected.test():
-                Dialog.program_not_available(self.window)
+                Dialog.program_not_available(selected.id_name, self.window)
             if self.config_section not in config:
                 config[self.config_section] = {}
             config[self.config_section][self.cname] = selected.id_name
@@ -160,11 +160,11 @@ class DesktopApplication():
             self.test_result = 0
         return self.test_result
 
-
     def test(self):
         if not self.tested:
             self.run_test()
         return self.test_result
+
 
 class Dialog():
     @staticmethod
@@ -183,6 +183,18 @@ class Dialog():
         else:
             dialog.destroy()
             return False
+
+    @staticmethod
+    def logout_login(parent=None):
+            dialog = Gtk.MessageDialog(
+                    transient_for = parent,
+                    message_type = Gtk.MessageType.ERROR,
+                    buttons = Gtk.ButtonsType.OK,
+                    text = 'Warning: Some changes might require you to log out and log back in again to have an effect.'.format(name))
+            dialog.set_title('Some changes might not be updated')
+            dialog.show()
+            dialog.run()
+            dialog.destroy()
 
     @staticmethod
     def missing_dependency(name, parent=None):
@@ -228,12 +240,13 @@ class Dialog():
                 transient_for = parent,
                 message_type = Gtk.MessageType.WARNING,
                 buttons = Gtk.ButtonsType.OK,
-                text = 'You selected a program, that is not installed or not available: "{}". '.format(selected.display_name)
+                text = 'You selected a program, that is not installed or not available: "{}". '.format(name)
                 + 'You might want want to either install that program or choose another one.')
         dialog.set_title('Program not installed')
         dialog.show()
         dialog.run()
         dialog.destroy()
+
 
 class MainWindow(Gtk.Window):
     def __init__(self):
@@ -248,10 +261,8 @@ class MainWindow(Gtk.Window):
         self.scrolled_window = Gtk.ScrolledWindow()
         self.notebook = Gtk.Notebook()
         self.action_bar = Gtk.ActionBar()
-        self.restart_wm_button = Gtk.Button(label="Restart WM")
-        self.restart_wm_button.connect('clicked', self.on_button_clicked)
-        self.restart_daemons_button = Gtk.Button(label="Restart Daemons")
-        self.restart_daemons_button.connect('clicked', self.on_button_clicked)
+        self.save_reload_button = Gtk.Button(label="Save and Reload")
+        self.save_reload_button.connect('clicked', self.on_button_clicked)
         self.cancel_button = Gtk.Button(label="Cancel")
         self.cancel_button.connect('clicked', self.on_button_clicked)
         self.save_button = Gtk.Button(label="Save")
@@ -270,8 +281,7 @@ class MainWindow(Gtk.Window):
         self.main_box.pack_start(self.notebook, True, True, 0)
         self.main_box.pack_end(self.action_bar, False, False, 0)
         if (getpid(PADEMELON_DAEMON_BINARY) > 0):
-            self.action_bar.pack_start(self.restart_wm_button)
-            self.action_bar.pack_start(self.restart_daemons_button)
+            self.action_bar.pack_start(self.save_reload_button)
         self.action_bar.pack_end(self.quit_button)
         self.action_bar.pack_end(self.save_button)
         self.action_bar.pack_end(self.cancel_button)
@@ -405,11 +415,8 @@ class MainWindow(Gtk.Window):
         elif source == self.lookandfeel_button:
             spawn(["lxappearance"], check_dependency=True, parent=self)
         # action bar
-        elif source == self.restart_wm_button:
-            pid = getpid(PADEMELON_DAEMON_BINARY)
-            if (pid > 0):
-                os.kill(pid, signal.SIGUSR2)
-        elif source == self.restart_daemons_button:
+        elif source == self.save_reload_button:
+            write_config(config, user_config_path('pademelon.conf'), self)
             pid = getpid(PADEMELON_DAEMON_BINARY)
             if (pid > 0):
                 os.kill(pid, signal.SIGUSR1)

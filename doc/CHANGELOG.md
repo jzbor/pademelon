@@ -4,10 +4,17 @@
 <!-- DO NOT EDIT THIS SECTION, INSTEAD RE-RUN doctoc.sh TO UPDATE -->
 **Table of Contents**
 
+- [Upcoming](#upcoming)
 - [0.3.0](#030)
 - [0.2.0](#020)
 
 <!-- END doctoc.sh generated TOC please keep comment here to allow auto update -->
+
+## Upcoming
+* Monitor plugged in keyboards to update keymap
+* Adding filemanager category
+* Improved responsiveness on canberra audio feedback
+* Adding muting to volume tool
 
 ## 0.3.0
 * Adding volume and backlight control via `pactl` and `xbacklight` (use *acpilight* to get acpi backlight support)

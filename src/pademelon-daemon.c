@@ -17,24 +17,46 @@
 
 #define CYCLE_LENGTH                2   /* seconds */
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
+#define TIMEOUT_AFTER_WM_START      3   /* seconds */
 
+static void export_applications(void);
+static void launch_wm(void);
 static void load_keyboard(void);
 static void loop(void);
 void set_application(struct category_option *co, const char *export_name);
 static void reload_config(void);
 static void setup_signals(void);
+static void shutdown_daemons(void);
 static void sigint_handler(int signal);
 static void sigusr1_handler(int signal);
 static void sigusr2_handler(int signal);
-static void startup_daemons(int initial);
+static void startup_daemons(void);
 
 static struct config *config;
 static int end = 0;
 static int ignore_wm_shutdown = 0;
 static int launch_setup = 0;
-static int restart_daemons = 0;
-static int restart_wm = 0;
+static int reload = 0;
 
+
+void export_applications(void) {
+    /* set default applications */
+    set_application(config->browser, "BROWSER");
+    set_application(config->dmenu, "DMENUCMD");
+    set_application(config->filemanager, "FILEMANAGER");
+    set_application(config->terminal, "TERMINAL");
+}
+
+static void launch_wm(void) {
+    /* start window manager */
+    if (launch_setup) {
+        char *args[] = { "/bin/sh", "-c", "pademelon-settings", NULL };
+        execvp(args[0], args);
+        exit(EXIT_FAILURE);
+    } else if (!config->no_window_manager) {
+        startup_daemon(config->window_manager);
+    }
+}
 
 void load_keyboard(void) {
     if (config->keyboard_settings) {
@@ -85,30 +107,35 @@ void loop(void) {
         }
 
 #ifdef X11
-        if (x11_screen_has_changed() || restart_wm) {
+        if (x11_screen_has_changed() || reload) {
             report(R_DEBUG, "Screen configuration has changed");
             tl_save_display_conf();
             tl_load_wallpaper();
         }
 
-        if (x11_keyboard_has_changed() || restart_wm) {
+        if (x11_keyboard_has_changed() || reload) {
             report(R_DEBUG, "Keyboard configuration has changed");
             load_keyboard();
         }
 #endif /* X11 */
 
-        if (restart_daemons) {
-            restart_daemons = 0;
-            restart_wm = 0;
+        if (reload) {
+            reload = 0;
+            /* ignore_wm_shutdown = 1; */
+
             reload_config();
-            startup_daemons(0);
-        }
-        if (restart_wm) {
-            ignore_wm_shutdown = 1;
-            restart_wm = 0;
-            reload_config();
+            shutdown_daemons();
             shutdown_daemon(config->window_manager);
+
+            /* remove wm from plist, so it pademelon does not exit */
+            pl = plist_search(NULL, config->window_manager->name);
+            if (pl)
+                plist_remove(pl->pid);
+
+            export_applications();
             startup_daemon(config->window_manager);
+            sleep(TIMEOUT_AFTER_WM_START);
+            startup_daemons();
         }
 
         sleep(CYCLE_LENGTH);
@@ -165,6 +192,21 @@ static void setup_signals(void) {
 		report(R_FATAL, "Unable to install signal handler");
 }
 
+void shutdown_daemons() {
+    /* shutdown daemons */
+    shutdown_daemon(config->compositor_daemon);
+    shutdown_daemon(config->dock_daemon);
+    shutdown_daemon(config->hotkey_daemon);
+    shutdown_daemon(config->notification_daemon);
+    shutdown_daemon(config->polkit_daemon);
+    shutdown_daemon(config->power_daemon);
+    shutdown_daemon(config->status_daemon);
+
+    /* shutdown optional daemons */
+    shutdown_optionals(config->applets);
+    shutdown_optionals(config->optional);
+}
+
 void sigint_handler(int signal) {
 	int errno_save = errno;
 
@@ -185,7 +227,7 @@ void sigusr1_handler(int signal) {
 		return;
 	}
 
-    restart_daemons = 1;
+    reload = 1;
 	errno = errno_save;
 }
 
@@ -197,49 +239,12 @@ void sigusr2_handler(int signal) {
 		return;
 	}
 
-    restart_wm = 1;
+    /* currently ignored */
+
 	errno = errno_save;
 }
 
-void startup_daemons(int initial) {
-    /* set default applications */
-    set_application(config->browser, "BROWSER");
-    set_application(config->dmenu, "DMENUCMD");
-    set_application(config->filemanager, "FILEMANAGER");
-    set_application(config->terminal, "TERMINAL");
-
-    if (initial) {
-        /* start window manager */
-        if (launch_setup) {
-            /* a = find_application("pademelon-setup", NULL, 0); */
-            /* if (a && test_application(a)) */
-            /*     launch_application(a); */
-            /* else */
-            /*     return; */
-            char *args[] = { "/bin/sh", "-c", "pademelon-settings", NULL };
-            execvp(args[0], args);
-            exit(EXIT_FAILURE);
-        } else if (!config->no_window_manager) {
-            startup_daemon(config->window_manager);
-            sleep(3);
-        }
-    }
-
-    if (!initial) {
-        /* shutdown daemons */
-        shutdown_daemon(config->compositor_daemon);
-        shutdown_daemon(config->dock_daemon);
-        shutdown_daemon(config->hotkey_daemon);
-        shutdown_daemon(config->notification_daemon);
-        shutdown_daemon(config->polkit_daemon);
-        shutdown_daemon(config->power_daemon);
-        shutdown_daemon(config->status_daemon);
-
-        /* shutdown optional daemons */
-        shutdown_optionals(config->applets);
-        shutdown_optionals(config->optional);
-    }
-
+void startup_daemons() {
     /* start daemons */
     startup_daemon(config->compositor_daemon);
     startup_daemon(config->dock_daemon);
@@ -296,7 +301,10 @@ int main(int argc, char *argv[]) {
     x11_screen_has_changed(); /* clear event queue */
     tl_load_wallpaper();
 #endif /* X11 */
-    startup_daemons(1);
+    export_applications();
+    launch_wm();
+    sleep(TIMEOUT_AFTER_WM_START);
+    startup_daemons();
     loop();
 
 #ifdef X11

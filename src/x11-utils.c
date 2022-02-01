@@ -205,8 +205,8 @@ int x11_wallpaper_all(const char *path) {
             imlib_render_image_on_drawable(crtc_info->x, crtc_info->y);
             imlib_free_image();
             imlib_context_set_image(image);
-            XRRFreeCrtcInfo(crtc_info);
         }
+        XRRFreeCrtcInfo(crtc_info);
     }
     XRRFreeScreenResources(screen_res);
 
