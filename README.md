@@ -21,11 +21,11 @@ Still one important goal of this software is to provide a desktop that works out
 ### Default software
 * **Window Manager:** MoonWM
 * **Compositor:** Picom
-* **Hotkeys:** sxhkd
 * **Notifications:** xfce4-notifyd
 * **Power Management:** xfce4-power-manager
-* **Polkit:** gnome-polkit
 * **Display Manager:** LightDM
+* **Polkit:** gnome-polkit
+* **Terminal:** XFCE4 Terminal
 
 ### Dependencies on external executables
 * **ARandR:** Configure display layouts

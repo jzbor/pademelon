@@ -5,4 +5,4 @@ category = terminal
 command = /usr/bin/xfce4-terminal
 test = test -x /usr/bin/xfce4-terminal
 settings = /usr/bin/xfce4-terminal --preferences
-default = False
+default = True

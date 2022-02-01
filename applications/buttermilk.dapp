@@ -5,4 +5,4 @@ category = terminal
 command = /usr/bin/buttermilk
 test = test -x /usr/bin/buttermilk
 settings = config://buttermilk/buttermilk.conf
-default = True
+default = False

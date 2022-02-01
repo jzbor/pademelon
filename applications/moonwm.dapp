@@ -4,4 +4,4 @@ description = jzbor's dynamic window manager
 category = window-manager
 command = /usr/bin/moonwm-utils launch-minimal
 test = test -x /usr/bin/moonwm-utils
-default = False
+default = True
