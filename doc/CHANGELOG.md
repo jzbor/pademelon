@@ -15,6 +15,8 @@
 * Adding filemanager category
 * Improved responsiveness on canberra audio feedback
 * Adding muting to volume tool
+* Change `SIGUSR1` to reloading everything
+* Ignore `SIGUSR2` for now
 
 ## 0.3.0
 * Adding volume and backlight control via `pactl` and `xbacklight` (use *acpilight* to get acpi backlight support)
