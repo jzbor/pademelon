@@ -73,3 +73,4 @@ uninstall-applications:
 uninstall-all: uninstall uninstall-applications
 
 .PHONY: all clean install install-daemons install-all uninstall uninstall-daemons uninstall-all
+.NOTPARALLEL: clean
