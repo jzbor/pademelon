@@ -107,13 +107,13 @@ void loop(void) {
         }
 
 #ifdef X11
-        if (x11_screen_has_changed() || reload) {
+        if (x11_screen_has_changed()) {
             report(R_DEBUG, "Screen configuration has changed");
             tl_save_display_conf();
             tl_load_wallpaper();
         }
 
-        if (x11_keyboard_has_changed() || reload) {
+        if (x11_keyboard_has_changed()) {
             report(R_DEBUG, "Keyboard configuration has changed");
             load_keyboard();
         }
@@ -136,6 +136,9 @@ void loop(void) {
             startup_daemon(config->window_manager);
             sleep(TIMEOUT_AFTER_WM_START);
             startup_daemons();
+
+            load_keyboard();
+            tl_load_wallpaper();
         }
 
         sleep(CYCLE_LENGTH);
