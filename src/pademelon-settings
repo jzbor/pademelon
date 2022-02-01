@@ -190,7 +190,7 @@ class Dialog():
                     transient_for = parent,
                     message_type = Gtk.MessageType.ERROR,
                     buttons = Gtk.ButtonsType.OK,
-                    text = 'Warning: Some changes might require you to log out and log back in again to have an effect.'.format(name))
+                    text = 'Warning: Some changes might require you to log out and log back in again to take effect.')
             dialog.set_title('Some changes might not be updated')
             dialog.show()
             dialog.run()
@@ -417,6 +417,7 @@ class MainWindow(Gtk.Window):
         # action bar
         elif source == self.save_reload_button:
             write_config(config, user_config_path('pademelon.conf'), self)
+            # Dialog.logout_login(self);
             pid = getpid(PADEMELON_DAEMON_BINARY)
             if (pid > 0):
                 os.kill(pid, signal.SIGUSR1)
