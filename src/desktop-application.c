@@ -485,7 +485,7 @@ int test_application(struct dapplication *application) {
     if (pid == 0) { /* child */
         char *args[] = { "/bin/sh", "-c", application->test_cmd, NULL };
         execvp(args[0], args);
-        return 0; /* exec has failed */
+        exit(EXIT_SUCCESS); /* exec has failed */
     } else if (pid > 0) { /* parent */
         /* while ((status = waitpid(pid, &wstatus, WUNTRACED|WNOHANG)) == 0) { */
         /*     sleep_remaining = sleep(sleep_remaining); */

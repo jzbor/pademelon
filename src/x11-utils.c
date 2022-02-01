@@ -143,12 +143,11 @@ int x11_wallpaper_all(const char *path) {
     XRROutputInfo *output_info;
     Display *dpy;
 
-    dpy = XOpenDisplay(NULL);
-    if (!dpy)
-        return 0;
+    dpy = display;
 
-    /* if (!display) */
-    /*     return 0; */
+    /* @TODO replace dpy with display */
+    if (!display)
+        return 0;
 
     image = imlib_load_image(path);
     if (!image)
@@ -175,7 +174,7 @@ int x11_wallpaper_all(const char *path) {
     screen_res = XRRGetScreenResources(dpy, DefaultRootWindow(dpy));
     status = 1;
     for (i = 0; i < screen_res->noutput; i++) {
-        output_info = XRRGetOutputInfo(display, screen_res, screen_res->outputs[i]);
+        output_info = XRRGetOutputInfo(dpy, screen_res, screen_res->outputs[i]);
         if (output_info == NULL || output_info->connection != RR_Connected || output_info->crtc == 0)
             continue;
         crtc_info = XRRGetCrtcInfo(dpy, screen_res, output_info->crtc);
@@ -221,7 +220,8 @@ int x11_wallpaper_all(const char *path) {
     imlib_free_color_range();
     imlib_free_image();
 
-    XCloseDisplay(dpy);
+    sleep(3);
+    /* XCloseDisplay(dpy); */
 
     return status;
 #else /* IMLIB2 */
