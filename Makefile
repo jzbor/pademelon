@@ -10,11 +10,16 @@ TOOLS_OBJ 	+= x11-utils.o
 endif # X11_SUPPORT
 
 
-
 all: pademelon-daemon pademelon-tools
 
 %.o:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+pademelon-%.1: doc/%.md
+	go-md2man -in $< -out $@
+
+pademelon.1: README.md
+	go-md2man -in $< -out $@
 
 common.o: src/common.c src/common.h src/signals.h
 cliparse.o: src/cliparse.c src/cliparse.h
@@ -36,6 +41,7 @@ pademelon-tools: $(TOOLS_OBJ)
 
 clean:
 	rm -f *.o
+	rm -f *.1
 	rm -f pademelon-daemon pademelon-tools
 
 install: pademelon-daemon pademelon-tools
@@ -48,21 +54,33 @@ install: pademelon-daemon pademelon-tools
 	sed "s/PREFIX/$(shell echo "${PREFIX}" | sed 's/\//\\\//g')/g" < pademelon.desktop > ${DESTDIR}${PREFIX}/share/xsessions/pademelon.desktop
 	sed "s/PREFIX/$(shell echo "${PREFIX}" | sed 's/\//\\\//g')/g" < pademelon-setup.desktop > ${DESTDIR}${PREFIX}/share/xsessions/pademelon-setup.desktop
 
-install-applications:
-	install -Dm644 applications/* -t ${DESTDIR}${PREFIX}/share/pademelon/applications
-
-install-all: install install-applications
-
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/pademelon-daemon ${DESTDIR}${PREFIX}/bin/pademelon-settings \
 		${DESTDIR}${PREFIX}/bin/xdg-xmenu ${DESTDIR}${PREFIX}/bin/pademelon-tools
 	rm -f ${DESTDIR}${PREFIX}/share/applications/pademelon-settings.desktop
 	rm -f ${DESTDIR}${PREFIX}/share/applications/pademelon-wallpaper.desktop
 
+install-applications:
+	install -Dm644 applications/* -t ${DESTDIR}${PREFIX}/share/pademelon/applications
+
 uninstall-applications:
 	rm -rf ${DESTDIR}${PREFIX}/share/pademelon/applications
 
-uninstall-all: uninstall uninstall-applications
+install-docs: pademelon.1 pademelon-config.1 pademelon-desktop-applications.1
+	mkdir -p ${DESTDIR}${MANPREFIX}/man1
+	sed "s/VERSION/${VERSION}/g" < pademelon.1 > ${DESTDIR}${MANPREFIX}/man1/pademelon.1
+	chmod 644 ${DESTDIR}${MANPREFIX}/man1/pademelon.1
+	install -Dm644 pademelon-config.1 pademelon-desktop-applications.1 -t ${DESTDIR}${MANPREFIX}/man1/
 
-.PHONY: all clean install install-daemons install-all uninstall uninstall-daemons uninstall-all
+uninstall-docs:
+	rm -f ${DESTDIR}${MANPREFIX}/man1/pademelon.1
+	rm -f ${DESTDIR}${MANPREFIX}/man1/pademelon-config.1
+	rm -f ${DESTDIR}${MANPREFIX}/man1/pademelon-desktop-applications.1
+
+install-all: install install-applications install-docs
+
+uninstall-all: uninstall uninstall-applications install-docs
+
+.PHONY: all clean install uninstall install-daemons uninstall-daemons install-docs uninstall-docs \
+	install-all uninstall-all
 .NOTPARALLEL: clean
