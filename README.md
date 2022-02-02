@@ -7,6 +7,9 @@ Pademelon ties together different software and tools to get a working desktop ou
 It aims to be completely modular, so you can swap out everything as you go.
 Still one important goal of this software is to provide a desktop that works out of the box - especially with window managers like DWM or i3.
 
+## What is a pademelon?
+[This.](https://en.wikipedia.org/wiki/Pademelon)
+
 ## Features
 * Launch different daemons required to get a fully working desktop
 * Graphical application for basic settings
