@@ -123,7 +123,7 @@ const struct clitool ct_select_application = {
 };
 
 CliArgument args_set_wallpaper[] = { {0} };
-CliOperand ops_set_wallpaper[] = { { ArgTypeString, OP_PATH } };
+CliOperand ops_set_wallpaper[] = { { ArgTypeString, OP_PATH }, {0} };
 const struct clitool ct_set_wallpaper = {
     .cliapp = { "set-wallpaper", "set the wallpaper" },
     .args = args_set_wallpaper,
@@ -191,9 +191,11 @@ int print_tools(void) {
 }
 
 int wr_backlight(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     ArgValue *val;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_backlight.cliapp,
             ct_backlight.args, ct_backlight.ops, &err);
     if (!status) {
@@ -202,7 +204,7 @@ int wr_backlight(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_backlight.cliapp, ct_backlight.args,
+            cli_print_usage(usage_name, ct_backlight.cliapp, ct_backlight.args,
                     ct_backlight.ops);
             return EXIT_FAILURE;
         }
@@ -219,15 +221,17 @@ int wr_backlight(int argc, char *argv[]) {
         return tl_backlight_dec(val->i);
     }
 
-    cli_print_usage(binary_name, ct_backlight.cliapp, ct_backlight.args,
+    cli_print_usage(usage_name, ct_backlight.cliapp, ct_backlight.args,
             ct_backlight.ops);
     return EXIT_FAILURE;
 }
 
 int wr_launch_application(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     OpValue *val_category;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_launch_application.cliapp,
             ct_launch_application.args, ct_launch_application.ops, &err);
     if (!status) {
@@ -236,7 +240,7 @@ int wr_launch_application(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_launch_application.cliapp, ct_launch_application.args,
+            cli_print_usage(usage_name, ct_launch_application.cliapp, ct_launch_application.args,
                     ct_launch_application.ops);
             return EXIT_FAILURE;
         }
@@ -251,10 +255,12 @@ int wr_launch_application(int argc, char *argv[]) {
 }
 
 int wr_load_display_conf(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     const char *path = NULL;
     ArgValue *val_path;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_load_display_conf.cliapp,
             ct_load_display_conf.args, ct_load_display_conf.ops, &err);
     if (!status) {
@@ -263,7 +269,7 @@ int wr_load_display_conf(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_load_display_conf.cliapp, ct_load_display_conf.args,
+            cli_print_usage(usage_name, ct_load_display_conf.cliapp, ct_load_display_conf.args,
                     ct_load_display_conf.ops);
             return EXIT_FAILURE;
         }
@@ -276,8 +282,10 @@ int wr_load_display_conf(int argc, char *argv[]) {
 }
 
 int wr_load_wallpaper(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_load_wallpaper.cliapp,
             ct_load_wallpaper.args, ct_load_wallpaper.ops, &err);
     if (!status) {
@@ -286,7 +294,7 @@ int wr_load_wallpaper(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_load_wallpaper.cliapp, ct_load_wallpaper.args,
+            cli_print_usage(usage_name, ct_load_wallpaper.cliapp, ct_load_wallpaper.args,
                     ct_load_wallpaper.ops);
             return EXIT_FAILURE;
         }
@@ -296,8 +304,10 @@ int wr_load_wallpaper(int argc, char *argv[]) {
 }
 
 int wr_print_applications(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_print_applications.cliapp,
             ct_print_applications.args, ct_print_applications.ops, &err);
     if (!status) {
@@ -306,7 +316,7 @@ int wr_print_applications(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_print_applications.cliapp, ct_print_applications.args,
+            cli_print_usage(usage_name, ct_print_applications.cliapp, ct_print_applications.args,
                     ct_print_applications.ops);
             return EXIT_FAILURE;
         }
@@ -316,8 +326,10 @@ int wr_print_applications(int argc, char *argv[]) {
 }
 
 int wr_save_display_conf(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_save_display_conf.cliapp,
             ct_save_display_conf.args, ct_save_display_conf.ops, &err);
     if (!status) {
@@ -326,7 +338,7 @@ int wr_save_display_conf(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_save_display_conf.cliapp, ct_save_display_conf.args,
+            cli_print_usage(usage_name, ct_save_display_conf.cliapp, ct_save_display_conf.args,
                     ct_save_display_conf.ops);
             return EXIT_FAILURE;
         }
@@ -336,9 +348,11 @@ int wr_save_display_conf(int argc, char *argv[]) {
 }
 
 int wr_set_wallpaper(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     OpValue *val_category;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_set_wallpaper.cliapp,
             ct_set_wallpaper.args, ct_set_wallpaper.ops, &err);
     if (!status) {
@@ -347,7 +361,7 @@ int wr_set_wallpaper(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_set_wallpaper.cliapp, ct_set_wallpaper.args,
+            cli_print_usage(usage_name, ct_set_wallpaper.cliapp, ct_set_wallpaper.args,
                     ct_set_wallpaper.ops);
             return EXIT_FAILURE;
         }
@@ -362,9 +376,11 @@ int wr_set_wallpaper(int argc, char *argv[]) {
 }
 
 int wr_select_application(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     OpValue *val_category;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_select_application.cliapp,
             ct_select_application.args, ct_select_application.ops, &err);
     if (!status) {
@@ -373,7 +389,7 @@ int wr_select_application(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_select_application.cliapp, ct_select_application.args,
+            cli_print_usage(usage_name, ct_select_application.cliapp, ct_select_application.args,
                     ct_select_application.ops);
             return EXIT_FAILURE;
         }
@@ -388,9 +404,11 @@ int wr_select_application(int argc, char *argv[]) {
 }
 
 int wr_test_application(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status;
     OpValue *val_id_name;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_test_application.cliapp,
             ct_test_application.args, ct_test_application.ops, &err);
     if (!status) {
@@ -399,7 +417,7 @@ int wr_test_application(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_test_application.cliapp, ct_test_application.args,
+            cli_print_usage(usage_name, ct_test_application.cliapp, ct_test_application.args,
                     ct_test_application.ops);
             return EXIT_FAILURE;
         }
@@ -414,9 +432,11 @@ int wr_test_application(int argc, char *argv[]) {
 }
 
 int wr_volume(int argc, char *argv[]) {
+    char usage_name[strlen(binary_name) + strlen(argv[0]) + 2];
     int status, play_sound;
     ArgValue *val;
     CliError err;
+    snprintf(usage_name, sizeof(usage_name), "%s %s", binary_name, argv[0]);
     status = cli_parse(argc, argv, ct_volume.cliapp,
             ct_volume.args, ct_volume.ops, &err);
     if (!status) {
@@ -425,7 +445,7 @@ int wr_volume(int argc, char *argv[]) {
             return EXIT_SUCCESS;
         } else {
             cli_print_error(err);
-            cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
+            cli_print_usage(usage_name, ct_volume.cliapp, ct_volume.args,
                     ct_volume.ops);
             return EXIT_FAILURE;
         }
@@ -484,7 +504,7 @@ int wr_volume(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
     } else {
-        cli_print_usage(binary_name, ct_volume.cliapp, ct_volume.args,
+        cli_print_usage(usage_name, ct_volume.cliapp, ct_volume.args,
                 ct_volume.ops);
         return EXIT_FAILURE;
     }

@@ -132,7 +132,7 @@ int x11_keyboard_has_changed(void) {
 int x11_wallpaper_all(const char *path) {
 #ifdef IMLIB2
     unsigned int dpy_width, dpy_height, new_width, new_height, uidummy;
-    int depth, color_map, screen, i, status, cache_size, idummy;
+    int depth, color_map, screen, i, status, idummy;
     double screen_ratio, image_ratio;
     Visual *vis;
     Window root, wdummy;
