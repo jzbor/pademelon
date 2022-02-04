@@ -160,8 +160,7 @@ int x11_wallpaper_all(const char *path) {
     color_map = DefaultColormap(dpy, screen);
     vis = DefaultVisual(dpy, screen);
 
-    if (XGetGeometry(dpy, root, &wdummy, &idummy, &idummy, &dpy_width, &dpy_height,
-                &uidummy, &uidummy) != Success)
+    if (!XGetGeometry(dpy, root, &wdummy, &idummy, &idummy, &dpy_width, &dpy_height, &uidummy, &uidummy))
         return 0;
     pixmap = XCreatePixmap(dpy, root, dpy_width, dpy_height, depth);
 
