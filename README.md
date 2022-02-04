@@ -17,7 +17,10 @@ Still one important goal of this software is to provide a desktop that works out
 * Modular and easily extendable concept
 * Setting and updating the wallpaper
 
-[Planned Features](doc/todo.md)
+### Features under consideration for the future
+* Wayland support
+* Application files for QT-based daemons (lxqt)
+* Support for power-profiles-daemon in `pademelon-settings`
 
 ## Dependencies
 

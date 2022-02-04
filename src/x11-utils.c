@@ -131,11 +131,11 @@ int x11_keyboard_has_changed(void) {
 
 int x11_wallpaper_all(const char *path) {
 #ifdef IMLIB2
-    int dpy_width, dpy_height, new_width, new_height;
-    int depth, color_map, screen, i, status;
+    unsigned int dpy_width, dpy_height, new_width, new_height, uidummy;
+    int depth, color_map, screen, i, status, cache_size, idummy;
     double screen_ratio, image_ratio;
     Visual *vis;
-    Window root;
+    Window root, wdummy;
     Pixmap pixmap;
     Imlib_Image image, cropped_image;
     XRRScreenResources *screen_res;
@@ -155,13 +155,14 @@ int x11_wallpaper_all(const char *path) {
 
     screen = DefaultScreen(dpy);
 
-    dpy_width = DisplayWidth(dpy, screen);
-    dpy_height = DisplayHeight(dpy, screen);
+    root = RootWindow(dpy, screen);
     depth = DefaultDepth(dpy, screen);
     color_map = DefaultColormap(dpy, screen);
     vis = DefaultVisual(dpy, screen);
 
-    root = RootWindow(dpy, screen);
+    if (XGetGeometry(dpy, root, &wdummy, &idummy, &idummy, &dpy_width, &dpy_height,
+                &uidummy, &uidummy) != Success)
+        return 0;
     pixmap = XCreatePixmap(dpy, root, dpy_width, dpy_height, depth);
 
     imlib_context_set_display(dpy);
@@ -219,9 +220,6 @@ int x11_wallpaper_all(const char *path) {
 
     imlib_free_color_range();
     imlib_free_image();
-
-    sleep(3);
-    /* XCloseDisplay(dpy); */
 
     return status;
 #else /* IMLIB2 */
