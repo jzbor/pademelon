@@ -12,15 +12,17 @@ Still one important goal of this software is to provide a desktop that works out
 
 ## Features
 * Launch different daemons required to get a fully working desktop
-* Graphical application for basic settings
+* Graphical settings application for basic setup and default applications
 * Simple, human-readable configuration files
 * Modular and easily extendable concept
-* Setting and updating the wallpaper
+* Bindings for wallpaper setting, volume and backlight
+* Save xrandr configuration and restore on restart
 
 ### Features under consideration for the future
 * Wayland support
 * Application files for QT-based daemons (lxqt)
 * Support for power-profiles-daemon in `pademelon-settings`
+* Importing of user configuration files in the form of archives
 
 ## Dependencies
 
