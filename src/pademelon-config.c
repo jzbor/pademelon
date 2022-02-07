@@ -139,14 +139,14 @@ struct config *load_config(void) {
     if (path) {
         status = ini_parse(path, &ini_config_callback, cfg);
         if (status < 0)
-            DBGPRINT("Unable to read config file: '%s'", path);
+            DBGPRINT("Unable to read config file: '%s'\n", path);
     }
     free(path);
     path = user_config_path("pademelon.conf");
     if (path) {
         status = ini_parse(path, &ini_config_callback, cfg);
         if (status < 0)
-            DBGPRINT("Unable to read config file: '%s'", path);
+            DBGPRINT("Unable to read config file: '%s'\n", path);
     }
     free(path);
 
