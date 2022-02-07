@@ -332,7 +332,7 @@ int print_application(struct dapplication *a) {
     if (a->category) {
         PRINT_PROPERTY_STR("category", a->category->name);
     } else {
-        PRINT_PROPERTY_STR("; category", category_default.name);
+        PRINT_PROPERTY_STR("; category", "unknown");
     }
     PRINT_PROPERTY_STR("command", a->launch_cmd);
     PRINT_PROPERTY_STR("test", a->test_cmd);

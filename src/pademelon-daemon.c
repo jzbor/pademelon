@@ -68,7 +68,6 @@ void load_keyboard(void) {
 }
 
 void loop(void) {
-    int temp;
     struct plist *pl;
 
     while (!end) {
@@ -84,16 +83,13 @@ void loop(void) {
             }
 
             if (WIFEXITED(pl->status)) {
-                temp = WEXITSTATUS(pl->status);
-                DBGPRINT("Process '%s' (pid: %d) exited with return code %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, temp);
+                DBGPRINT("Process '%s' (pid: %d) exited with return code %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, WEXITSTATUS(pl->status));
                 plist_remove(pl->pid);
             } else if (WIFSIGNALED(pl->status)) {
-                temp = WTERMSIG(pl->status);
-                DBGPRINT("Process '%s' (pid: %d) was terminated by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, temp);
+                DBGPRINT("Process '%s' (pid: %d) was terminated by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, WTERMSIG(pl->status));
                 plist_remove(pl->pid);
             } else if (WIFSTOPPED(pl->status)) {
-                temp = WSTOPSIG(pl->status);
-                DBGPRINT("Process '%s' (pid: %d) was stopped by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, temp);
+                DBGPRINT("Process '%s' (pid: %d) was stopped by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, WSTOPSIG(pl->status));
             } else if (WIFCONTINUED(pl->status)) {
                 DBGPRINT("Process '%s' (pid: %d) was continued\n", ((struct dapplication*) pl->content)->id_name, pl->pid);
             }
