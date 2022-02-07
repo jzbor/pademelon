@@ -85,36 +85,29 @@ void loop(void) {
 
             if (WIFEXITED(pl->status)) {
                 temp = WEXITSTATUS(pl->status);
-                report_value(R_DEBUG, "Process exited", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belonged to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
-                report_value(R_DEBUG, "Exit status", &temp, R_INTEGER);
+                DBGPRINT("Process '%s' (pid: %d) exited with return code %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, temp);
                 plist_remove(pl->pid);
             } else if (WIFSIGNALED(pl->status)) {
                 temp = WTERMSIG(pl->status);
-                report_value(R_DEBUG, "Process terminated", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belonged to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
-                report_value(R_DEBUG, "Terminated by signal", &temp, R_INTEGER);
+                DBGPRINT("Process '%s' (pid: %d) was terminated by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, temp);
                 plist_remove(pl->pid);
             } else if (WIFSTOPPED(pl->status)) {
                 temp = WSTOPSIG(pl->status);
-                report_value(R_DEBUG, "Process stopped", &pl->pid, R_INTEGER);
-                report_value(R_DEBUG, "Process belongs to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
-                report_value(R_DEBUG, "Stopped by", &temp, R_INTEGER);
+                DBGPRINT("Process '%s' (pid: %d) was stopped by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, temp);
             } else if (WIFCONTINUED(pl->status)) {
-                report_value(R_DEBUG, "Process belongs to daemon", ((struct dapplication*) pl->content)->id_name, R_STRING);
-                report_value(R_DEBUG, "Process continued", &pl->pid, R_INTEGER);
+                DBGPRINT("Process '%s' (pid: %d) was continued\n", ((struct dapplication*) pl->content)->id_name, pl->pid);
             }
         }
 
 #ifdef X11
         if (x11_screen_has_changed()) {
-            report(R_DEBUG, "Screen configuration has changed");
+            DBGPRINT("%s\n", "Screen configuration has changed");
             tl_save_display_conf();
             tl_load_wallpaper();
         }
 
         if (x11_keyboard_has_changed()) {
-            report(R_DEBUG, "Keyboard configuration has changed");
+            DBGPRINT("%s\n", "Keyboard configuration has changed");
             load_keyboard();
         }
 #endif /* X11 */
@@ -168,31 +161,31 @@ static void setup_signals(void) {
 
     /* handle SIGCHLD */
     if (!install_plist_sigchld_handler())
-		report(R_FATAL, "Unable to install plist sigchld handler");
+		die("Unable to install plist sigchld handler");
 
     /* handle SIGINT */
 	status = sigfillset(&sigaction_sigint_handler.sa_mask); // @TODO do I have to block anything here?
 	if (status == -1)
-		report(R_FATAL, "Unable to clear out a sigset");
+		die("Unable to clear out a sigset");
 	status = sigaction(SIGINT, &sigaction_sigint_handler, NULL);
 	if (status == -1)
-		report(R_FATAL, "Unable to install signal handler");
+		die("Unable to install signal handler");
 
     /* handle SIGUSR1 */
 	status = sigfillset(&sigaction_sigusr1_handler.sa_mask); // @TODO do I have to block anything here?
 	if (status == -1)
-		report(R_FATAL, "Unable to clear out a sigset");
+		die("Unable to clear out a sigset");
 	status = sigaction(SIGUSR1, &sigaction_sigusr1_handler, NULL);
 	if (status == -1)
-		report(R_FATAL, "Unable to install signal handler");
+		die("Unable to install signal handler");
 
     /* handle SIGUSR2 */
 	status = sigfillset(&sigaction_sigusr2_handler.sa_mask); // @TODO do I have to block anything here?
 	if (status == -1)
-		report(R_FATAL, "Unable to clear out a sigset");
+		die("Unable to clear out a sigset");
 	status = sigaction(SIGUSR2, &sigaction_sigusr2_handler, NULL);
 	if (status == -1)
-		report(R_FATAL, "Unable to install signal handler");
+		die("Unable to install signal handler");
 }
 
 void shutdown_daemons() {
@@ -280,14 +273,14 @@ int main(int argc, char *argv[]) {
             launch_setup = 1;
         } else if (strcmp(argv[i], "--window-manager") == 0 || strcmp(argv[i], "-w") == 0) {
             if (!argv[i + 1])
-                report(R_FATAL, "Not enough arguments for --window-manager");
+                die("Not enough arguments for --window-manager");
             free(config->window_manager);
             config->window_manager->user_preference = strdup(argv[++i]);
             if (!config->window_manager)
-                report(R_FATAL, "Unable to allocate memory for settings");
+                die("Unable to allocate memory for settings");
         } else {
             if (printf("Usage: %s [--no-window-manager] [--window-manager <window-manager>] [--setup]\n", argv[0]) < 0)
-                report(R_FATAL, "Unable to write to stderr");
+                die("Unable to write to stderr");
         }
     }
 

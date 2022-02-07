@@ -59,13 +59,13 @@ void add_to_category(const char *name, struct dapplication *a) {
     if (a->category == NULL) {
         c = malloc(sizeof(struct dcategory));
         if (!c)
-            report(R_FATAL, "Unable to allocate enough memory for new category");
+            die("Unable to allocate enough memory for new category");
         memcpy(c, &category_default, sizeof(category_default));
 
         /* set name and add to lists */
         c->name = strdup(name);
         if (!c->name) {
-            report(R_FATAL, "Unable to allocate space for new category name");
+            die("Unable to allocate space for new category name");
         }
         c->applications = a;
         c->next = categories;
@@ -106,13 +106,13 @@ struct dapplication *find_application(const char *id_name, const char *category,
     if (!a && init_if_not_found) {
         a = malloc(sizeof(struct dapplication));
         if (!a)
-            report(R_FATAL, "Unable to allocate enough memory for new application");
+            die("Unable to allocate enough memory for new application");
         memcpy(a, &application_default, sizeof(application_default));
 
         /* set name and add to lists */
         a->id_name = strdup(id_name);
         if (!a->id_name) {
-            report(R_FATAL, "Unable to allocate space for new desktop id_name");
+            die("Unable to allocate space for new desktop id_name");
         }
         a->next = applications;
         applications = a;
@@ -182,7 +182,7 @@ int ini_application_callback(void* user, const char* section, const char* name, 
     if (write_to_str) {
         *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
         if (!*write_to_str)
-            report(R_FATAL, "Unable to allocate memory for application attribute");
+            die("Unable to allocate memory for application attribute");
         strcpy(*write_to_str, value);
         return 1;
     }
@@ -224,7 +224,8 @@ void launch_application(struct dapplication *application) {
     } else if (pid > 0) { /* parent */
         plist_add(pid, application);
     } else {
-        report(R_FATAL, "Unable to fork into a new process");
+        /* @TODO do we really want do die here? */
+        die("Unable to fork into a new process");
     }
     unblock_signal(SIGCHLD);
 }
@@ -283,7 +284,7 @@ void load_applications_from_dir(const char *dir) {
 
         /* ignore files with an inappropriate ending */
         if (!STR_ENDS_WITH(diriter->d_name, APPLICATION_FILE_ENDING)) {
-            report_value(R_DEBUG, "Not a desktop application file", diriter->d_name, R_STRING);
+            DBGPRINT("Not a desktop application file: %s\n", diriter->d_name);
             continue;
         }
 
@@ -291,7 +292,7 @@ void load_applications_from_dir(const char *dir) {
         char subpath[strlen(dir) + strlen("/") + strlen(diriter->d_name) + 1];
         status = snprintf(subpath, sizeof(subpath), "%s/%s", dir, diriter->d_name);
         if (status < 0)
-            report(R_FATAL, "Unable to print path to variable on the stack");
+            die("Unable to print path to variable on the stack");
 
         /* check if path is actually a regular file */
         status = stat(subpath, &filestats);
@@ -313,7 +314,7 @@ void load_applications_from_dir(const char *dir) {
 
     status = closedir(directory);
     if (status)
-        report(R_FATAL, "Unable to close directory");
+        DBGPRINT("%s\n", "Unable to close directory");
 }
 
 int print_application(struct dapplication *a) {
@@ -418,7 +419,7 @@ void shutdown_optionals(struct category_option *co) {
     if (c && co->user_preference) {
         s = strdup(co->user_preference);
         if (!s)
-            report(R_FATAL, "Unable to allocate memory for optional daemons");
+            die("Unable to allocate memory for optional daemons");
         for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
             pl = plist_search(token, NULL);
             if (!pl)
@@ -459,7 +460,7 @@ void startup_optionals(struct category_option *co) {
     if (c && co->user_preference) {
         s = strdup(co->user_preference);
         if (!s)
-            report(R_FATAL, "Unable to allocate memory for optional daemons");
+            die("Unable to allocate memory for optional daemons");
         for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
             d = find_application(token, co->name, 0);
             if (d && test_application(d))

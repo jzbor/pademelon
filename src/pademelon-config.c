@@ -65,7 +65,7 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         if (co && strcmp(CONFIG_SECTION_DAEMONS, co->section) == 0) {
             co->user_preference = realloc(co->user_preference, sizeof(char) * (strlen(value) + 1));
             if (!co->user_preference)
-                report(R_FATAL, "Unable to allocate memory for config");
+                die("Unable to allocate memory for config");
             strcpy(co->user_preference, value);
             return 1;
         }
@@ -84,7 +84,7 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         if (co && strcmp(CONFIG_SECTION_APPLICATIONS, co->section) == 0) {
             co->user_preference = realloc(co->user_preference, sizeof(char) * (strlen(value) + 1));
             if (!co->user_preference)
-                report(R_FATAL, "Unable to allocate memory for config");
+                die("Unable to allocate memory for config");
             strcpy(co->user_preference, value);
             return 1;
         }
@@ -96,7 +96,7 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         if (write_to_str) {
             *write_to_str = realloc(*write_to_str, sizeof(char) * (strlen(value) + 1));
             if (!*write_to_str)
-                report(R_FATAL, "Unable to allocate memory for config");
+                die("Unable to allocate memory for config");
             strcpy(*write_to_str, value);
             return 1;
         }

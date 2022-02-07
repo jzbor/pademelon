@@ -67,7 +67,7 @@ struct plist *plist_add(pid_t pid, void *content) {
     /* create new element */
     new_element = calloc(1, sizeof(struct plist));
     if (!new_element)
-        report(R_FATAL, "Unable to allocate memory for plist");
+        die("Unable to allocate memory for plist");
     new_element->pid = pid;
     new_element->content = content;
 
