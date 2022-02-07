@@ -131,10 +131,11 @@ int x11_keyboard_has_changed(void) {
 int x11_wallpaper_all(const char *path) {
 #ifdef IMLIB2
     unsigned int dpy_width, dpy_height, new_width, new_height, uidummy;
-    int depth, color_map, screen, i, status, idummy;
+    int depth, screen, i, status, idummy;
     double screen_ratio, image_ratio;
     Visual *vis;
     Window root, wdummy;
+    Colormap color_map;
     Pixmap pixmap;
     Imlib_Image image, cropped_image;
     XRRScreenResources *screen_res;
@@ -161,7 +162,7 @@ int x11_wallpaper_all(const char *path) {
 
     if (!XGetGeometry(dpy, root, &wdummy, &idummy, &idummy, &dpy_width, &dpy_height, &uidummy, &uidummy))
         return 0;
-    pixmap = XCreatePixmap(dpy, root, dpy_width, dpy_height, depth);
+    pixmap = XCreatePixmap(dpy, root, dpy_width, dpy_height, (unsigned int) depth);
 
     imlib_context_set_display(dpy);
     imlib_context_set_visual(vis);
@@ -181,19 +182,21 @@ int x11_wallpaper_all(const char *path) {
             screen_ratio = ((double) crtc_info->width) / ((double) crtc_info->height);
             image_ratio = ((double) imlib_image_get_width()) / ((double) imlib_image_get_height());
             if (image_ratio < screen_ratio) {
-                new_height = (int) ((((double) imlib_image_get_width()) * ((double) crtc_info->height)) / ((double) crtc_info->width));
-                cropped_image = imlib_create_cropped_scaled_image(0, (imlib_image_get_height() - new_height) / 2,
-                        imlib_image_get_width(), new_height,
-                        crtc_info->width, crtc_info->height);
+                new_height = (unsigned int) ((((double) imlib_image_get_width()) * ((double) crtc_info->height)) / ((double) crtc_info->width));
+                cropped_image = imlib_create_cropped_scaled_image(
+                        0, (imlib_image_get_height() - ((int) new_height)) / 2,
+                        imlib_image_get_width(), (int) new_height,
+                        (int) crtc_info->width, (int) crtc_info->height);
             } else if (image_ratio > screen_ratio) {
-                new_width = (int) ((((double) imlib_image_get_height()) * ((double) crtc_info->width)) / ((double) crtc_info->height));
-                cropped_image = imlib_create_cropped_scaled_image((imlib_image_get_width() - new_width) / 2, 0,
-                        new_width, imlib_image_get_height(),
-                        crtc_info->width, crtc_info->height);
+                new_width = (unsigned int) ((((double) imlib_image_get_height()) * ((double) crtc_info->width)) / ((double) crtc_info->height));
+                cropped_image = imlib_create_cropped_scaled_image(
+                        (imlib_image_get_width() - ((int) new_width)) / 2, 0,
+                        (int) new_width, imlib_image_get_height(),
+                        (int) crtc_info->width, (int) crtc_info->height);
             } else {
                 cropped_image = imlib_create_cropped_scaled_image(0, 0,
                         imlib_image_get_width(), imlib_image_get_height(),
-                        crtc_info->width, crtc_info->height);
+                        (int) crtc_info->width, (int) crtc_info->height);
             }
 
             if (!cropped_image)

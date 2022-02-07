@@ -52,7 +52,7 @@ int cli_parse(int argc, char *argv[], CliApplication cli_application, CliArgumen
         return 0;
 
     /* init argv_used */
-    memset(argv_used, 0, sizeof(int) * argc);
+    memset(argv_used, 0, sizeof(int) * (long unsigned int) argc);
     argv_used[0] = 1; /* binary name */
 
     /* get argument and operand count */
@@ -230,7 +230,7 @@ int str_to_int(const char *str, int *integer) {
     int val;
     errno = 0;
     ltemp = strtol(str, &endptr, 0);
-    val = ltemp;
+    val = (int) ltemp;
     if (val != ltemp || (ltemp == 0 && errno != 0) || str == endptr || (*endptr) != '\0') {
         return 0;
     }

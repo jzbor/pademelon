@@ -60,7 +60,7 @@ int str_to_int(const char *str, int *integer) {
     int val;
     errno = 0;
     ltemp = strtol(str, &endptr, 0);
-    val = ltemp;
+    val = (int) ltemp;
     if (val != ltemp || (ltemp == 0 && errno != 0) || str == endptr || (*endptr) != '\0') {
         return 0;
     }

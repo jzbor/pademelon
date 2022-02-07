@@ -4,7 +4,7 @@ CC 			= gcc
 EXTRAFLAGS 	= -g -Wshadow -Wformat=2 -Wconversion -Wextra
 CPPFLAGS	=
 # CFLAGS 		= -std=c11 -pedantic -Wall -Wextra -Wshadow -Wconversion -Wformat=2 -D_XOPEN_SOURCE=700
-CFLAGS 		= -std=c11 -pedantic -Wall -Wshadow -D_XOPEN_SOURCE=700
+CFLAGS 		= -std=c11 -pedantic -Wall -Wshadow -Wconversion -D_XOPEN_SOURCE=700
 LDFLAGS		=
 
 # additional cflags
