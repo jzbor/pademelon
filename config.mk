@@ -3,9 +3,17 @@ VERSION = 0.3.0
 CC 			= gcc
 EXTRAFLAGS 	= -g -Wshadow -Wformat=2 -Wconversion -Wextra
 CPPFLAGS	=
-CFLAGS 		= -g -std=c11 -pedantic -Wall -Werror -Wno-error=unused-function -Wno-error=unused-label \
-		 	  -Wno-error=unused-value -Wno-error=unused-variable -D_XOPEN_SOURCE=700
+# CFLAGS 		= -std=c11 -pedantic -Wall -Wextra -Wshadow -Wconversion -Wformat=2 -D_XOPEN_SOURCE=700
+CFLAGS 		= -std=c11 -pedantic -Wall -D_XOPEN_SOURCE=700
 LDFLAGS		=
+
+# additional cflags
+ifeq ($(DEBUG),1)
+	CFLAGS += -g -DDEBUG
+else
+	CFLAGS += -O3
+endif
+
 
 # paths
 PREFIX		= /usr/local
