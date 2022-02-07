@@ -17,39 +17,39 @@ static void reset_root_atoms(Display *display, Window root, Pixmap pixmap);
 static Display *display = NULL;
 static int x11_initialized = 0;
 
-void reset_root_atoms(Display *display, Window root, Pixmap pixmap) {
+void reset_root_atoms(Display *dpy, Window root, Pixmap pixmap) {
     Atom atom_root, atom_eroot, type;
     unsigned char *data_root, *data_eroot;
     int format;
     unsigned long length, after;
 
-    atom_root = XInternAtom(display, "_XROOTMAP_ID", True);
-    atom_eroot = XInternAtom(display, "ESETROOT_PMAP_ID", True);
+    atom_root = XInternAtom(dpy, "_XROOTMAP_ID", True);
+    atom_eroot = XInternAtom(dpy, "ESETROOT_PMAP_ID", True);
 
     // doing this to clean up after old background
     if (atom_root != None && atom_eroot != None) {
-        XGetWindowProperty(display, root, atom_root, 0L, 1L, False,
+        XGetWindowProperty(dpy, root, atom_root, 0L, 1L, False,
                 AnyPropertyType, &type, &format, &length, &after,
                 &data_root);
 
         if (type == XA_PIXMAP) {
-            XGetWindowProperty(display, root, atom_eroot, 0L, 1L, False,
+            XGetWindowProperty(dpy, root, atom_eroot, 0L, 1L, False,
                     AnyPropertyType, &type, &format, &length, &after,
                     &data_eroot);
 
             if (data_root && data_eroot && type == XA_PIXMAP &&
                     *((Pixmap *)data_root) == *((Pixmap *)data_eroot))
-                XKillClient(display, *((Pixmap *)data_root));
+                XKillClient(dpy, *((Pixmap *)data_root));
         }
     }
 
-    atom_root = XInternAtom(display, "_XROOTPMAP_ID", False);
-    atom_eroot = XInternAtom(display, "ESETROOT_PMAP_ID", False);
+    atom_root = XInternAtom(dpy, "_XROOTPMAP_ID", False);
+    atom_eroot = XInternAtom(dpy, "ESETROOT_PMAP_ID", False);
 
     // setting new background atoms
-    XChangeProperty(display, root, atom_root, XA_PIXMAP, 32,
+    XChangeProperty(dpy, root, atom_root, XA_PIXMAP, 32,
             PropModeReplace, (unsigned char *)&pixmap, 1);
-    XChangeProperty(display, root, atom_eroot, XA_PIXMAP, 32,
+    XChangeProperty(dpy, root, atom_eroot, XA_PIXMAP, 32,
             PropModeReplace, (unsigned char *)&pixmap, 1);
 }
 
