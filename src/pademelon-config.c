@@ -102,7 +102,7 @@ int ini_config_callback(void* user, const char* section, const char* name, const
         }
     }
 
-    report_value(R_WARNING, "Unknown key", name, R_STRING);
+    DBGPRINT("Unknown config key: '%s'\n", name);
     return 1;
 }
 
@@ -139,14 +139,14 @@ struct config *load_config(void) {
     if (path) {
         status = ini_parse(path, &ini_config_callback, cfg);
         if (status < 0)
-            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
+            DBGPRINT("Unable to read config file: '%s'", path);
     }
     free(path);
     path = user_config_path("pademelon.conf");
     if (path) {
         status = ini_parse(path, &ini_config_callback, cfg);
         if (status < 0)
-            report_value(R_WARNING, "Unable to read config file", path, R_STRING);
+            DBGPRINT("Unable to read config file: '%s'", path);
     }
     free(path);
 

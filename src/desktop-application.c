@@ -202,7 +202,8 @@ int ini_application_callback(void* user, const char* section, const char* name, 
         return 1;
     }
 
-    report_value(R_WARNING, "Unknown key", name, R_STRING);
+    if (fprintf(stderr, "WARNING: Unknown key '%s'\n", name) < 0)
+        DBGPRINT("%s\n", "Unable to print to stderr");
     return 1;
 }
 
@@ -219,7 +220,8 @@ void launch_application(struct dapplication *application) {
         unblock_signal(SIGCHLD);
         char *args[] = { "/bin/sh", "-c", application->launch_cmd, NULL };
         execvp(args[0], args);
-        report_value(R_ERROR, "Unable to launch application", application->launch_cmd, R_STRING);
+        if (fprintf(stderr, "WARNING: Unable to launch application '%s'\n", application->launch_cmd) < 0)
+            DBGPRINT("%s\n", "Unable to print to stderr");
         exit(EXIT_FAILURE);
     } else if (pid > 0) { /* parent */
         plist_add(pid, application);
@@ -271,7 +273,7 @@ void load_applications_from_dir(const char *dir) {
     /* open directory for iteration */
     directory = opendir(dir);
     if (directory == NULL) {
-        report_value(R_WARNING, "Unable to load applications from the following directory", dir, R_STRING);
+        DBGPRINT("Unable to launch applications from directory '%s'\n", dir);
         return;
     }
 
@@ -297,19 +299,22 @@ void load_applications_from_dir(const char *dir) {
         /* check if path is actually a regular file */
         status = stat(subpath, &filestats);
         if (status) {
-            report(R_ERROR, "Unable to get file stats for potential application config file");
+            if (fprintf(stderr, "ERROR: Unable to get file stats for potential application config file '%s'\n", subpath) < 0)
+                DBGPRINT("%s\n", "Unable to print to stderr");
             continue;
         } else if (!S_ISREG(filestats.st_mode))
             continue;
 
         status = ini_parse(subpath, &ini_application_callback, NULL);
-        if (status < 0)
-            report_value(R_ERROR, "An error occurred while reading desktop application file", subpath, R_STRING);
+        if (status < 0) {
+            if (fprintf(stderr, "ERROR: An error occurred while reading desktop application file '%s'\n", subpath) < 0)
+                DBGPRINT("%s\n", "Unable to print to stderr");
+        }
     }
 
     if (errno != 0) {
-        report_value(R_ERROR, "An error was encountered while iterating through the following directory",
-                dir, R_STRING);
+        if (fprintf(stderr, "ERROR: An error was encountered while iterating through directory '%s'\n", dir) < 0);
+        DBGPRINT("%s\n", "Unable to print to stderr");
     }
 
     status = closedir(directory);
@@ -365,13 +370,15 @@ struct dapplication *select_application(struct category_option *co) {
     } else if (!co->fallback) {
         return NULL;
     } else if (co->user_preference) {
-        report_value(R_WARNING, "Preferred application not found - using fallback", co->user_preference, R_STRING);
+        if (fprintf(stderr, "Preferred application not found: '%s' (using fallback)", co->user_preference) < 0)
+            DBGPRINT("%s\n", "Unable to print to stderr");
     }
 
     /* preference was not found */
     c = find_category(co->name);
     if (!c) {
-        report_value(R_WARNING, "Unable to launch application - category empty", co->name, R_STRING);
+        if (fprintf(stderr, "WARNING: Unable to launch application - category '%s' is empty\n", co->name) < 0)
+            DBGPRINT("%s\n", "Unable to print to stderr");
         return NULL;
     }
 

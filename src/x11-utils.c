@@ -1,6 +1,5 @@
 #ifdef X11
 
-#include "common.h"
 #include "x11-utils.h"
 #ifdef IMLIB2
 #include <Imlib2.h>
@@ -64,7 +63,7 @@ int x11_init(void) {
     /* open x11 display */
     display = XOpenDisplay(NULL);
     if (!display) {
-        report(R_ERROR, "Unable to open X11 display");
+        fprintf(stderr, "ERROR: Unable to open X11 display\n");
         return 0;
     }
 
