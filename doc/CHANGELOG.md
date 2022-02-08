@@ -4,13 +4,13 @@
 <!-- DO NOT EDIT THIS SECTION, INSTEAD RE-RUN doctoc.sh TO UPDATE -->
 **Table of Contents**
 
-- [Upcoming](#upcoming)
+- [1.0.0](#100)
 - [0.3.0](#030)
 - [0.2.0](#020)
 
 <!-- END doctoc.sh generated TOC please keep comment here to allow auto update -->
 
-## Upcoming
+## 1.0.0
 * Monitor plugged in keyboards to update keymap
 * Adding muting to volume tool
 * Change `SIGUSR1` to reloading everything

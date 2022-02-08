@@ -280,12 +280,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* MoonWM workaround */
-    if (setenv("MOONWM_NO_AUTOSTART", "1", 1) == -1)
-        die("Unable to set environment variable");
-    if (setenv("MOONWM_NO_STATUS", "1", 1) == -1)
-        die("Unable to set environment variable");
-
 #ifdef X11
     x11_init();
     load_keyboard();
