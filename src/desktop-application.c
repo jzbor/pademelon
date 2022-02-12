@@ -75,7 +75,13 @@ void add_to_category(const char *name, struct dapplication *a) {
 }
 
 int export_application(struct dapplication *application, const char *name) {
-    return setenv(name, application->launch_cmd, 0);
+    if ((!getenv(name))
+            || (application->category && application->category->exported)) {
+        if (application->category)
+            application->category->exported = 1;
+        return setenv(name, application->launch_cmd, 1);
+    }
+    return 1;
 }
 
 struct dcategory *get_categories(void) {

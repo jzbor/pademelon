@@ -15,6 +15,7 @@ struct dapplication {
 };
 
 struct dcategory { /* linked list with applications in category */
+    int exported;
     char *name;
     struct dapplication *applications;
     struct dcategory *next;
