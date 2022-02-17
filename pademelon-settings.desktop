@@ -4,6 +4,7 @@ TryExec=pademelon-settings
 Exec=pademelon-settings
 Terminal=false
 Categories=Settings;
+Icon=settings
 
 Name=Pademelon Settings
 GenericName=Settings
