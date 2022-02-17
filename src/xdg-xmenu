@@ -166,7 +166,7 @@ def load_desktop_file(filepath):
     application = {}
     for line in file.readlines():
         try:
-            key, value = line.strip().split('=', 2)
+            key, value = line.strip().split('=', 1)
             # cancel before additional options are added
             if key in application:
                 break
