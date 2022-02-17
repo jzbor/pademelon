@@ -4,11 +4,16 @@
 <!-- DO NOT EDIT THIS SECTION, INSTEAD RE-RUN doctoc.sh TO UPDATE -->
 **Table of Contents**
 
+- [1.0.1](#101)
 - [1.0.0](#100)
 - [0.3.0](#030)
 - [0.2.0](#020)
 
 <!-- END doctoc.sh generated TOC please keep comment here to allow auto update -->
+
+## 1.0.1
+* Improving desktop entries
+* Re-export settings if set through pademelon-daemon
 
 ## 1.0.0
 * Monitor plugged in keyboards to update keymap
