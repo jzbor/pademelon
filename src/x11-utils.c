@@ -131,7 +131,7 @@ int x11_keyboard_has_changed(void) {
 int x11_wallpaper_all(const char *path) {
 #ifdef IMLIB2
     unsigned int dpy_width, dpy_height, new_width, new_height, uidummy;
-    int depth, screen, i, status, idummy;
+    int depth, screen, i, status, idummy, cache_size;
     double screen_ratio, image_ratio;
     Visual *vis;
     Window root, wdummy;
@@ -221,6 +221,11 @@ int x11_wallpaper_all(const char *path) {
 
     imlib_free_color_range();
     imlib_free_image();
+
+    /* drop imlib2 cache */
+    cache_size = imlib_get_font_cache_size();
+    imlib_set_cache_size(0);
+    imlib_set_cache_size(cache_size);
 
     return status;
 #else /* IMLIB2 */
