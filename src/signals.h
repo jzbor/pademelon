@@ -18,6 +18,8 @@ struct plist *plist_add(pid_t pid, void *content);
 void plist_free(void);
 struct plist *plist_get(pid_t pid);
 struct plist *plist_next_event(struct plist *from);
+struct plist *plist_peek(void);
+struct plist *plist_pop(void);
 void plist_remove(pid_t pid);
 struct plist *plist_search(char *id_name, char *category);
 void plist_wait(struct plist *pl, long timeout_milli);

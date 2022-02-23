@@ -405,6 +405,21 @@ struct dapplication *select_application(struct category_option *co) {
     return NULL;
 }
 
+void shutdown_all_daemons(void) {
+    struct plist *pl;
+    while ((pl = plist_peek())) {
+        if (kill(pl->pid, SIGTERM) == -1) {
+            plist_pop();
+            continue;
+        }
+        plist_wait(pl, 1000);
+        if (!pl->status_changed) {
+            kill(pl->pid, SIGKILL);
+        }
+        plist_pop();
+    }
+}
+
 void shutdown_daemon(struct category_option *co) {
     struct plist *pl;
     pl = plist_search(NULL, co->name);
@@ -415,9 +430,9 @@ void shutdown_daemon(struct category_option *co) {
         return;
     plist_wait(pl, 1000);
     if (!pl->status_changed) {
-        if (kill(pl->pid, SIGKILL) == -1)
-            return;
+        kill(pl->pid, SIGKILL);
     }
+    plist_remove(pl->pid);
 }
 
 void shutdown_optionals(struct category_option *co) {

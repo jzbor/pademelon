@@ -166,6 +166,9 @@ static void setup_signals(void) {
 	status = sigaction(SIGINT, &sigaction_sigint_handler, NULL);
 	if (status == -1)
 		die("Unable to install signal handler");
+	status = sigaction(SIGTERM, &sigaction_sigint_handler, NULL);
+	if (status == -1)
+		die("Unable to install signal handler");
 
     /* handle SIGUSR1 */
 	status = sigfillset(&sigaction_sigusr1_handler.sa_mask); // @TODO do I have to block anything here?
@@ -293,6 +296,7 @@ int main(int argc, char *argv[]) {
     startup_daemons();
     loop();
 
+    shutdown_all_daemons();
 #ifdef X11
     x11_deinit();
 #endif /* X11 */

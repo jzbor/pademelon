@@ -121,21 +121,33 @@ void plist_free(void) {
         plist_remove(plist_head->pid);
 }
 
+struct plist *plist_peek(void) {
+    return plist_head;
+}
+
+struct plist *plist_pop(void) {
+    struct plist *pl_remove = NULL;
+    pl_remove = plist_head;
+    if (plist_head)
+        plist_head = plist_head->next;
+    return pl_remove;
+}
+
 void plist_remove(pid_t pid) {
-    struct plist *pl, *pl_delete = NULL;
+    struct plist *pl, *pl_remove = NULL;
 
     block_signal(SIGCHLD);
 
     /* check if head matches */
     if (plist_head->pid == pid) {
-        pl_delete = plist_head;
-        plist_head = pl_delete->next;
+        pl_remove = plist_head;
+        plist_head = pl_remove->next;
     } else {
         /* search for the entry before pid */
         for (pl = plist_head; pl && pl->next; pl = pl->next) {
             if (pl->next->pid == pid) {
-                pl_delete = pl->next;
-                pl->next = pl_delete->next;
+                pl_remove = pl->next;
+                pl->next = pl_remove->next;
                 break;
             }
         }
@@ -144,7 +156,7 @@ void plist_remove(pid_t pid) {
     unblock_signal(SIGCHLD);
 
     /* free item (NULL anyway if not found) */
-    free(pl_delete);
+    free(pl_remove);
 }
 
 struct plist *plist_search(char *id_name, char *category) {
@@ -190,7 +202,7 @@ void plist_sigchld_handler(int signal) {
 
 void plist_wait(struct plist *pl, long timeout_milli) {
     int status;
-    struct timespec ts = { .tv_sec = 0, .tv_nsec = timeout_milli + 1000 };
+    struct timespec ts = { .tv_sec = 0, .tv_nsec = timeout_milli * 1000 };
     while (!pl->status_changed) {
         status = nanosleep(&ts, &ts);
         if (status == 0 /* time elapsed */
