@@ -57,7 +57,7 @@ void add_to_category(const char *name, struct dapplication *a) {
 
     /* create category - it does not exist yet */
     if (a->category == NULL) {
-        c = malloc(sizeof(struct dcategory));
+        c = calloc(1, sizeof(struct dcategory));
         if (!c)
             die("Unable to allocate enough memory for new category");
         memcpy(c, &category_default, sizeof(category_default));
@@ -110,7 +110,7 @@ struct dapplication *find_application(const char *id_name, const char *category,
 
     /* application with this id_name doesn't exist yet */
     if (!a && init_if_not_found) {
-        a = malloc(sizeof(struct dapplication));
+        a = calloc(1, sizeof(struct dapplication));
         if (!a)
             die("Unable to allocate enough memory for new application");
         memcpy(a, &application_default, sizeof(application_default));
