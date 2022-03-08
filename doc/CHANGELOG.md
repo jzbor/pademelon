@@ -4,12 +4,18 @@
 <!-- DO NOT EDIT THIS SECTION, INSTEAD RE-RUN doctoc.sh TO UPDATE -->
 **Table of Contents**
 
+- [1.0.2](#102)
 - [1.0.1](#101)
 - [1.0.0](#100)
 - [0.3.0](#030)
 - [0.2.0](#020)
 
 <!-- END doctoc.sh generated TOC please keep comment here to allow auto update -->
+
+## 1.0.2
+* Properly terminating applications on exit
+* Reduce memory consumption by dropping image cache
+* Fixing bug in xdg-xmenu
 
 ## 1.0.1
 * Improving desktop entries

@@ -1,4 +1,4 @@
-VERSION = 1.0.1
+VERSION = 1.0.2
 
 CC 			= gcc
 EXTRAFLAGS 	= -g -Wshadow -Wformat=2 -Wconversion -Wextra
