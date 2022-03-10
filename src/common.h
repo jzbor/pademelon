@@ -26,6 +26,8 @@ void die(const char *msg);
 /* returns -1 on error, return code else */
 int execute(const char *command);
 
+void init_user_data_path(void);
+
 int str_to_int(const char *str, int *integer);
 
 /*

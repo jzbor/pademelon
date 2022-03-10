@@ -220,6 +220,8 @@ int tl_save_display_conf(void) {
     if (!path)
         return EXIT_FAILURE;
 
+    init_user_data_path();
+
     char temp[strlen(UNXRANDR_CMD) + strlen(" > ") + strlen(path) + 1];
     strcpy(temp, UNXRANDR_CMD);
     strcat(temp, " > ");
