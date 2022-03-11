@@ -227,10 +227,15 @@ int tl_save_display_conf(void) {
     strcat(temp, " > ");
     strcat(temp, path);
     status = execute(temp);
-    if (WIFEXITED(status))
+    if (WIFEXITED(status)) {
+        if (WEXITSTATUS(status) == 0) {
+            if (chmod(path, S_IRWXU) == -1)
+                return EXIT_FAILURE;
+        }
         return WEXITSTATUS(status);
-    else
-        return EXIT_SUCCESS;
+    } else {
+        return EXIT_FAILURE;
+    }
 }
 
 int tl_select_application(const char *category) {

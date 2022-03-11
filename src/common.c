@@ -66,7 +66,6 @@ void init_user_data_path(void) {
         char path[strlen(xdg_data) + strlen(name) + 2];
         if(sprintf(path, "%s/%s", xdg_data, name) < 0)
             die("Unable to configure user data dir");
-        fprintf(stderr, "Creating data dir: %s\n", path);
         mkdir(path, S_IRWXU);
     } else {
         if (!(home = getenv("HOME")))
@@ -76,7 +75,6 @@ void init_user_data_path(void) {
             die("Unable to configure user data dir");
         strcat(path, "/");
         strcat(path, name);
-        fprintf(stderr, "Creating data dir: %s\n", path);
         mkdir(path, S_IRWXU);
     }
 }
