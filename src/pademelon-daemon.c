@@ -17,7 +17,7 @@
 
 #define CYCLE_LENGTH                2   /* seconds */
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
-#define TIMEOUT_AFTER_WM_START      3   /* seconds */
+#define TIMEOUT_AFTER_WM_START      0   /* seconds */
 
 static void export_applications(void);
 static void launch_wm(void);
@@ -283,6 +283,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    export_applications();
+    launch_wm();
 #ifdef X11
     x11_init();
     load_keyboard();
@@ -290,8 +292,6 @@ int main(int argc, char *argv[]) {
     x11_screen_has_changed(); /* clear event queue */
     tl_load_wallpaper();
 #endif /* X11 */
-    export_applications();
-    launch_wm();
     sleep(TIMEOUT_AFTER_WM_START);
     startup_daemons();
     loop();
