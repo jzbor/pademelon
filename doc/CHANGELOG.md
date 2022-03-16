@@ -4,6 +4,7 @@
 <!-- DO NOT EDIT THIS SECTION, INSTEAD RE-RUN doctoc.sh TO UPDATE -->
 **Table of Contents**
 
+- [1.0.4](#104)
 - [1.0.3](#103)
 - [1.0.2](#102)
 - [1.0.1](#101)
@@ -12,6 +13,10 @@
 - [0.2.0](#020)
 
 <!-- END doctoc.sh generated TOC please keep comment here to allow auto update -->
+
+## 1.0.4
+* Fixing permissions for saved display configuration
+* Speeding up launching by setting wallpaper after launching WM
 
 ## 1.0.3
 * Fixing data dir not getting created for tl_save_display_conf
