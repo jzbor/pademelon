@@ -31,7 +31,7 @@ Pademelon makes use of the following categories as listed in the XDG Desktop Men
 `WebBrowser`, `TerminalEmulator`,`FileManager`
 
 Additionally pademelon introduces the following categories:
-`HotkeyDaemon`, `X11Compositor`, `NotificationDeamon`, `Polkit`, `PowerManager`, `Dock` (`Status`, `Panel`)
+`HotkeyDaemon`, `X11Compositor`, `NotificationDaemon`, `Polkit`, `PowerManager`, `Dock` (`Status`, `Panel`), `AppLauncher`
 
 ## Todo
 * How to handle window managers?
