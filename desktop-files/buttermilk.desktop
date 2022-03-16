@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Buttermilk Terminal
+Comment=A basic personal terminal emulator based on VTE
+Categories=TerminalEmulator
+Exec=/usr/bin/buttermilk
+TryExec=/usr/bin/buttermilk
+X-Pademelon-Settings=config://buttermilk/buttermilk.conf

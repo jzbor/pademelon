@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=XFCE4 Notification Daemon
+Comment=Notification daemon for the Xfce desktop
+Categories=NotificationDaemon
+Exec=/usr/lib/xfce4/notifyd/xfce4-notifyd
+TryExec=/usr/lib/xfce4/notifyd/xfce4-notifyd
+X-Pademelon-Settings=/usr/bin/xfce4-notifyd-config

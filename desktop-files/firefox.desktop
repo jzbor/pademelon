@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Firefox
+Comment=Standalone web browser from mozilla.org
+Categories=WebBrowser
+Exec=/usr/bin/firefox
+TryExec=/usr/bin/firefox
+X-Pademelon-Settings=/usr/bin/firefox --preferences

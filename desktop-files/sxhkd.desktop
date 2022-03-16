@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Sxhkd
+Comment=Simple X hotkey daemon
+Categories=HotkeyDaemon
+Exec=/usr/bin/sxhkd
+TryExec=/usr/bin/sxhkd
+X-Pademelon-Settings=config://sxhkd/sxhkdrc

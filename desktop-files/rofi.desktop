@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Rofi
+Comment=A window switcher, application launcher and dmenu replacement
+Categories=AppLauncher
+Exec=/usr/bin/rofi -show drun
+TryExec=/usr/bin/rofi

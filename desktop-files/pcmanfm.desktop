@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=PCManFM
+Comment=Extremely fast and lightweight file manager
+Categories=FileManager
+Exec=/usr/bin/pcmanfm
+TryExec=/usr/bin/pcmanfm
+X-Pademelon-Settings=/usr/bin/pcmanfm --show-pref=1

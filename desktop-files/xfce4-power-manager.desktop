@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=XFCE4 Power Manager
+Comment=Power manager for the Xfce desktop
+Categories=PowerManager
+Exec=/usr/bin/xfce4-power-manager
+TryExec=/usr/bin/xfce4-power-manager
+X-Pademelon-Settings=/usr/bin/xfce4-power-manager-settings
