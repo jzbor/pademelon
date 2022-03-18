@@ -28,10 +28,10 @@ Pademelon also extends the specification by the following values to fit its need
 ## Categories
 
 Pademelon makes use of the following categories as listed in the XDG Desktop Menu Specification:
-`WebBrowser`, `TerminalEmulator`,`FileManager`
+`WebBrowser`, `TerminalEmulator`, `FileManager`, `Applet` (`TrayIcon`)
 
 Additionally pademelon introduces the following categories:
-`HotkeyDaemon`, `X11Compositor`, `NotificationDaemon`, `Polkit`, `PowerManager`, `Dock` (`Status`, `Panel`), `AppLauncher`
+`HotkeyDaemon`, `X11Compositor`, `NotificationDaemon`, `Polkit`, `PowerManager`, `Dock`, `Status`, (`Panel`), `AppLauncher`, `Autostart`
 
 ## Todo
 * How to handle window managers?

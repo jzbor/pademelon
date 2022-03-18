@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 #ifdef DEBUG
-#define DBGPRINT(fmt, ...) do { \
-    fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); \
-        } while (0)
+#define DBGPRINT(...) \
+        do { fprintf(stderr, "%s:%d:%s(): ",__FILE__, __LINE__, __func__);\
+             fprintf(stderr, __VA_ARGS__); } while (0)
 #else /* DEBUG */
 #define DBGPRINT(fmt, ...) do {} while (0)
 #endif /* DEBUG */

@@ -15,32 +15,15 @@ struct cmapping {
 };
 
 
-static struct dcategory *parse_categories(const char *string);
 static int desktop_file_callback(void* user, const char* section, const char* name, const char* value);
+static struct dcategory *parse_categories(const char *string);
 
-
-struct cmapping cmappings[] = {
-    { "WebBrowser",             "browser" },
-    { "TerminalEmulator",       "terminal" },
-    { "FileManager",            "filemanager" },
-    { "HotkeyDaemon",           "hotkeys" },
-    { "X11Compositor",          "compositor" },
-    { "NotificationDeamon",     "notifications" },
-    { "Polkit",                 "polkit" },
-    { "PowerManager",           "power" },
-    { "Dock",                   "dock" },
-    { "Status",                 "status" },
-    { "Panel",                  "status" },
-    { NULL,                     NULL },
-};
 
 char **desktop_entry_dirs(void) {
     /* @TODO add user and xdg directories */
     static char *dirs[] = {
         "/usr/local/share/pademelon/applications",
         "/usr/share/pademelon/applications",
-        "/usr/local/share/applications",
-        "/usr/share/applications",
         NULL,
     };
 
@@ -60,7 +43,7 @@ int desktop_file_callback(void* user, const char* section, const char* name, con
     else if (strcmp(name, "Comment") == 0)
         write_to_str = &app->desc;
     else if (strcmp(name, "Exec") == 0)
-        write_to_str = &app->desc;
+        write_to_str = &app->launch_cmd;
     /* @TODO implement TryExec */
     else if (strcmp(name, "X-Pademelon-Settings") == 0)
         write_to_str = &app->settings;
@@ -84,19 +67,21 @@ int desktop_file_callback(void* user, const char* section, const char* name, con
 
 struct dapplication *application_by_category(const char *category) {
     int i, status;
-    char *filename;
     char **dirs;
     DIR *directory;
     struct dapplication *app;
     struct dirent *diriter;
     struct stat filestats = {0};
 
+    if (!category)
+        return NULL;
+
     dirs = desktop_entry_dirs();
     for (i = 0; dirs[i]; i++) {
         /* open directory for iteration */
         directory = opendir(dirs[i]);
         if (directory == NULL) {
-            DBGPRINT("Unable to launch applications from directory '%s'\n", dir);
+            DBGPRINT("Unable to launch applications from directory '%s'\n", dirs[i]);
             continue;
         }
 
@@ -131,8 +116,8 @@ struct dapplication *application_by_category(const char *category) {
                 continue;
 
             app = parse_desktop_file(subpath, diriter->d_name);
-            if (!app || !app->category || !app->category
-                    || strcmp(app->category->name, category) != 0) {
+            if (!app || !app->category || !app->category->xdg_name
+                    || strcmp(app->category->xdg_name, category) != 0) {
                 free_application(app);
                 continue;
             } else {
@@ -150,14 +135,12 @@ struct dapplication *application_by_category(const char *category) {
         status = closedir(directory);
         if (status)
             DBGPRINT("%s\n", "Unable to close directory");
-
-        return NULL;
     }
+    return NULL;
 }
 
 struct dapplication *application_by_name(const char *name, const char *expected_category) {
     int i, status;
-    char *filename;
     char **dirs;
     struct dapplication *app;
     struct stat filestats = {0};
@@ -180,23 +163,23 @@ struct dapplication *application_by_name(const char *name, const char *expected_
         /* check if path is actually a regular file */
         status = stat(filename, &filestats);
         if (status) {
-            DBGPRINT("ERROR: Unable to get file stats for potential application config file '%s'\n", subpath);
+            DBGPRINT("ERROR: Unable to get file stats for potential application config file '%s'\n", filepath);
             continue;
         } else if (!S_ISREG(filestats.st_mode))
             continue;
 
         app = parse_desktop_file(filepath, filename);
-        if (!app || (expected_category && (!app->category || strcmp(expected_category, app->category->name) != 0))) {
+        if (!app || (expected_category && (!app->category || strcmp(expected_category, app->category->xdg_name) != 0))) {
             free_application(app);
             continue;
         } else {
             return app;
         }
     }
+    return NULL;
 }
 
 struct dcategory *parse_categories(const char *string) {
-    int i;
     char *current;
     char *token_string = strdup(string);
     if (!token_string) {
@@ -208,11 +191,12 @@ struct dcategory *parse_categories(const char *string) {
     if (!current)
         return NULL;
     do {
-        for (i = 0; cmappings[i].xdg_name; i++) {
-            if (strcmp(cmappings[i].xdg_name, current) == 0) {
-                return find_category(cmappings[i].internal_name);
-            }
-        }
+        if (strcmp(string, "TrayIcon") == 0)
+            return find_category("Applet");
+        else if (strcmp(string, "Panel") == 0)
+            return find_category("Status");
+        else
+            return find_category(current);
     } while ((current = strtok(NULL, ";")));
 
     return NULL;
@@ -220,7 +204,7 @@ struct dcategory *parse_categories(const char *string) {
 
 struct dapplication *parse_desktop_file(const char *filepath, const char *filename) {
     int status;
-    char *temp;
+    DBGPRINT("parsing file '%s'\n", filepath);
     struct dapplication *app = calloc(1, sizeof(struct dapplication));
     if (!app)
         return NULL;
@@ -236,7 +220,7 @@ struct dapplication *parse_desktop_file(const char *filepath, const char *filena
         return NULL;
     }
 
-    app->id_name[strlen(app->id_name) - strlen(".desktop")] == '\0';
+    app->id_name[strlen(app->id_name) - strlen(".desktop")] = '\0';
 
     status = ini_parse(filepath, &desktop_file_callback, (void *) app);
     if (status < 0) {

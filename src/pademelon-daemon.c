@@ -23,7 +23,7 @@ static void export_applications(void);
 static void launch_wm(void);
 static void load_keyboard(void);
 static void loop(void);
-void set_application(struct category_option *co, const char *export_name);
+void set_application(struct dcategory *c, const char *export_name);
 static void reload_config(void);
 static void setup_signals(void);
 static void shutdown_daemons(void);
@@ -134,10 +134,11 @@ void loop(void) {
     }
 }
 
-void set_application(struct category_option *co, const char *export_name) {
-    struct dapplication *a = select_application(co);
-    if (a && test_application(a))
-        export_application(a, export_name);
+void set_application(struct dcategory *c, const char *export_name) {
+    if (!export_name || !c || !c->selected_application)
+        return;
+    else if (c->selected_application && test_application(c->selected_application))
+        export_application(c->selected_application, export_name);
 }
 
 void reload_config(void) {
@@ -302,6 +303,5 @@ int main(int argc, char *argv[]) {
 #endif /* X11 */
     plist_free();
     free_config(config);
-    free_applications();
     free_categories();
 }

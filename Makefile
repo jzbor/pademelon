@@ -1,8 +1,8 @@
 include config.mk
 
 # VPATH		= src
-DAEMON_OBJ	= common.o desktop-application.o pademelon-daemon.o pademelon-config.o tools.o signals.o
-TOOLS_OBJ	= pademelon-tools.o tools.o common.o signals.o desktop-application.o pademelon-config.o cliparse.o
+DAEMON_OBJ	= common.o desktop-application.o pademelon-daemon.o pademelon-config.o tools.o signals.o desktop-files.o
+TOOLS_OBJ	= pademelon-tools.o tools.o common.o signals.o desktop-application.o pademelon-config.o cliparse.o desktop-files.o
 
 ifdef X11_SUPPORT
 DAEMON_OBJ 	+= x11-utils.o
@@ -23,12 +23,13 @@ pademelon.1: README.md
 
 common.o: src/common.c src/common.h src/signals.h
 cliparse.o: src/cliparse.c src/cliparse.h
-desktop-application.o: src/desktop-application.c src/desktop-application.h src/common.h src/signals.h src/pademelon-config.h
+desktop-application.o: src/desktop-application.c src/desktop-application.h src/common.h src/signals.h src/desktop-files.h
+desktop-files.o: src/desktop-files.c src/desktop-files.h
 pademelon-daemon.o: src/pademelon-daemon.c src/pademelon-config.h src/common.h src/tools.h src/signals.h
-pademelon-config.o: src/pademelon-config.c src/common.h
+pademelon-config.o: src/pademelon-config.c src/common.h src/desktop-application.h
 pademelon-tools.o: src/pademelon-tools.c src/tools.h src/x11-utils.h src/cliparse.h
 signals.o: src/signals.c src/signals.h src/common.h src/desktop-application.h
-tools.o: src/tools.c src/common.h src/x11-utils.h src/desktop-application.h
+tools.o: src/tools.c src/common.h src/x11-utils.h src/desktop-application.h src/desktop-files.h
 
 x11-utils.o: src/x11-utils.c src/x11-utils.h src/common.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@

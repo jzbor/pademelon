@@ -1,5 +1,6 @@
 #include "common.h"
 #include "desktop-application.h"
+#include "desktop-files.h"
 #include "tools.h"
 #ifdef X11
 #include "x11-utils.h"
@@ -116,8 +117,7 @@ int tl_backlight_set(int percentage) {
 }
 
 int tl_launch_application(const char *category) {
-    struct dapplication *a;
-    struct category_option *c;
+    struct dcategory *c;
     struct config *cfg;
 
     if (!category) {
@@ -132,19 +132,18 @@ int tl_launch_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    c = get_category_option(category);
+    c = find_category(category);
     if (!c) {
         fprintf(stderr, "select-application: category not found\n");
         return EXIT_FAILURE;
     }
 
-    a = select_application(c);
-    if (!a) {
+    if (!c->selected_application) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
     }
 
-    launch_application(a);
+    launch_application(c->selected_application);
     return EXIT_SUCCESS;
 }
 
@@ -192,15 +191,20 @@ int tl_load_wallpaper(void) {
 }
 
 int tl_print_applications(void) {
+    int i;
     struct dcategory *c;
+    struct config *cfg;
+
+    cfg = load_config();
+    if (!cfg) {
+        fprintf(stderr, "select-application: unable to load config\n");
+        return EXIT_FAILURE;
+    }
 
     load_applications();
 
-    if (printf("These are the available categories ([d]efault, [a]vailable):\n\n") < 0)
-        return EXIT_FAILURE;
-
-    for (c = get_categories(); c; c = c->next) {
-        if (print_category(c) < 0)
+    for (i = 0, c = get_categories(); c[i].name; i++) {
+        if (print_category(&c[i]) < 0)
             return EXIT_FAILURE;
         if (printf("\n") < 0)
             return EXIT_FAILURE;
@@ -208,7 +212,7 @@ int tl_print_applications(void) {
     if (fflush(stdout) == EOF)
         return EXIT_FAILURE;
 
-    free_applications();
+    free_categories();
 
     return EXIT_SUCCESS;
 }
@@ -239,8 +243,7 @@ int tl_save_display_conf(void) {
 }
 
 int tl_select_application(const char *category) {
-    struct dapplication *a;
-    struct category_option *c;
+    struct dcategory *c;
     struct config *cfg;
 
     if (!category) {
@@ -255,19 +258,18 @@ int tl_select_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    c = get_category_option(category);
+    c = find_category(category);
     if (!c) {
         fprintf(stderr, "select-application: category not found\n");
         return EXIT_FAILURE;
     }
 
-    a = select_application(c);
-    if (!a) {
+    if (!c->selected_application) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
     }
 
-    if (printf("%s\n", a->id_name) < 0) {
+    if (printf("%s\n", c->selected_application->id_name) < 0) {
         perror("select-application: unable to write to stdout");
         return EXIT_FAILURE;
     }
@@ -276,7 +278,7 @@ int tl_select_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    free_applications();
+    free_categories();
     free_config(cfg);
 
     return EXIT_SUCCESS;
@@ -362,23 +364,14 @@ int tl_set_wallpaper(const char *input_path) {
 }
 
 int print_category(struct dcategory *c) {
-    int status, tested;
-    struct dapplication *d;
+    int status;
     status = printf("%s:\n", c->name);
     if (status < 0)
         return -1;
-    for (d = c->applications; d; d = d->cnext) {
-        status = printf("%s", d->id_name);
-        if (status < 0) return -1;
-        tested = test_application(d);
-        if (d->cdefault || tested) {
-            status = printf("(%s%s)", d->cdefault ? "d" : "", tested ? "a" : "");
-            if (status < 0) return -1;
-        }
-        status = printf(" -> ");
-        if (status < 0) return -1;
-    }
-    status = printf("%p\n", NULL);
+    status = printf("\tuser config: %s\n", c->user_preference);
+    if (status < 0)
+        return -1;
+    status = printf("\tselected application: %s\n", c->selected_application ? c->selected_application->id_name : "null");
     if (status < 0)
         return -1;
     return 0;
@@ -407,7 +400,7 @@ int tl_test_application(const char *id_name) {
     }
 
     load_applications();
-    a = find_application(id_name, NULL, 0);
+    a = application_by_name(id_name, NULL);
     if (!a) {
         fprintf(stderr, "test-application: application not found\n");
         return EXIT_FAILURE;
@@ -425,7 +418,7 @@ int tl_test_application(const char *id_name) {
         return EXIT_FAILURE;
     }
 
-    free_applications();
+    free_categories();
 }
 
 int tl_volume_dec(int percentage, int play_sound) {

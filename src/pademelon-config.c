@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pademelon-config.h"
+#include "desktop-application.h"
 #include <ini.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,64 +13,27 @@
 
 static inline int IS_TRUE(const char *s)       { return strcmp(s, "True") == 0 || strcmp(s, "true") == 0 || strcmp(s, "1") == 0; }
 
-static struct category_option category_options[] = {
-    /* CONFIG_SECTION_DAEMONS */
-    { .name = "window-manager",     .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
-    { .name = "compositor",         .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
-    { .name = "dock",               .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
-    { .name = "hotkeys",            .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
-    { .name = "notifications",      .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
-    { .name = "polkit",             .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
-    { .name = "power",              .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
-    { .name = "status",             .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
-    /* the "special ones" */
-    { .name = "applets",            .section = CONFIG_SECTION_DAEMONS, .optional = 1 },
-    { .name = "optional",           .section = CONFIG_SECTION_DAEMONS, .optional = 1 },
-
-    /* CONFIG_SECTION_APPLICATIONS */
-    { .name = "browser",            .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
-    { .name = "dmenu",              .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
-    { .name = "filemanager",        .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
-    { .name = "terminal",           .section = CONFIG_SECTION_APPLICATIONS, .fallback = 1 },
-    { .name = NULL },
-};
-
 
 void free_config(struct config *cfg) {
-    int i;
-    for (i = 0; category_options[i].name; i++) {
-        free(category_options[i].user_preference);
-    }
-
     free(cfg->keyboard_settings);
     free(cfg);
 }
 
-struct category_option *get_category_option(const char *cname) {
-    int i;
-    for (i = 0; category_options[i].name; i++) {
-        if (strcmp(category_options[i].name, cname) == 0)
-            return &category_options[i];
-    }
-    return NULL;
-}
-
 int ini_config_callback(void* user, const char* section, const char* name, const char* value) {
     struct config *cfg = (struct config *) user;
-    struct category_option *co;
+    struct dcategory *c;
     char **write_to_str = NULL;
     int *write_to_int = NULL;
 
     if (strcmp(section, CONFIG_SECTION_DAEMONS) == 0) {
-        co = get_category_option(name);
-        if (co && strcmp(CONFIG_SECTION_DAEMONS, co->section) == 0) {
-            co->user_preference = realloc(co->user_preference, sizeof(char) * (strlen(value) + 1));
-            if (!co->user_preference)
+        c = find_category(name);
+        if (c && strcmp(CONFIG_SECTION_DAEMONS, c->section) == 0) {
+            c->user_preference = realloc(c->user_preference, sizeof(char) * (strlen(value) + 1));
+            if (!c->user_preference)
                 die("Unable to allocate memory for config");
-            strcpy(co->user_preference, value);
+            strcpy(c->user_preference, value);
             return 1;
         }
-
 
         /* boolean attributes */
         if (strcmp(name, "no-window-manager") == 0)
@@ -80,12 +44,12 @@ int ini_config_callback(void* user, const char* section, const char* name, const
             return 1;
         }
     } else if (strcmp(section, CONFIG_SECTION_APPLICATIONS) == 0) {
-        co = get_category_option(name);
-        if (co && strcmp(CONFIG_SECTION_APPLICATIONS, co->section) == 0) {
-            co->user_preference = realloc(co->user_preference, sizeof(char) * (strlen(value) + 1));
-            if (!co->user_preference)
+        c = find_category(name);
+        if (c && strcmp(CONFIG_SECTION_APPLICATIONS, c->section) == 0) {
+            c->user_preference = realloc(c->user_preference, sizeof(char) * (strlen(value) + 1));
+            if (!c->user_preference)
                 die("Unable to allocate memory for config");
-            strcpy(co->user_preference, value);
+            strcpy(c->user_preference, value);
             return 1;
         }
     } else if (strcmp(section, CONFIG_SECTION_INPUT) == 0) {
@@ -119,21 +83,21 @@ struct config *load_config(void) {
 
     /* add category options */
     /* CONFIG_SECTION_DAEMONS */
-    cfg->window_manager         = get_category_option("window-manager");
-    cfg->compositor_daemon      = get_category_option("compositor");
-    cfg->dock_daemon            = get_category_option("dock");
-    cfg->hotkey_daemon          = get_category_option("hotkeys");
-    cfg->notification_daemon    = get_category_option("notifications");
-    cfg->polkit_daemon          = get_category_option("polkit");
-    cfg->power_daemon           = get_category_option("power");
-    cfg->status_daemon          = get_category_option("status");
-    cfg->applets                = get_category_option("applets");
-    cfg->optional               = get_category_option("optional");
+    cfg->window_manager         = find_category("window-manager");
+    cfg->compositor_daemon      = find_category("compositor");
+    cfg->dock_daemon            = find_category("dock");
+    cfg->hotkey_daemon          = find_category("hotkeys");
+    cfg->notification_daemon    = find_category("notifications");
+    cfg->polkit_daemon          = find_category("polkit");
+    cfg->power_daemon           = find_category("power");
+    cfg->status_daemon          = find_category("status");
+    cfg->applets                = find_category("applets");
+    cfg->optional               = find_category("optional");
     /* CONFIG_SECTION_APPLICATIONS */
-    cfg->browser                = get_category_option("browser");
-    cfg->dmenu                  = get_category_option("dmenu");
-    cfg->filemanager            = get_category_option("filemanager");
-    cfg->terminal               = get_category_option("terminal");
+    cfg->browser                = find_category("browser");
+    cfg->dmenu                  = find_category("dmenu");
+    cfg->filemanager            = find_category("filemanager");
+    cfg->terminal               = find_category("terminal");
 
     path = system_config_path("pademelon.conf");
     if (path) {

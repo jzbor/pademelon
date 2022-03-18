@@ -10,35 +10,28 @@
 struct config {
     /* CONFIG_SECTION_DAEMONS */
     int no_window_manager;
-    struct category_option *window_manager;
-    struct category_option *compositor_daemon;
-    struct category_option *dock_daemon;
-    struct category_option *hotkey_daemon;
-    struct category_option *notification_daemon;
-    struct category_option *polkit_daemon;
-    struct category_option *power_daemon;
-    struct category_option *status_daemon;
-    struct category_option *applets;
-    struct category_option *optional;
+    struct dcategory *window_manager;
+    struct dcategory *compositor_daemon;
+    struct dcategory *dock_daemon;
+    struct dcategory *hotkey_daemon;
+    struct dcategory *notification_daemon;
+    struct dcategory *polkit_daemon;
+    struct dcategory *power_daemon;
+    struct dcategory *status_daemon;
+    struct dcategory *applets;
+    struct dcategory *optional;
 
     /* CONFIG_SECTION_APPLICATIONS */
-    struct category_option *browser;
-    struct category_option *dmenu;
-    struct category_option *filemanager;
-    struct category_option *terminal;
+    struct dcategory *browser;
+    struct dcategory *dmenu;
+    struct dcategory *filemanager;
+    struct dcategory *terminal;
 
     /* CONFIG_SECTION_INPUT */
     char *keyboard_settings;
 };
 
-struct category_option {
-    int fallback, optional;
-    char *name, *section, *user_preference;
-};
-
-
 void free_config(struct config *cfg);
-struct category_option *get_category_option(const char *cname);
 int ini_config_callback(void* user, const char* section, const char* name, const char* value);
 struct config *init_config(void);
 struct config *load_config(void);
