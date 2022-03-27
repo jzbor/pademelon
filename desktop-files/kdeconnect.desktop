@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=KDE Connect
+Comment=Adds communication between your computer and your smartphone
+Categories=TrayIcon
+Exec=/usr/bin/kdeconnect-indicator
+TryExec=/usr/bin/kdeconnect-indicator
+X-Pademelon-Settings=/usr/bin/kdeconnect-settings

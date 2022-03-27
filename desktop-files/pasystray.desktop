@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=PulseAudio System Tray
+Comment=System Tray Icon for Audio Control
+Categories=TerminalEmulator
+Exec=/usr/bin/pasystray
+TryExec=/usr/bin/pasystray
+

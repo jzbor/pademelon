@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=UXTerm
+Comment=Unicode X Terminal Emulator
+Categories=TerminalEmulator
+Exec=/usr/bin/uxterm
+TryExec=/usr/bin/uxterm
+

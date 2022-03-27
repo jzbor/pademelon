@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Alacritty
+Comment=Cross-platform, GPU-accelerated terminal emulator
+Categories=TerminalEmulator
+Exec=/usr/bin/alacritty
+TryExec=/usr/bin/alacritty
+X-Pademelon-Settings=config://alacritty/alacritty.yml

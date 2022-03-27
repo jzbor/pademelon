@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=MATE Power Manager
+Comment=Mate's Power Manager
+Categories=PowerManager
+Exec=/usr/bin/mate-power-manager
+TryExec=/usr/bin/mate-power-manager
+X-Pademelon-Settings=/usr/bin/mate-power-preferences
+

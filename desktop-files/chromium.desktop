@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Chromium
+Comment=A web browser built for speed, simplicity, and security
+Categories=WebBrowser
+Exec=/usr/bin/chromium
+TryExec=/usr/bin/chromium

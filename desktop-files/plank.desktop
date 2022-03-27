@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Plank
+Comment=Elegant, simple, clean dock
+Categories=Dock
+Exec=/usr/bin/plank
+TryExec=/usr/bin/plank
+X-Pademelon-Settings=/usr/bin/plank --preferences
+

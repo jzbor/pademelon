@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=dmenu
+Comment=Generic menu for X
+Categories=AppLauncher
+Exec=/usr/bin/dmenu_run
+TryExec=/usr/bin/dmenu_run
+

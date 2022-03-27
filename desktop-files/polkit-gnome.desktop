@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Polkit (GNOME)
+Comment=Legacy polkit authentication agent for GNOME
+Categories=Polkit
+Exec=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+TryExec=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1

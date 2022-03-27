@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Tint2
+Comment=Basic, good-looking task manager for WMs
+Categories=Dock
+Exec=/usr/bin/tint2
+TryExec=/usr/bin/tint2
+

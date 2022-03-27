@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Cairo Dock
+Comment=Light eye-candy fully themable animated dock
+Categories=Dock
+Exec=/usr/bin/cairo-dock
+TryExec=/usr/bin/cairo-dock

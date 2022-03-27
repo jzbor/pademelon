@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Picom
+Comment=X compositor that may fix tearing issues
+Categories=X11Compositor
+Exec=/usr/bin/picom
+TryExec=/usr/bin/picom
+X-Pademelon-Settings=config://picom.conf
+

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Network Manager Applet
+Comment=Applet for managing network connections
+Categories=TrayIcon
+Exec=/usr/bin/nm-applet
+TryExec=/usr/bin/nm-applet
+

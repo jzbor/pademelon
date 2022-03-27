@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=XFCE4's Terminal Emulator
+Comment=A modern terminal emulator primarily for the Xfce desktop environment
+Categories=TerminalEmulator
+Exec=/usr/bin/xfce4-terminal
+TryExec=/usr/bin/xfce4-terminal
+X-Pademelon-Settings=/usr/bin/xfce4-terminal --preferences
+

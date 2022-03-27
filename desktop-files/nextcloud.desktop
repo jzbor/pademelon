@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Nextcloud
+Comment=Nextcloud desktop client
+Categories=TrayIcon
+Exec=/usr/bin/nextcloud --background
+TryExec=/usr/bin/nextcloud
+

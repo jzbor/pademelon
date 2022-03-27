@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Mate Notification Daemon
+Comment=Notification daemon for MATE
+Categories=NotificationDaemon
+Exec=/usr/lib/mate-notification-daemon/mate-notification-daemon
+TryExec=/usr/lib/mate-notification-daemon/mate-notification-daemon
+X-Pademelon-Settings=/usr/bin/mate-notification-properties
+

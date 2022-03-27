@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Dunst
+Comment=A customizable and lightweight notification-daemon
+Categories=NotificationDaemon
+Exec=/usr/bin/dunst
+TryExec=/usr/bin/dunst
+X-Pademelon-Settings=config://dunst/dunstrc
+

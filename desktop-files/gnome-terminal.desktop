@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=GNOME Terminal
+Comment=The GNOME Terminal Emulator
+Categories=TerminalEmulator
+Exec=/usr/bin/gnome-terminal
+TryExec=/usr/bin/gnome-terminal
+X-Pademelon-Settings=/usr/bin/gnome-terminal --preferences
+

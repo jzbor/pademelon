@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=MoonWM's Status Script
+Comment=Periodically pushes a status to WM_NAME
+Categories=Status
+Exec=/usr/bin/moonwm-status
+TryExec=/usr/bin/moonwm-status
+

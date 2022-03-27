@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Nautilus Filemanager
+Comment=Default file manager for GNOME
+Categories=FileManager
+Exec=/usr/bin/nautilus
+TryExec=/usr/bin/nautilus
+

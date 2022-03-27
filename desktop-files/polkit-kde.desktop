@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Polkit (KDE)
+Comment=Daemon providing a polkit authentication UI for KDE
+Categories=Polkit
+Exec=/usr/lib/polkit-kde-authentication-agent-1
+TryExec=/usr/lib/polkit-kde-authentication-agent-1
+

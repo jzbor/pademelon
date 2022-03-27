@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Touchegg (Server)
+Comment=Multitouch gesture recognizer (Server)
+Categories=Autostart
+Exec=pidof touchegg || rm -f ~/.config/touchegg/.touchegg.lock; /usr/bin/touchegg --daemon $TOUCHEGG_THRESHOLD
+TryExec=/usr/bin/touchegg
+

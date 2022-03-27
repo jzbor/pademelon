@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Touchegg (Client)
+Comment=Multitouch gesture recognizer (Client)
+Categories=Autostart
+Exec=sleep 2 && /usr/bin/touchegg --client
+TryExec=/usr/bin/touchegg
+X-Pademelon-Settings=config://touchegg/touchegg.conf
+
