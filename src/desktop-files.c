@@ -22,10 +22,15 @@ static struct dcategory *parse_categories(const char *string);
 char **desktop_entry_dirs(void) {
     /* @TODO add user and xdg directories */
     static char *dirs[] = {
+        NULL,
         "/usr/local/share/pademelon/applications",
         "/usr/share/pademelon/applications",
         NULL,
     };
+
+    if (!dirs[0]) {
+        dirs[0] = user_data_path("applications");
+    }
 
     return dirs;
 }
@@ -94,7 +99,7 @@ struct dapplication *application_by_category(const char *category) {
 
             /* ignore files with an inappropriate ending */
             if (!STR_ENDS_WITH(diriter->d_name, DESKTOP_FILE_ENDING)) {
-                DBGPRINT("Not a desktop application file: %s\n", diriter->d_name);
+                /* DBGPRINT("Not a desktop application file: %s\n", diriter->d_name); */
                 continue;
             }
 
@@ -163,7 +168,7 @@ struct dapplication *application_by_name(const char *name, const char *expected_
         /* check if path is actually a regular file */
         status = stat(filename, &filestats);
         if (status) {
-            DBGPRINT("ERROR: Unable to get file stats for potential application config file '%s'\n", filepath);
+            /* DBGPRINT("ERROR: Unable to get file stats for potential application config file '%s'\n", filepath); */
             continue;
         } else if (!S_ISREG(filestats.st_mode))
             continue;
@@ -180,6 +185,7 @@ struct dapplication *application_by_name(const char *name, const char *expected_
 }
 
 struct dcategory *parse_categories(const char *string) {
+    struct dcategory *d;
     char *current;
     char *token_string = strdup(string);
     if (!token_string) {
@@ -192,11 +198,14 @@ struct dcategory *parse_categories(const char *string) {
         return NULL;
     do {
         if (strcmp(string, "TrayIcon") == 0)
-            return find_category("Applet");
+            d = find_category("Applet");
         else if (strcmp(string, "Panel") == 0)
-            return find_category("Status");
+            d = find_category("Status");
         else
-            return find_category(current);
+            d = find_category(current);
+
+        if (d)
+            return d;
     } while ((current = strtok(NULL, ";")));
 
     return NULL;
