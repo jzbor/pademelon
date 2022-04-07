@@ -4,6 +4,7 @@
 #include "signals.h"
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <ini.h>
 #include <signal.h>
 #include <stdio.h>
@@ -91,6 +92,7 @@ void free_categories(void) {
 
 void launch_application(struct dapplication *application) {
     pid_t pid;
+    int stderr_fd, devnull;
 
     if (!application)
         return;
@@ -100,13 +102,32 @@ void launch_application(struct dapplication *application) {
 
     if (pid == 0) { /* child */
         unblock_signal(SIGCHLD);
+
+        /* disable output if possible */
+        if ((stderr_fd = dup(STDERR_FILENO)) == -1) {
+            stderr_fd = STDERR_FILENO;
+            DBGPRINT("Unable to copy stderr file descriptor: %s\n", strerror(errno));
+        } else if ((devnull = open("/dev/null", O_WRONLY)) == -1) {
+            DBGPRINT("Unable to open /dev/null: %s\n", strerror(errno));
+        } else {
+            if (dup2(devnull, STDOUT_FILENO) == -1)
+                DBGPRINT("Unable to redirect stdout of child process: %s\n", strerror(errno));
+            if (dup2(devnull, STDERR_FILENO) == -1)
+                DBGPRINT("Unable to redirect stderr of child process: %s\n", strerror(errno));
+        }
+
         char *args[] = { "/bin/sh", "-c", application->launch_cmd, NULL };
         execvp(args[0], args);
+
+        if (dup2(stderr_fd, STDERR_FILENO) == -1)
+            DBGPRINT("Unable to reset stderr of child process: %s\n", strerror(errno));
         if (fprintf(stderr, "WARNING: Unable to launch application '%s'\n", application->launch_cmd) < 0)
             DBGPRINT("%s\n", "Unable to print to stderr");
         exit(EXIT_FAILURE);
     } else if (pid > 0) { /* parent */
         plist_add(pid, application);
+        if (fprintf(stderr, "Launched application: %s (`%s`)\n", application->id_name, application->launch_cmd) < 0)
+            DBGPRINT("%s\n", "Unable to print to stderr");
     } else {
         /* @TODO do we really want do die here? */
         die("Unable to fork into a new process");
