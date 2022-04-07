@@ -303,8 +303,6 @@ int test_application(struct dapplication *application) {
     pid_t pid;
     /* int sleep_remaining = TEST_TIMEOUT; */
 
-    return 1; /* @TODO implement later */
-
     if (!application || !application->test_cmd)
         return 1;
 

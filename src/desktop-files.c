@@ -42,6 +42,16 @@ int desktop_file_callback(void* user, const char* section, const char* name, con
     if (strcmp(section, "Desktop Entry") != 0)
         return 1;
 
+    /* TryExec (extra handling) */
+    if (strcmp(name, "TryExec") == 0) {
+        app->test_cmd = realloc(app->test_cmd, sizeof(char) * (strlen("test -x ") + strlen(value) + 1));
+        if (!app->test_cmd)
+            die("Unable to allocate memory for application attribute");
+        strcpy(app->test_cmd, "test -x ");
+        strcat(app->test_cmd, value);
+        return 1;
+    }
+
     /* string attributes */
     if (strcmp(name, "Name") == 0)
         write_to_str = &app->display_name;
@@ -49,7 +59,6 @@ int desktop_file_callback(void* user, const char* section, const char* name, con
         write_to_str = &app->desc;
     else if (strcmp(name, "Exec") == 0)
         write_to_str = &app->launch_cmd;
-    /* @TODO implement TryExec */
     else if (strcmp(name, "X-Pademelon-Settings") == 0)
         write_to_str = &app->settings;
 
