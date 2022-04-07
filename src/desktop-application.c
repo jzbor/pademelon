@@ -262,8 +262,8 @@ void startup_daemon(struct dcategory *c) {
 }
 
 void startup_optionals(struct dcategory *c) {
-    struct dapplication *d;
-    char *s, *token;
+    struct dapplication *a, *b;
+    char *s, *token, *saveptr = NULL;
     const char **dirs;
 
     if (!c)
@@ -275,14 +275,24 @@ void startup_optionals(struct dcategory *c) {
         return;
     }
 
+    c->active_application = NULL;
     if (c->user_preference) {
         s = strdup(c->user_preference);
         if (!s)
             die("Unable to allocate memory for optional daemons");
-        for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
-            d = application_by_name(dirs, token, c->xdg_name);
-            if (d && test_application(d))
-                launch_application(d);
+        for(token = strtok_r(s, " ", &saveptr); token; token = strtok_r(NULL, " ", &saveptr)) {
+            DBGPRINT("Looking for application '%s'\n", token);
+            a = application_by_name(dirs, token, c->xdg_name);
+            if (a && test_application(a))
+                launch_application(a);
+
+            if (!c->active_application)
+                c->active_application = a;
+            else {
+                for (b = c->active_application; b->next_optional; b = b->next_optional);
+                a->next_optional = NULL;
+                b->next_optional = a;
+            }
         }
         free(s);
     }

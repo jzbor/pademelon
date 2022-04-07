@@ -10,6 +10,7 @@ struct dapplication {
     char *display_name, *id_name, *desc; /* allocated by user, freed in free_application() */
     char *launch_cmd, *test_cmd; /* allocated by user, freed in free_application() */
     char *settings; /* allocated by user, freed in free_application() */
+    struct dapplication *next_optional;
     struct dcategory *category;
 };
 
