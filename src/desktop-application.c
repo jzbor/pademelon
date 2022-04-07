@@ -23,7 +23,7 @@ static inline int IS_TRUE(const char *s)       { return strcmp(s, "True") == 0 |
 
 static struct dcategory categories[] = {
     /* CONFIG_SECTION_DAEMONS */
-    { .name = "window-manager",     .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
+    { .name = "window-manager",     .xdg_name = "X11WindowManager", .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
     { .name = "compositor",         .xdg_name = "X11Compositor",    .section = CONFIG_SECTION_DAEMONS, .fallback = 1 },
     { .name = "dock",               .xdg_name = "Dock",             .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
     { .name = "hotkeys",            .xdg_name = "HotkeyDaemon",     .section = CONFIG_SECTION_DAEMONS, .fallback = 0 },
@@ -157,16 +157,24 @@ int print_application(struct dapplication *a) {
 }
 
 struct dapplication *select_application(struct dcategory *c) {
-    const char** dirs;
     struct dapplication *app = NULL;
+    const char** dirs;
+    static const char *wm_dirs[] = {
+        "/usr/share/xsessions",
+        NULL,
+    };
 
     if (!c)
         return NULL;
 
-    dirs = desktop_entry_dirs();
-    if (!dirs) {
-        DBGPRINT("unable to get desktop entry dirs");
-        return NULL;
+    if (c == find_category("X11WindowManager")) {
+        dirs = wm_dirs;
+    } else {
+        dirs = desktop_entry_dirs();
+        if (!dirs) {
+            DBGPRINT("unable to get desktop entry dirs");
+            return NULL;
+        }
     }
 
     if (c->user_preference)

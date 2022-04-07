@@ -212,7 +212,6 @@ struct dcategory *parse_categories(const char *string) {
 
 struct dapplication *parse_desktop_file(const char *filepath, const char *filename) {
     int status;
-    DBGPRINT("parsing file '%s'\n", filepath);
     struct dapplication *app = calloc(1, sizeof(struct dapplication));
     if (!app)
         return NULL;
