@@ -165,9 +165,10 @@ struct dapplication *application_by_name(const char **dirs, const char *name, co
         }
 
         /* check if path is actually a regular file */
-        status = stat(filename, &filestats);
+        status = stat(filepath, &filestats);
         if (status) {
-            /* DBGPRINT("ERROR: Unable to get file stats for potential application config file '%s'\n", filepath); */
+            /* DBGPRINT("ERROR: Unable to get file stats for potential application config file '%s' (%s)\n", */
+            /*         filepath, strerror(errno)); */
             continue;
         } else if (!S_ISREG(filestats.st_mode))
             continue;
