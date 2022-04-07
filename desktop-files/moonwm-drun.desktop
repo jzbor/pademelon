@@ -3,4 +3,4 @@ Name=MoonWM Drun
 Comment=MoonWM's drun menu
 Categories=AppLauncher
 Exec=/usr/bin/moonwm-utils drun
-TryExec=/usr/bin/moonwm-utils drun
+TryExec=/usr/bin/moonwm-utils
