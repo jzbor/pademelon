@@ -86,7 +86,7 @@ void free_categories(void) {
     int i;
     for (i = 0; categories[i].name; i++) {
         free(categories[i].user_preference);
-        free_application(categories[i].selected_application);
+        free_application(categories[i].active_application);
     }
 }
 
@@ -135,24 +135,6 @@ void launch_application(struct dapplication *application) {
     unblock_signal(SIGCHLD);
 }
 
-void load_applications(void) {
-    int i;
-    static int applications_loaded = 0;
-
-    /* only load applications on the first call */
-    if (applications_loaded)
-        return;
-    else
-        applications_loaded = 1;
-
-    for (i = 0; categories[i].name; i++) {
-        if (categories[i].user_preference)
-            categories[i].selected_application = application_by_name(categories[i].user_preference, categories[i].xdg_name);
-        if (!categories[i].selected_application && categories[i].fallback && categories[i].xdg_name)
-            categories[i].selected_application = application_by_category(categories[i].xdg_name);
-    }
-}
-
 int print_application(struct dapplication *a) {
     int status;
     status = printf("[%s]\t\t; %p\n", a->id_name, (void *)a);
@@ -172,6 +154,27 @@ int print_application(struct dapplication *a) {
     if (fflush(stdout) == EOF)
         return -1;
     return 0;
+}
+
+struct dapplication *select_application(struct dcategory *c) {
+    const char** dirs;
+    struct dapplication *app = NULL;
+
+    if (!c)
+        return NULL;
+
+    dirs = desktop_entry_dirs();
+    if (!dirs) {
+        DBGPRINT("unable to get desktop entry dirs");
+        return NULL;
+    }
+
+    if (c->user_preference)
+        app = application_by_name(dirs, c->user_preference, c->xdg_name);
+    if (!app && c->fallback && c->xdg_name)
+        app = application_by_category(dirs, c->xdg_name);
+
+    return app;
 }
 
 void shutdown_all_daemons(void) {
@@ -233,26 +236,40 @@ void shutdown_optionals(struct dcategory *c) {
 }
 
 void startup_daemon(struct dcategory *c) {
-    if (!c || !c->selected_application)
+    struct dapplication *app;
+
+    if (!c)
         return;
 
-    if (c->selected_application && test_application(c->selected_application))
-        launch_application(c->selected_application);
+    app = select_application(c);
+    if (!app)
+        return;
+
+    if (test_application(app))
+        launch_application(app);
+    c->active_application = app;
 }
 
 void startup_optionals(struct dcategory *c) {
     struct dapplication *d;
     char *s, *token;
+    const char **dirs;
 
     if (!c)
         return;
+
+    dirs = desktop_entry_dirs();
+    if (!dirs) {
+        DBGPRINT("unable to get desktop entry dirs");
+        return;
+    }
 
     if (c->user_preference) {
         s = strdup(c->user_preference);
         if (!s)
             die("Unable to allocate memory for optional daemons");
         for(token = strtok(s, " "); token; token = strtok(NULL, " ")) {
-            d = application_by_name(token, c->xdg_name);
+            d = application_by_name(dirs, token, c->xdg_name);
             if (d && test_application(d))
                 launch_application(d);
         }

@@ -135,10 +135,16 @@ void loop(void) {
 }
 
 void set_application(struct dcategory *c, const char *export_name) {
-    if (!export_name || !c || !c->selected_application)
+    struct dapplication *app;
+    if (!export_name || !c)
         return;
-    else if (c->selected_application && test_application(c->selected_application))
-        export_application(c->selected_application, export_name);
+
+    app = select_application(c);
+    if (!app)
+        return;
+
+    else if (test_application(app))
+        export_application(app, export_name);
 }
 
 void reload_config(void) {
@@ -262,9 +268,6 @@ int main(int argc, char *argv[]) {
 
     /* load config */
     config = load_config();
-
-    /* load applications */
-    load_applications();
 
     for (i = 1; argv[i]; i++) {
         if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {

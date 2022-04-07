@@ -9,7 +9,7 @@
         do { fprintf(stderr, "%s:%d:%s(): ",__FILE__, __LINE__, __func__);\
              fprintf(stderr, __VA_ARGS__); } while (0)
 #else /* DEBUG */
-#define DBGPRINT(fmt, ...) do {} while (0)
+#define DBGPRINT(...) do {} while (0)
 #endif /* DEBUG */
 
 static inline int STR_STARTS_WITH(const char *s, const char *pre) { return strncmp(pre, s, strlen(pre)) == 0; }

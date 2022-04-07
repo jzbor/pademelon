@@ -19,9 +19,9 @@ static int desktop_file_callback(void* user, const char* section, const char* na
 static struct dcategory *parse_categories(const char *string);
 
 
-char **desktop_entry_dirs(void) {
+const char **desktop_entry_dirs(void) {
     /* @TODO add user and xdg directories */
-    static char *dirs[] = {
+    static const char *dirs[] = {
         NULL,
         "/usr/local/share/pademelon/applications",
         "/usr/share/pademelon/applications",
@@ -70,18 +70,16 @@ int desktop_file_callback(void* user, const char* section, const char* name, con
     return 1;
 }
 
-struct dapplication *application_by_category(const char *category) {
+struct dapplication *application_by_category(const char **dirs, const char *category) {
     int i, status;
-    char **dirs;
     DIR *directory;
     struct dapplication *app;
     struct dirent *diriter;
     struct stat filestats = {0};
 
-    if (!category)
+    if (!dirs || !category)
         return NULL;
 
-    dirs = desktop_entry_dirs();
     for (i = 0; dirs[i]; i++) {
         /* open directory for iteration */
         directory = opendir(dirs[i]);
@@ -144,13 +142,14 @@ struct dapplication *application_by_category(const char *category) {
     return NULL;
 }
 
-struct dapplication *application_by_name(const char *name, const char *expected_category) {
+struct dapplication *application_by_name(const char **dirs, const char *name, const char *expected_category) {
     int i, status;
-    char **dirs;
     struct dapplication *app;
     struct stat filestats = {0};
 
-    dirs = desktop_entry_dirs();
+    if (!dirs || !name)
+        return NULL;
+
     for (i = 0; dirs[i]; i++) {
         char filename[strlen(name) + strlen("/.desktop") + 1];
         char filepath[strlen(dirs[i]) + strlen(name) + strlen("/.desktop") + 1];

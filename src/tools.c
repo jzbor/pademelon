@@ -117,6 +117,7 @@ int tl_backlight_set(int percentage) {
 }
 
 int tl_launch_application(const char *category) {
+    struct dapplication *a;
     struct dcategory *c;
     struct config *cfg;
 
@@ -125,7 +126,6 @@ int tl_launch_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    load_applications();
     cfg = load_config();
     if (!cfg) {
         fprintf(stderr, "select-application: unable to load config\n");
@@ -138,12 +138,13 @@ int tl_launch_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    if (!c->selected_application) {
+    a = select_application(c);
+    if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
     }
 
-    launch_application(c->selected_application);
+    launch_application(a);
     return EXIT_SUCCESS;
 }
 
@@ -201,8 +202,6 @@ int tl_print_applications(void) {
         return EXIT_FAILURE;
     }
 
-    load_applications();
-
     for (i = 0, c = get_categories(); c[i].name; i++) {
         if (print_category(&c[i]) < 0)
             return EXIT_FAILURE;
@@ -243,6 +242,7 @@ int tl_save_display_conf(void) {
 }
 
 int tl_select_application(const char *category) {
+    struct dapplication *a;
     struct dcategory *c;
     struct config *cfg;
 
@@ -251,7 +251,6 @@ int tl_select_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    load_applications();
     cfg = load_config();
     if (!cfg) {
         fprintf(stderr, "select-application: unable to load config\n");
@@ -264,12 +263,13 @@ int tl_select_application(const char *category) {
         return EXIT_FAILURE;
     }
 
-    if (!c->selected_application) {
+    a = select_application(c);
+    if (!a) {
         fprintf(stderr, "select-application: no suitable application found\n");
         return EXIT_FAILURE;
     }
 
-    if (printf("%s\n", c->selected_application->id_name) < 0) {
+    if (printf("%s\n", a->id_name) < 0) {
         perror("select-application: unable to write to stdout");
         return EXIT_FAILURE;
     }
@@ -371,7 +371,8 @@ int print_category(struct dcategory *c) {
     status = printf("\tuser config: %s\n", c->user_preference);
     if (status < 0)
         return -1;
-    status = printf("\tselected application: %s\n", c->selected_application ? c->selected_application->id_name : "null");
+    status = printf("\tactive application: %s\n", c->active_application ? c->active_application->id_name : "null");
+    status = printf("\tselected application: %s\n", select_application(c) ? select_application(c)->id_name : "null");
     if (status < 0)
         return -1;
     return 0;
@@ -393,14 +394,20 @@ char* wallpaper_path(void) {
 
 int tl_test_application(const char *id_name) {
     struct dapplication *a;
+    const char **dirs;
 
     if (!id_name) {
         fprintf(stderr, "test-application: not enough arguments\n");
         return EXIT_FAILURE;
     }
 
-    load_applications();
-    a = application_by_name(id_name, NULL);
+    dirs = desktop_entry_dirs();
+    if (!dirs) {
+        fprintf(stderr, "test-application: unable to get directories\n");
+        return EXIT_FAILURE;
+    }
+
+    a = application_by_name(dirs, id_name, NULL);
     if (!a) {
         fprintf(stderr, "test-application: application not found\n");
         return EXIT_FAILURE;

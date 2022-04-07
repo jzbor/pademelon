@@ -17,7 +17,7 @@ struct dcategory { /* linked list with applications in category */
     int exported; /* runtime variables */
     const int fallback, optional; /* configuration variables */
     char *name, *xdg_name, *section, *user_preference;
-    struct dapplication *selected_application;
+    struct dapplication *active_application;
     /* @TODO free user_preference */
 };
 
@@ -30,8 +30,6 @@ struct dcategory *get_categories(void);
 int ini_application_callback(void* user, const char* section, const char* name, const char* value);
 void init_sigset_sigchld(void);
 void launch_application(struct dapplication *application);
-void load_applications(void);
-void load_applications_from_dir(const char *dir);
 int print_application(struct dapplication *a);
 int print_applications(void);
 struct dapplication *select_application(struct dcategory *c);
