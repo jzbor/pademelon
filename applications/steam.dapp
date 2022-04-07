@@ -1,7 +1,0 @@
-[steam]
-name = Steam
-description = Valve's digital software delivery system
-category = applets
-command = /usr/bin/steam -silent
-test = test -x /usr/bin/steam
-default = False

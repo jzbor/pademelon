@@ -1,8 +1,0 @@
-[plank]
-name = Plank
-description = Elegant, simple, clean dock
-category = dock
-command = /usr/bin/plank
-test = test -x /usr/bin/plank
-settings = /usr/bin/plank --preferences
-default = False

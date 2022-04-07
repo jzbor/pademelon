@@ -1,8 +1,0 @@
-[buttermilk]
-name = Buttermilk Terminal
-description = A basic personal terminal emulator based on VTE
-category = terminal
-command = /usr/bin/buttermilk
-test = test -x /usr/bin/buttermilk
-settings = config://buttermilk/buttermilk.conf
-default = False

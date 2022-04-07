@@ -1,7 +1,0 @@
-[nm-applet]
-name = Network Manager Applet
-description = Applet for managing network connections
-category = applets
-command = /usr/bin/nm-applet
-test = test -x /usr/bin/nm-applet
-default = False

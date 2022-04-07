@@ -1,7 +1,0 @@
-[rofi]
-name = Rofi
-description = A window switcher, application launcher and dmenu replacement
-category = dmenu
-command = /usr/bin/rofi -show drun
-test = test -x /usr/bin/rofi
-default = False

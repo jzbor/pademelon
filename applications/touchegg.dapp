@@ -1,8 +1,0 @@
-[touchegg]
-name = Touchegg
-description = Multitouch gesture recognizer (Requires "Touchegg (Server)")
-category = optional
-command = sleep 2 && /usr/bin/touchegg --client
-test = test -x /usr/bin/touchegg
-setting = config://touchegg/touchegg.conf
-default = False

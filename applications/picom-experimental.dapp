@@ -1,8 +1,0 @@
-[picom-experimental]
-name = Picom (Experimental Backends)
-description = X compositor that may fix tearing issues
-category = compositor
-command = /usr/bin/picom --experimental-backends
-test = test -x /usr/bin/picom
-settings = config://picom.conf
-default = False

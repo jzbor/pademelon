@@ -1,8 +1,0 @@
-[gnome-terminal]
-name = GNOME Terminal
-description = The GNOME Terminal Emulator
-category = terminal
-command = /usr/bin/gnome-terminal
-test = test -x /usr/bin/gnome-terminal
-settings = /usr/bin/gnome-terminal --preferences
-default = False

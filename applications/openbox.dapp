@@ -1,7 +1,0 @@
-[openbox]
-name = Openbox
-description = Highly configurable and lightweight X11 window manager
-category = window-manager
-command = /usr/bin/openbox
-test = test -x /usr/bin/openbox
-default = False

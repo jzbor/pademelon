@@ -1,7 +1,0 @@
-[i3-wm]
-name = i3
-description = Improved tiling window manager
-category = window-manager
-command = /usr/bin/i3
-test = test -x /usr/bin/i3
-default = False

@@ -1,7 +1,0 @@
-[polkit-kde]
-name = Polkit (KDE)
-description = Daemon providing a polkit authentication UI for KDE
-category = polkit
-command = /usr/lib/polkit-kde-authentication-agent-1
-test = test -x /usr/lib/polkit-kde-authentication-agent-1
-default = False

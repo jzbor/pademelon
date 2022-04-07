@@ -1,8 +1,0 @@
-[alacritty]
-name = Alacritty
-description = Cross-platform, GPU-accelerated terminal emulator
-category = terminal
-command = /usr/bin/alacritty
-test = test -x /usr/bin/alacritty
-settings = config://alacritty/alacritty.yml
-default = False

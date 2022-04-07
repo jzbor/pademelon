@@ -1,7 +1,0 @@
-[pa-systray]
-name = PulseAudio System Tray
-description = System Tray Icon for Audio Control
-category = applets
-command = /usr/bin/pasystray
-test = test -x /usr/bin/pasystray
-default = False

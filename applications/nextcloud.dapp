@@ -1,7 +1,0 @@
-[nextcloud]
-name = Nextcloud
-description = Nextcloud desktop client
-category = applets
-command = /usr/bin/nextcloud --background
-test = test -x /usr/bin/nextcloud
-default = False

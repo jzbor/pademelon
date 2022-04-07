@@ -1,7 +1,0 @@
-[uxterm]
-name = UXTerm
-description =  Unicode X Terminal Emulator
-category = terminal
-command = /usr/bin/uxterm
-test = test -x /usr/bin/uxterm
-default = False

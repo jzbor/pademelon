@@ -62,7 +62,6 @@ uninstall:
 	rm -f ${DESTDIR}${PREFIX}/share/applications/pademelon-wallpaper.desktop
 
 install-applications:
-	install -Dm644 applications/* -t ${DESTDIR}${PREFIX}/share/pademelon/applications
 	install -Dm644 desktop-files/* -t ${DESTDIR}${PREFIX}/share/pademelon/applications
 
 uninstall-applications:

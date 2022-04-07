@@ -1,8 +1,0 @@
-[nautilus]
-name = Nautilus Filemanager
-description = Default file manager for GNOME
-category = filemanager
-command = /usr/bin/pcmanfm
-test = test -x /usr/bin/pcmanfm
-settings = /usr/bin/pcmanfm --show-pref=1
-default = False

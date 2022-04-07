@@ -1,7 +1,0 @@
-[dwm]
-name = Dynamic Window Manager
-description = A dynamic window manager for X
-category = window-manager
-command = /usr/bin/dwm
-test = test -x /usr/bin/dwm
-default = False

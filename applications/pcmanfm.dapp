@@ -1,8 +1,0 @@
-[pcmanfm]
-name = PCManFM
-description = Extremely fast and lightweight file manager
-category = filemanager
-command = /usr/bin/pcmanfm
-test = test -x /usr/bin/pcmanfm
-settings = /usr/bin/pcmanfm --show-pref=1
-default = True

@@ -1,7 +1,0 @@
-[jzbor-status]
-name = jzbor's personal status script
-description = XFCE4s tool to manage power, battery and display brightness
-category = status
-command = /home/jzbor/.scripts/dwm/dwmstatus.sh
-test = test -x /home/jzbor/.scripts/dwm/dwmstatus.sh
-default = False

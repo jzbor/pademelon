@@ -1,8 +1,0 @@
-[xfce4-notifyd]
-name = XFCE4 Notification Daemon
-description = Notification daemon for the Xfce desktop
-category = notifications
-command = /usr/lib/xfce4/notifyd/xfce4-notifyd
-test = test -x /usr/lib/xfce4/notifyd/xfce4-notifyd
-settings = /usr/bin/xfce4-notifyd-config
-default = True

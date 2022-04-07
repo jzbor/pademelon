@@ -1,7 +1,0 @@
-[moonwm-drun]
-name = MoonWM Drun
-description = MoonWM's drun menu
-category = dmenu
-command = /usr/bin/moonwm-utils drun
-test = test -x /usr/bin/moonwm-utils
-default = True
