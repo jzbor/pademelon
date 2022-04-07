@@ -10,16 +10,36 @@ import shutil
 import signal
 import subprocess
 
-APPLICATION_FILE_ENDING = ".dapp"
+DESKTOP_FILE_ENDING = '.desktop'
+DESKTOP_ENTRY_SECTION = 'Desktop Entry'
 CONFIG_SECTION_APPEARANCE = 'appearance'
 CONFIG_SECTION_APPLICATIONS = 'applications'
 CONFIG_SECTION_DAEMONS = 'daemons'
 CONFIG_SECTION_INPUT = 'input'
 DIRNAME = 'pademelon'
-PADEMELON_DAEMON_BINARY = "pademelon-daemon"
+PADEMELON_DAEMON_BINARY = 'pademelon-daemon'
 PREFERENCE_NONE = 'none'
 TEST_TIMEOUT = 1    # in seconds
 TITLE = 'Pademelon Settings'
+
+category_names = {
+        # CONFIG_SECTION_DAEMONS
+        'window-manager' : 'X11WindowManager',
+        'compositor' : 'X11Compositor',
+        'dock' : 'Dock',
+        'hotkeys' : 'HotkeyDaemon',
+        'notifications' : 'NotificationDaemon',
+        'polkit' : 'Polkit',
+        'power' : 'PowerManager',
+        'status' : 'Status',
+        'applets' : 'Applet',
+        'optional' : 'Optional',
+        # CONFIG_SECTION_APPLICATIONS
+        'browser' : 'WebBrowser',
+        'dmenu' : 'AppLauncher',
+        'filemanager' : 'FileManager',
+        'terminal' : 'TerminalEmulator',
+}
 
 child_processes = []
 
@@ -32,8 +52,8 @@ class ApplicationBox(Gtk.Box):
         self.cname = cname
         self.clabel = clabel
 
-        if cname in categories:
-            self.applications = categories[cname]
+        if cname in category_names.keys() and category_names[cname] in categories:
+            self.applications = categories[category_names[cname]]
         else:
             self.applications = []
 
@@ -142,7 +162,7 @@ class DesktopApplication():
         self.id_name = id_name
         self.display_name = id_name
         self.desc = ""
-        self.category = "optional"
+        self.category = "Optional"
         self.cdefault = False
         self.launch_cmd = ""
         self.test_cmd = ""
@@ -505,6 +525,15 @@ def getpid(pname):
             return int(dirname)
     return -1
 
+def parse_categories(value):
+    for cat in value.split(','):
+        if cat in category_names.values():
+            return cat
+        elif cat == 'TrayIcon':
+            return 'Applet'
+        elif cat == 'Panel':
+            return 'Status'
+    return None
 
 def read_config(paths):
     config = configparser.ConfigParser()
@@ -516,34 +545,37 @@ def read_desktop_application_files(paths):
     files = []
 
     for path in paths:
-        if (os.path.exists(path)):
-            files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(APPLICATION_FILE_ENDING)])
+        files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(DESKTOP_FILE_ENDING)])
+
 
     # read config files
     config = configparser.ConfigParser()
-    if len(config.read(files)) == 0:
-        return None
+    # if len(config.read(files)) == 0:
+    #     return None
 
-    for application_id_name in config.sections():
-        application = DesktopApplication(application_id_name)
+    for filename in files:
+        if len(config.read(filename)) == 0:
+            continue
+
+        application = DesktopApplication(os.path.basename(filename)[:-len(DESKTOP_FILE_ENDING)])
         try:
-            application.display_name = config[application_id_name]['name']
+            application.display_name = config[DESKTOP_ENTRY_SECTION]['Name']
         except KeyError:
-            print("Error while reading application config '{}': 'name' not specified".format(application_id_name))
+            print("Error while reading application config '{}': 'Name' not specified".format(application_id_name))
 
         # optional values
-        if ('default' in config[application_id_name]):
-            application.cdefault = str_to_bool(config[application_id_name]['default'])
-        if ('description' in config[application_id_name]):
-            application.desc = config[application_id_name]['description']
-        if ('category' in config[application_id_name]):
-            application.category = config[application_id_name]['category']
-        if ('command' in config[application_id_name]):
-            application.launch_cmd = config[application_id_name]['command']
-        if ('test' in config[application_id_name]):
-            application.test_cmd = config[application_id_name]['test']
-        if ('settings' in config[application_id_name]):
-            application.settings = config[application_id_name]['settings']
+        if ('Comment' in config[DESKTOP_ENTRY_SECTION]):
+            application.desc = config[DESKTOP_ENTRY_SECTION]['Comment']
+        if ('Categories' in config[DESKTOP_ENTRY_SECTION]):
+            application.category = parse_categories(config[DESKTOP_ENTRY_SECTION]['Categories'])
+            if application.category == None:
+                application.category = 'Optional'
+        if ('Exec' in config[DESKTOP_ENTRY_SECTION]):
+            application.launch_cmd = config[DESKTOP_ENTRY_SECTION]['Exec']
+        if ('TryExec' in config[DESKTOP_ENTRY_SECTION]):
+            application.test_cmd = "test -x " + config[DESKTOP_ENTRY_SECTION]['TryExec']
+        if ('X-Pademelon-Settings' in config[DESKTOP_ENTRY_SECTION]):
+            application.settings = config[DESKTOP_ENTRY_SECTION]['X-Pademelon-Settings']
 
         # add application to the right category
         if (application.category not in categories):
