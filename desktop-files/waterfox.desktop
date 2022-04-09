@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Waterfox G4
+Comment=Fourth generation of customizable privacy-conscious web browser.
+Categories=WebBrowser
+Exec=/usr/bin/waterfox-g4
+TryExec=/usr/bin/waterfox-g4
+X-Pademelon-Settings=/usr/bin/waterfox-g4 --preferences
