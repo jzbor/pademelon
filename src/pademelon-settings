@@ -540,18 +540,13 @@ def read_config(paths):
     config.read(paths)
     return config
 
-def read_desktop_application_files(paths):
+def read_desktop_application_files(paths, wm_paths):
     categories = {}
     files = []
-
-    for path in paths:
-        files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(DESKTOP_FILE_ENDING)])
-
-
-    # read config files
     config = configparser.ConfigParser()
-    # if len(config.read(files)) == 0:
-    #     return None
+
+    for path in paths + wm_paths:
+        files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(DESKTOP_FILE_ENDING)])
 
     for filename in files:
         if len(config.read(filename)) == 0:
@@ -576,6 +571,9 @@ def read_desktop_application_files(paths):
             application.test_cmd = "test -x " + config[DESKTOP_ENTRY_SECTION]['TryExec']
         if ('X-Pademelon-Settings' in config[DESKTOP_ENTRY_SECTION]):
             application.settings = config[DESKTOP_ENTRY_SECTION]['X-Pademelon-Settings']
+
+        if os.path.dirname(filename) in wm_paths:
+                application.category = 'X11WindowManager'
 
         # add application to the right category
         if (application.category not in categories):
@@ -634,8 +632,10 @@ def write_config(config, path, parent=None):
 
 
 if __name__ == '__main__':
-    categories = read_desktop_application_files([system_data_path('applications'),
-            system_local_data_path('applications'), user_data_path('applications')])
+    categories = read_desktop_application_files(
+            [system_data_path('applications'), system_local_data_path('applications'),
+                user_data_path('applications')],
+            ['/usr/share/xsessions'])
     config = read_config([system_config_path('pademelon.conf'), user_config_path('pademelon.conf')])
     MainWindow()
     Gtk.main()
