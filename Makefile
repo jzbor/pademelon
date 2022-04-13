@@ -67,11 +67,11 @@ install-applications:
 uninstall-applications:
 	rm -rf ${DESTDIR}${PREFIX}/share/pademelon/applications
 
-install-docs: pademelon.1 pademelon-config.1 pademelon-desktop-applications.1
+install-docs: pademelon.1 pademelon-config.1 pademelon-desktop-files.1
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	sed "s/VERSION/${VERSION}/g" < pademelon.1 > ${DESTDIR}${MANPREFIX}/man1/pademelon.1
 	chmod 644 ${DESTDIR}${MANPREFIX}/man1/pademelon.1
-	install -Dm644 pademelon-config.1 pademelon-desktop-applications.1 -t ${DESTDIR}${MANPREFIX}/man1/
+	install -Dm644 pademelon-config.1 pademelon-desktop-files.1 -t ${DESTDIR}${MANPREFIX}/man1/
 
 uninstall-docs:
 	rm -f ${DESTDIR}${MANPREFIX}/man1/pademelon.1
