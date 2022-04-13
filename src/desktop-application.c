@@ -160,25 +160,16 @@ struct dapplication *select_application(struct dcategory *c) {
     struct dapplication *app = NULL;
     char *xdg_category;
     const char** dirs;
-    static const char *wm_dirs[] = {
-        "/usr/share/xsessions",
-        NULL,
-    };
 
     if (!c)
         return NULL;
 
-    if (c == find_category("X11WindowManager")) {
-        dirs = wm_dirs;
-        xdg_category = NULL;
-    } else {
-        dirs = desktop_entry_dirs();
-        if (!dirs) {
-            DBGPRINT("unable to get desktop entry dirs");
-            return NULL;
-        }
-        xdg_category = c->xdg_name;
+    dirs = desktop_entry_dirs();
+    if (!dirs) {
+        DBGPRINT("unable to get desktop entry dirs");
+        return NULL;
     }
+    xdg_category = c->xdg_name;
 
     if (c->user_preference)
         app = application_by_name(dirs, c->user_preference, xdg_category);
