@@ -5,7 +5,8 @@ A desktop manager for modular Linux desktop setups.
 ## What does this do?
 Pademelon ties together different software and tools to get a working desktop out of the box.
 It aims to be completely modular, so you can swap out everything as you go.
-Still one important goal of this software is to provide a desktop that works out of the box - especially with window managers like DWM or i3.
+Still one important goal of this software is to provide a desktop that works out of the box -
+especially with window managers like DWM or i3.
 
 ## What is a pademelon?
 [This.](https://en.wikipedia.org/wiki/Pademelon)
@@ -18,22 +19,21 @@ Still one important goal of this software is to provide a desktop that works out
 * Bindings for wallpaper setting, volume and backlight
 * Save xrandr configuration and restore on restart
 
-### Features under consideration for the future
-* Wayland support
-* Application files for QT-based daemons (lxqt)
-* Support for power-profiles-daemon in `pademelon-settings`
-* Importing of user configuration files in the form of archives
+## Default software
+This is a curated set of applications that work well together and
+provide a user-friendly tiling WM experience.
+Pademelon provides a default config using these applications, which is also available
+in the [AUR](https://aur.archlinux.org/packages/pademelon-desktop).
 
-## Dependencies
-
-### Default software
 * **Window Manager:** MoonWM
 * **Compositor:** Picom
 * **Notifications:** xfce4-notifyd
 * **Power Management:** xfce4-power-manager
-* **Display Manager:** LightDM
 * **Polkit:** gnome-polkit
 * **Terminal:** XFCE4 Terminal
+* **Applets:** nm-applet
+
+## Dependencies
 
 ### Dependencies on external executables
 * **ARandR:** Configure display layouts
