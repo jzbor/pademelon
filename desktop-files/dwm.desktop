@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Dynamic Window Manager
+Comment=A dynamic window manager for X
+Categories=X11WindowManager
+Exec=/usr/bin/dwm
+TryExec=/usr/bin/dwm

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Fluxbox
+Comment=A lightweight and highly-configurable window manager
+Categories=X11WindowManager
+Exec=/usr/bin/fluxbox
+TryExec=/usr/bin/fluxbox

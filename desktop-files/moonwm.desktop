@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=MoonWM
+Comment=jzbor's dynamic window manager
+Categories=X11WindowManager
+Exec=/usr/bin/moonwm
+TryExec=/usr/bin/moonwm

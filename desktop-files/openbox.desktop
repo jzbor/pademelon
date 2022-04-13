@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Openbox
+Comment=Highly configurable and lightweight X11 window manager
+Categories=X11WindowManager
+Exec=/usr/bin/openbox
+TryExec=/usr/bin/openbox

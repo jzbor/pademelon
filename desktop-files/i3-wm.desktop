@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=i3
+Comment=Improved tiling window manager
+Categories=X11WindowManager
+Exec=/usr/bin/i3
+TryExec=/usr/bin/i3
