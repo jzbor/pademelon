@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+
+import argparse
+import gi
+import os
+import subprocess
+
+gi.require_version('Gtk', '3.0')
+gi.require_version('AppIndicator3', '0.1')
+from gi.repository import Gtk, Gdk, AppIndicator3
+
+
+class IconButton(Gtk.Button):
+    def __init__(self, label, icon_name):
+        super().__init__(label=label)
+        self.image = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.BUTTON);
+        self.get_child().set_use_markup(True)
+        self.set_label('  ' + label)
+        self.set_image(self.image);
+        self.set_image_position(Gtk.PositionType.LEFT)
+        self.set_always_show_image(True)
+
+
+class PademelonDialog(Gtk.Window):
+    def __init__(self, title):
+        super().__init__(title=title)
+        self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        self.main_box = Gtk.Box(spacing=5)
+        self.main_box.set_orientation(Gtk.Orientation.VERTICAL)
+        self.header_bar = Gtk.HeaderBar()
+        self.header_bar.set_title(title)
+        self.set_titlebar(self.header_bar)
+
+        self.buttons = []
+        self.button_box = Gtk.Box(spacing=0)
+        self.button_box.set_orientation(Gtk.Orientation.HORIZONTAL)
+
+        self.main_box.pack_end(self.button_box, True, True, 10)
+        self.add(self.main_box)
+
+    def add_button(self, button):
+        self.buttons.append(button)
+        self.button_box.pack_start(button, True, True, 10)
+
+    def run(self):
+        self.connect('destroy', Gtk.main_quit)
+        self.show_all()
+        Gtk.main()
+
+
+class PowerDialog(PademelonDialog):
+    def __init__(self):
+        super().__init__(title='Poweroff, reboot or log out?')
+
+        poweroff_button = IconButton('Poweroff', 'system-shutdown')
+        poweroff_button.connect('clicked', self.poweroff)
+        self.add_button(poweroff_button)
+
+        reboot_button = IconButton('Reboot', 'system-reboot')
+        reboot_button.connect('clicked', self.reboot)
+        self.add_button(reboot_button)
+
+        logout_button = IconButton('Logout', 'gnome-logout')
+        logout_button.connect('clicked', self.logout)
+        self.add_button(logout_button)
+
+    def logout(self, source):
+        subprocess.run('pkill -KILL -u {}'.format(os.getlogin()), shell=True)
+
+    def poweroff(self, source):
+        subprocess.run('poweroff', shell=True)
+
+    def reboot(self, source):
+        subprocess.run('reboot', shell=True)
+
+class PowerProfiles():
+    @staticmethod
+    def get_supported():
+        try:
+            raw_output = exec_output("powerprofilesctl list | grep '^[\*| ] [a-z-]*:' | sed 's/^[\*| ] \([a-z-]*\):/\\1/'")
+            return raw_output.decode().split()
+        except subprocess.CalledProcessError:
+            return None
+
+    @staticmethod
+    def get_active():
+        try:
+            raw_output = exec_output('powerprofilesctl get')
+            return raw_output.decode().strip()
+        except subprocess.CalledProcessError:
+            return None
+
+    @staticmethod
+    def set_active(profile):
+        print(f'Setting profile: {profile}')
+        sp = subprocess.run(f"powerprofilesctl set {profile}", shell=True)
+        return sp.returncode == 0
+
+
+class PpdApplet():
+    def __init__(self):
+        self.indicator = AppIndicator3.Indicator.new("pademelon-ppd-applet", "power-profile-balanced-symbolic", AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+        self.set_menu()
+        self.update_status()
+
+    def profile_callback(self, gtk_widget, profile):
+        PowerProfiles.set_active(profile)
+        self.update_status()
+
+    def set_menu(self):
+        menu = Gtk.Menu()
+
+        profile_entries = []
+        profiles = PowerProfiles.get_supported()
+        if not type(profiles) is list:
+            print("No power profile support")
+            exit(1)
+        for profile in profiles:
+            new_entry = Gtk.MenuItem(label=profile)
+            new_entry.connect('activate', self.profile_callback, profile)
+            profile_entries.append(new_entry)
+
+
+        entry_delim0 = Gtk.SeparatorMenuItem()
+        entry_exit = Gtk.MenuItem(label='Exit Applet')
+        entry_exit.connect('activate', quit)
+
+        # assemble menu
+        for profile_entry in profile_entries:
+            menu.append(profile_entry)
+        menu.append(entry_delim0)
+        # menu.append(entry_exit)
+
+        menu.show_all()
+        self.indicator.set_menu(menu)
+
+    def run(self):
+        Gtk.main()
+
+    def update_status(self):
+        active_profile = PowerProfiles.get_active()
+        self.indicator.set_icon_full(f"power-profile-{active_profile}-symbolic", f"power-profile-{active_profile}-symbolic")
+
+class PpdDialog(PademelonDialog):
+    def __init__(self):
+        super().__init__(title='Change power profile')
+
+        self.combo = Gtk.ComboBoxText()
+        self.add_button(self.combo)
+        self.select_button = Gtk.Button.new_from_icon_name('object-select', Gtk.IconSize.BUTTON)
+        self.add_button(self.select_button)
+
+        self.profiles = PowerProfiles.get_supported()
+        current_profile = PowerProfiles.get_active()
+        for profile in self.available_profiles:
+            self.combo.append_text(profile)
+        self.combo.set_active(available_profiles.index(current_profile))
+
+    def button_callback(self, source):
+        PowerProfiles.set_active(self.profiles[self.combo.get_active])
+
+
+def exec_output(command):
+    return subprocess.check_output(command, shell=True)
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Pademelon widgets implemented in Gtk+')
+    parser.add_argument('widget', type=str, nargs=1, help='widget to launch (`list` to list available)')
+    return parser.parse_args()
+
+
+widgets = {
+    'power-dialog'  : PowerDialog,
+    'ppd-applet'    : PpdApplet,
+    'ppd-dialog'    : PpdDialog,
+}
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    widget_arg = args.widget[0]
+    if widget_arg in widgets:
+        widget = widgets[widget_arg]()
+        try:
+            widget.run()
+        except KeyboardInterrupt:
+            exit(0)
+    elif widget_arg == 'list':
+        print(list(widgets.keys()))
+    else:
+        print(f"Unknown widget `{widget_arg}`. Try `list` for a list of available widgets.")
