@@ -49,6 +49,7 @@ install: pademelon-daemon pademelon-tools
 	install -Dm755 pademelon-daemon -t ${DESTDIR}${PREFIX}/bin
 	install -Dm755 pademelon-tools -t ${DESTDIR}${PREFIX}/bin
 	install -Dm755 src/pademelon-settings -t ${DESTDIR}${PREFIX}/bin
+	install -Dm755 src/pademelon-widgets -t ${DESTDIR}${PREFIX}/bin
 	install -Dm755 src/xdg-xmenu -t ${DESTDIR}${PREFIX}/bin
 	install -Dm755 pademelon-settings.desktop pademelon-wallpaper.desktop -t ${DESTDIR}${PREFIX}/share/applications
 	mkdir -p ${DESTDIR}${PREFIX}/share/xsessions/
@@ -56,8 +57,11 @@ install: pademelon-daemon pademelon-tools
 	sed "s/PREFIX/$(shell echo "${PREFIX}" | sed 's/\//\\\//g')/g" < pademelon-setup.desktop > ${DESTDIR}${PREFIX}/share/xsessions/pademelon-setup.desktop
 
 uninstall:
-	rm -f ${DESTDIR}${PREFIX}/bin/pademelon-daemon ${DESTDIR}${PREFIX}/bin/pademelon-settings \
-		${DESTDIR}${PREFIX}/bin/xdg-xmenu ${DESTDIR}${PREFIX}/bin/pademelon-tools
+	rm -f ${DESTDIR}${PREFIX}/bin/pademelon-daemon \
+		${DESTDIR}${PREFIX}/bin/pademelon-settings \
+		${DESTDIR}${PREFIX}/bin/pademelon-widgets \
+		${DESTDIR}${PREFIX}/bin/xdg-xmenu \
+		${DESTDIR}${PREFIX}/bin/pademelon-tools
 	rm -f ${DESTDIR}${PREFIX}/share/applications/pademelon-settings.desktop
 	rm -f ${DESTDIR}${PREFIX}/share/applications/pademelon-wallpaper.desktop
 
