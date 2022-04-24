@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=PowerProfiles Applet
+Comment=Applet for changing power profiles
+Categories=TrayIcon
+Exec=/usr/bin/pademelon-widgets ppd-applet
+TryExec=/usr/bin/pademelon-widgets
+
