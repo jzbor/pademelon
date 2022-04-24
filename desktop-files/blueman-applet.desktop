@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Blueman Applet
+Comment=Applet for managing bluetooth connections
+Categories=Applet
+Exec=/usr/bin/blueman-applet
+TryExec=/usr/bin/blueman-applet
+
