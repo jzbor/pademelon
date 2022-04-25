@@ -99,6 +99,11 @@ class PowerProfiles():
 
 class PpdApplet():
     def __init__(self):
+        self.profiles = PowerProfiles.get_supported()
+        if not type(self.profiles) is list:
+            print("No power profile support")
+            exit(1)
+
         self.indicator = AppIndicator3.Indicator.new("pademelon-ppd-applet", "power-profile-balanced-symbolic", AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
         self.set_menu()
@@ -111,15 +116,11 @@ class PpdApplet():
     def set_menu(self):
         menu = Gtk.Menu()
 
-        profile_entries = []
-        profiles = PowerProfiles.get_supported()
-        if not type(profiles) is list:
-            print("No power profile support")
-            exit(1)
-        for profile in profiles:
+        self.profile_entries = []
+        for profile in self.profiles:
             new_entry = Gtk.MenuItem(label=profile)
             new_entry.connect('activate', self.profile_callback, profile)
-            profile_entries.append(new_entry)
+            self.profile_entries.append(new_entry)
 
 
         entry_delim0 = Gtk.SeparatorMenuItem()
@@ -127,10 +128,8 @@ class PpdApplet():
         entry_exit.connect('activate', quit)
 
         # assemble menu
-        for profile_entry in profile_entries:
+        for profile_entry in self.profile_entries:
             menu.append(profile_entry)
-        menu.append(entry_delim0)
-        # menu.append(entry_exit)
 
         menu.show_all()
         self.indicator.set_menu(menu)
@@ -140,6 +139,11 @@ class PpdApplet():
 
     def update_status(self):
         active_profile = PowerProfiles.get_active()
+        for i, entry in enumerate(self.profile_entries):
+            if self.profiles[i] == active_profile:
+                entry.set_label(self.profiles[i] + '*')
+            else:
+                entry.set_label(self.profiles[i])
         self.indicator.set_icon_full(f"power-profile-{active_profile}-symbolic", f"power-profile-{active_profile}-symbolic")
 
 class PpdDialog(PademelonDialog):
