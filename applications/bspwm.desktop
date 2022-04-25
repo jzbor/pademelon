@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=bspwm
+Comment=Tiling window manager based on binary space partitioning
+Categories=X11WindowManager
+Exec=/usr/bin/bspwm
+TryExec=/usr/bin/bspwm
