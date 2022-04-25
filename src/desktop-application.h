@@ -37,8 +37,8 @@ struct dapplication *select_application(struct dcategory *c);
 void shutdown_all_daemons(void);
 void shutdown_daemon(struct dcategory *c);
 void shutdown_optionals(struct dcategory *c);
-void startup_daemon(struct dcategory *c);
-void startup_optionals(struct dcategory *c);
+int startup_daemon(struct dcategory *c);
+int startup_optionals(struct dcategory *c);
 int test_application(struct dapplication *application);
 
 

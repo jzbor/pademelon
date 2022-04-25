@@ -54,7 +54,10 @@ static void launch_wm(void) {
         execvp(args[0], args);
         exit(EXIT_FAILURE);
     } else if (!config->no_window_manager) {
-        startup_daemon(config->window_manager);
+        if (!startup_daemon(config->window_manager)) {
+            fprintf(stderr, "No window manager found\n");
+            exit(1);
+        }
     }
 }
 

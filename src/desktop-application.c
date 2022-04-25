@@ -237,33 +237,34 @@ void shutdown_optionals(struct dcategory *c) {
     }
 }
 
-void startup_daemon(struct dcategory *c) {
+int startup_daemon(struct dcategory *c) {
     struct dapplication *app;
 
     if (!c)
-        return;
+        return 0;
 
     app = select_application(c);
     if (!app)
-        return;
+        return 0;
 
     if (test_application(app))
         launch_application(app);
     c->active_application = app;
+    return 1;
 }
 
-void startup_optionals(struct dcategory *c) {
+int startup_optionals(struct dcategory *c) {
     struct dapplication *a, *b;
     char *s, *token, *saveptr = NULL;
     const char **dirs;
 
     if (!c)
-        return;
+        return 0;
 
     dirs = desktop_entry_dirs();
     if (!dirs) {
         DBGPRINT("unable to get desktop entry dirs");
-        return;
+        return 0;
     }
 
     c->active_application = NULL;
@@ -287,6 +288,7 @@ void startup_optionals(struct dcategory *c) {
         }
         free(s);
     }
+    return 1;
 }
 
 int test_application(struct dapplication *application) {
