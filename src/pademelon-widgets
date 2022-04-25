@@ -113,8 +113,12 @@ class PpdApplet():
         PowerProfiles.set_active(profile)
         self.update_status()
 
+    def menu_callback(self, gtk_widget):
+        self.update_status()
+
     def set_menu(self):
         menu = Gtk.Menu()
+        menu.connect('map', self.menu_callback)
 
         self.profile_entries = []
         for profile in self.profiles:
@@ -148,21 +152,27 @@ class PpdApplet():
 
 class PpdDialog(PademelonDialog):
     def __init__(self):
-        super().__init__(title='Change power profile')
+        super().__init__('Change power profile')
+
+        self.profiles = PowerProfiles.get_supported()
+        current_profile = PowerProfiles.get_active()
+        if not type(self.profiles) is list:
+            print("No power profile support")
+            exit(1)
 
         self.combo = Gtk.ComboBoxText()
         self.add_button(self.combo)
         self.select_button = Gtk.Button.new_from_icon_name('object-select', Gtk.IconSize.BUTTON)
+        self.select_button.connect('clicked', self.button_callback)
         self.add_button(self.select_button)
 
-        self.profiles = PowerProfiles.get_supported()
-        current_profile = PowerProfiles.get_active()
-        for profile in self.available_profiles:
+        for profile in self.profiles:
             self.combo.append_text(profile)
-        self.combo.set_active(available_profiles.index(current_profile))
+        self.combo.set_active(self.profiles.index(current_profile))
 
     def button_callback(self, source):
-        PowerProfiles.set_active(self.profiles[self.combo.get_active])
+        Gtk.main_quit()
+        PowerProfiles.set_active(self.profiles[self.combo.get_active()])
 
 
 def exec_output(command):
