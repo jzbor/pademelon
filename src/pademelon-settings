@@ -546,7 +546,8 @@ def read_desktop_application_files(paths):
     config = configparser.ConfigParser()
 
     for path in paths:
-        files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(DESKTOP_FILE_ENDING)])
+        if os.path.isdir(path):
+            files.extend([f.path for f in os.scandir(path) if f.is_file() and f.path.endswith(DESKTOP_FILE_ENDING)])
 
     for filename in files:
         if len(config.read(filename)) == 0:
