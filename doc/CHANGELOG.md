@@ -4,7 +4,7 @@
 <!-- DO NOT EDIT THIS SECTION, INSTEAD RE-RUN doctoc.sh TO UPDATE -->
 **Table of Contents**
 
-- [Upcoming](#upcoming)
+- [1.1.0](#110)
 - [1.0.4](#104)
 - [1.0.3](#103)
 - [1.0.2](#102)
@@ -15,7 +15,7 @@
 
 <!-- END doctoc.sh generated TOC please keep comment here to allow auto update -->
 
-## Upcoming
+## 1.1.0
 * Switching application file format to `.desktop` files (**BREAKING CHANGE!!**)
 * Adding `pademelon-widgets` for controlling stuff like poweroff dialogs or switching power profiles
 * Adding various applications to application files
