@@ -53,6 +53,12 @@ void reset_root_atoms(Display *dpy, Window root, Pixmap pixmap) {
             PropModeReplace, (unsigned char *)&pixmap, 1);
 }
 
+int x11_connection_number(void) {
+    if (!display)
+        return -1;
+    return XConnectionNumber(display);
+}
+
 int x11_init(void) {
     XIEventMask ximask;
     unsigned char mask[2] = { 0 };

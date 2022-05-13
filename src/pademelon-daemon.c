@@ -5,6 +5,7 @@
 #include "tools.h"
 #ifdef X11
 #include "x11-utils.h"
+#include <poll.h>
 #endif /* X11 */
 #include <errno.h>
 #include <signal.h>
@@ -15,7 +16,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define CYCLE_LENGTH                2   /* seconds */
+#define CYCLE_TIMEOUT               2   /* seconds */
+#define CYCLE_TIMEOUT_X11           10   /* seconds */
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
 #define TIMEOUT_AFTER_WM_START      0   /* seconds */
 
@@ -72,6 +74,13 @@ void load_keyboard(void) {
 
 void loop(void) {
     struct plist *pl;
+
+#ifdef X11
+    struct pollfd fds = {0};
+    int poll_status = 0;
+    fds.fd = x11_connection_number();
+    fds.events = POLLIN;
+#endif /* X11 */
 
     while (!end) {
         while ((pl = plist_next_event(NULL)) != NULL) {
@@ -133,7 +142,17 @@ void loop(void) {
             tl_load_wallpaper();
         }
 
-        sleep(CYCLE_LENGTH);
+
+#ifdef X11
+        poll_status = poll(&fds, 1, CYCLE_TIMEOUT_X11 * 1000);
+        if (poll_status < 0) { /* error or signal */
+            if (errno != EINTR)
+                end = 1;
+        }
+#else /* X11 */
+        sleep(CYCLE_TIMEOUT);
+#endif /* X11 */
+
     }
 }
 
