@@ -3,10 +3,6 @@
 #include "pademelon-config.h"
 #include "signals.h"
 #include "tools.h"
-#ifdef X11
-#include "x11-utils.h"
-#include <poll.h>
-#endif /* X11 */
 #include <errno.h>
 #include <signal.h>
 #include <stddef.h>
@@ -15,6 +11,16 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#ifdef X11
+#include "x11-utils.h"
+#include <poll.h>
+#endif /* X11 */
+
+#ifdef LIBNOTIFY
+#include <libnotify/notify.h>
+#endif /* LIBNOTIFY */
+
 
 #define CYCLE_TIMEOUT               2   /* seconds */
 #define CYCLE_TIMEOUT_X11           10   /* seconds */
@@ -25,6 +31,11 @@ static void export_applications(void);
 static void launch_wm(void);
 static void load_keyboard(void);
 static void loop(void);
+static void notify_termination(struct dapplication *app, pid_t pid, char *msg);
+#ifdef LIBNOTIFY
+static void notification_callback(NotifyNotification *notification, char *action, gpointer user_data);
+static void notification_closed (NotifyNotification *notify, void *user_data);
+#endif
 void set_application(struct dcategory *c, const char *export_name);
 static void reload_config(void);
 static void setup_signals(void);
@@ -96,9 +107,11 @@ void loop(void) {
 
             if (WIFEXITED(pl->status)) {
                 DBGPRINT("Process '%s' (pid: %d) exited with return code %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, WEXITSTATUS(pl->status));
+                notify_termination(((struct dapplication*) pl->content), pl->pid, "exited");
                 plist_remove(pl->pid);
             } else if (WIFSIGNALED(pl->status)) {
                 DBGPRINT("Process '%s' (pid: %d) was terminated by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, WTERMSIG(pl->status));
+                notify_termination(((struct dapplication*) pl->content), pl->pid, "was terminated by a signal");
                 plist_remove(pl->pid);
             } else if (WIFSTOPPED(pl->status)) {
                 DBGPRINT("Process '%s' (pid: %d) was stopped by signal %d\n", ((struct dapplication*) pl->content)->id_name, pl->pid, WSTOPSIG(pl->status));
@@ -155,6 +168,63 @@ void loop(void) {
 
     }
 }
+
+void notify_termination(struct dapplication *app, pid_t pid, char *msg) {
+#ifdef LIBNOTIFY
+    int status;
+    char title[] = "A process has terminated";
+    char content_format[] = "Process '%s' (pid: %d) %s";
+    char content[strlen(content_format) + strlen(app->id_name) + strlen("really long pid") + strlen(msg) + 1 ];
+    GMainLoop *loop = NULL;
+
+    DBGPRINT("Creating notification\n");
+    status = snprintf(content, sizeof(content) / sizeof(char), content_format, app->id_name, pid, msg);
+    if (status < 0) {
+        DBGPRINT("snprintf failed: %s\n", strerror(errno));
+        return;
+    }
+
+	NotifyNotification *notification = notify_notification_new(title, content, "dialog-information");
+    notify_notification_add_action(notification, "restart", "Restart Application", notification_callback, NULL, NULL);
+	notify_notification_show(notification, NULL);
+
+    /* wait for feedback */
+    loop = g_main_loop_new (NULL, FALSE);
+    DBGPRINT("user_data in: %p\n", (void *) loop);
+    g_signal_connect(G_OBJECT(notification), "closed", G_CALLBACK(notification_closed), (void *) loop);
+    /* g_timeout_add(NOTIFY_EXPIRES_DEFAULT, notification_timeout, NULL); */
+    g_main_loop_run(loop);
+    g_main_loop_unref(loop);
+
+	g_object_unref(G_OBJECT(notification));
+
+    DBGPRINT("Showed notification\n");
+#else /* LIBNOTIFY */
+    DBGPRINT("Not compiled with libnotify support\n");
+    return;
+#endif /* LIBNOTIFY */
+}
+
+#ifdef LIBNOTIFY
+void notification_callback(NotifyNotification *notification, char *action, gpointer user_data) {
+    DBGPRINT("Callback: %s\n", action);
+    printf("test\n");
+    fflush(stdout);
+}
+
+int notification_timeout(void *data) {
+    DBGPRINT("Notification timed out\n");
+    GMainLoop *loop = (GMainLoop *) loop;
+    g_main_loop_quit(loop);
+    return 0;
+}
+
+void notification_closed (NotifyNotification *notify, void *user_data) {
+    DBGPRINT("user_data out: %p\n", user_data);
+    GMainLoop *loop = (GMainLoop *) user_data;
+    g_main_loop_quit(loop);
+}
+#endif /* LIBNOTIFY */
 
 void set_application(struct dcategory *c, const char *export_name) {
     struct dapplication *app;
@@ -318,11 +388,17 @@ int main(int argc, char *argv[]) {
     x11_screen_has_changed(); /* clear event queue */
     tl_load_wallpaper();
 #endif /* X11 */
+#ifdef LIBNOTIFY
+    notify_init("Pademelon Daemon");
+#endif /* LIBNOTIFY */
     sleep(TIMEOUT_AFTER_WM_START);
     startup_daemons();
     loop();
 
     shutdown_all_daemons();
+#ifdef LIBNOTIFY
+    notify_uninit();
+#endif /* LIBNOTIFY */
 #ifdef X11
     x11_deinit();
 #endif /* X11 */

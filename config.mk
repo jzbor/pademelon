@@ -26,6 +26,7 @@ DEPENDENCIES	= inih
 X11_SUPPORT			= true 		# requires xrandr
 IMLIB2_SUPPORT		= true
 CANBERRA_SUPPORT	= true
+LIBNOTIFY_SUPPORT 	= true
 
 # x11 support
 ifdef X11_SUPPORT
@@ -49,6 +50,11 @@ DEPENDENCIES	+= libcanberra
 CFLAGS		+= -DCANBERRA
 endif
 
+# libcanberra support
+ifdef LIBNOTIFY_SUPPORT
+DEPENDENCIES	+= libnotify
+CFLAGS		+= -DLIBNOTIFY
+endif
 
 CFLAGS		+= `pkg-config --cflags $(DEPENDENCIES)`
 LIBS		+= `pkg-config --libs $(DEPENDENCIES)`
