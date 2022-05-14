@@ -26,6 +26,10 @@
 #define CYCLE_TIMEOUT_X11           10   /* seconds */
 #define SECS_TO_WALLPAPER_REFRESH   5   /* seconds, bigger than CYCLE_LENGTH */
 #define TIMEOUT_AFTER_WM_START      0   /* seconds */
+#define NOTIFICATION_RESTART_ID     "restart"
+#define NOTIFICATION_IGNORE_ID      "ignore"
+#define NOTIFICATION_RESTART_LABEL  "Restart"
+#define NOTIFICATION_IGNORE_LABEL   "Ignore"
 
 static void export_applications(void);
 static void launch_wm(void);
@@ -34,8 +38,9 @@ static void loop(void);
 static void notify_termination(struct dapplication *app, pid_t pid, char *msg);
 #ifdef LIBNOTIFY
 static void notification_callback(NotifyNotification *notification, char *action, gpointer user_data);
-static void notification_closed (NotifyNotification *notify, void *user_data);
+static void notification_closed(NotifyNotification *notify, void *user_data);
 #endif
+static unsigned int notifications_show(void);
 void set_application(struct dcategory *c, const char *export_name);
 static void reload_config(void);
 static void setup_signals(void);
@@ -49,7 +54,13 @@ static struct config *config;
 static int end = 0;
 static int ignore_wm_shutdown = 0;
 static int launch_setup = 0;
+static int no_wm_overwrite = 0;
 static int reload = 0;
+
+#ifdef LIBNOTIFY
+static NotifyNotification **notification_list;
+static unsigned int notification_list_size, remaining_notifications;
+#endif /* LIBNOTIFY */
 
 
 void export_applications(void) {
@@ -66,7 +77,7 @@ static void launch_wm(void) {
         char *args[] = { "/bin/sh", "-c", "pademelon-settings", NULL };
         execvp(args[0], args);
         exit(EXIT_FAILURE);
-    } else if (!config->no_window_manager) {
+    } else if (!config->no_window_manager && !no_wm_overwrite) {
         if (!startup_daemon(config->window_manager)) {
             fprintf(stderr, "No window manager found\n");
             exit(1);
@@ -100,8 +111,10 @@ void loop(void) {
                         && strcmp(((struct dapplication*) pl->content)->category->name, "window-manager") == 0) {
                     if (ignore_wm_shutdown)
                         ignore_wm_shutdown = 0;
-                    else
+                    else {
+                        DBGPRINT("Quitting because of WM shutdown\n");
                         end = 1;
+                    }
                 }
             }
 
@@ -147,7 +160,7 @@ void loop(void) {
                 plist_remove(pl->pid);
 
             export_applications();
-            startup_daemon(config->window_manager);
+            launch_wm();
             sleep(TIMEOUT_AFTER_WM_START);
             startup_daemons();
 
@@ -155,12 +168,17 @@ void loop(void) {
             tl_load_wallpaper();
         }
 
+        if (notifications_show()) {
+            continue;
+        }
 
 #ifdef X11
         poll_status = poll(&fds, 1, CYCLE_TIMEOUT_X11 * 1000);
         if (poll_status < 0) { /* error or signal */
-            if (errno != EINTR)
+            if (errno != EINTR) {
+                DBGPRINT("Quitting because of poll error\n");
                 end = 1;
+            }
         }
 #else /* X11 */
         sleep(CYCLE_TIMEOUT);
@@ -175,56 +193,91 @@ void notify_termination(struct dapplication *app, pid_t pid, char *msg) {
     char title[] = "A process has terminated";
     char content_format[] = "Process '%s' (pid: %d) %s";
     char content[strlen(content_format) + strlen(app->id_name) + strlen("really long pid") + strlen(msg) + 1 ];
-    GMainLoop *loop = NULL;
+    NotifyNotification *notification;
+    NotifyNotification **temp;
 
-    DBGPRINT("Creating notification\n");
     status = snprintf(content, sizeof(content) / sizeof(char), content_format, app->id_name, pid, msg);
     if (status < 0) {
         DBGPRINT("snprintf failed: %s\n", strerror(errno));
         return;
     }
 
-	NotifyNotification *notification = notify_notification_new(title, content, "dialog-information");
-    notify_notification_add_action(notification, "restart", "Restart Application", notification_callback, NULL, NULL);
-	notify_notification_show(notification, NULL);
+    notification = notify_notification_new(title, content, "dialog-information");
+    notify_notification_add_action(notification, NOTIFICATION_RESTART_ID,  NOTIFICATION_RESTART_LABEL,
+            notification_callback, (void *) app, NULL);
+    notify_notification_add_action(notification, NOTIFICATION_IGNORE_ID, NOTIFICATION_IGNORE_LABEL,
+            notification_callback, (void *) app, NULL);
 
-    /* wait for feedback */
-    loop = g_main_loop_new (NULL, FALSE);
-    DBGPRINT("user_data in: %p\n", (void *) loop);
-    g_signal_connect(G_OBJECT(notification), "closed", G_CALLBACK(notification_closed), (void *) loop);
-    /* g_timeout_add(NOTIFY_EXPIRES_DEFAULT, notification_timeout, NULL); */
-    g_main_loop_run(loop);
-    g_main_loop_unref(loop);
-
-	g_object_unref(G_OBJECT(notification));
-
-    DBGPRINT("Showed notification\n");
+    /* add notification to list */
+    temp = realloc(notification_list, sizeof(notification) * (notification_list_size + 1));
+    if (!temp) {
+        DBGPRINT("Unable to insert notification into list: %s\n", strerror(errno));
+        g_object_unref(G_OBJECT(notification));
+    } else {
+        notification_list = temp;
+        notification_list[notification_list_size] = notification;
+        notification_list_size++;
+    }
 #else /* LIBNOTIFY */
-    DBGPRINT("Not compiled with libnotify support\n");
     return;
 #endif /* LIBNOTIFY */
 }
 
 #ifdef LIBNOTIFY
-void notification_callback(NotifyNotification *notification, char *action, gpointer user_data) {
-    DBGPRINT("Callback: %s\n", action);
-    printf("test\n");
-    fflush(stdout);
+void notification_callback(NotifyNotification *notification, char *action, void *user_data) {
+    struct dapplication *app = (struct dapplication *) user_data;
+
+    if (strcmp(action, NOTIFICATION_RESTART_ID) == 0
+            && app && app->category) {
+        DBGPRINT("Restarting application for %s\n", app->category->name);
+        shutdown_daemon(app->category);
+        startup_daemon(app->category);
+    }
 }
 
-int notification_timeout(void *data) {
-    DBGPRINT("Notification timed out\n");
-    GMainLoop *loop = (GMainLoop *) loop;
-    g_main_loop_quit(loop);
-    return 0;
-}
-
-void notification_closed (NotifyNotification *notify, void *user_data) {
-    DBGPRINT("user_data out: %p\n", user_data);
+void notification_closed(NotifyNotification *notify, void *user_data) {
+    int i;
     GMainLoop *loop = (GMainLoop *) user_data;
-    g_main_loop_quit(loop);
+
+    remaining_notifications--;
+
+    if (remaining_notifications == 0) {
+        g_main_loop_quit(loop);
+        g_main_loop_unref(loop);
+
+        for (i = 0; i < notification_list_size; i++) {
+            g_object_unref(G_OBJECT(notification_list[i]));
+        }
+
+        notification_list_size = 0;
+        free(notification_list);
+        notification_list = NULL;
+    }
 }
 #endif /* LIBNOTIFY */
+
+static unsigned int notifications_show(void) {
+#ifdef LIBNOTIFY
+    int i;
+    unsigned int notifications_shown;
+    GMainLoop *loop = NULL;
+
+    notifications_shown = notification_list_size;
+    if (notification_list_size > 0) {
+        loop = g_main_loop_new (NULL, FALSE);
+        for (i = 0; i < notification_list_size; i++) {
+            g_signal_connect(G_OBJECT(notification_list[i]), "closed", G_CALLBACK(notification_closed), (void *) loop);
+            notify_notification_show(notification_list[i], NULL);
+        }
+        remaining_notifications = notification_list_size;
+        g_main_loop_run(loop);
+    }
+
+    return notifications_shown;
+#else /* LIBNOTIFY */
+    return 0;
+#endif /* LIBNOTIFY */
+}
 
 void set_application(struct dcategory *c, const char *export_name) {
     struct dapplication *app;
@@ -363,7 +416,7 @@ int main(int argc, char *argv[]) {
 
     for (i = 1; argv[i]; i++) {
         if (strcmp(argv[i], "--no-window-manager") == 0 || strcmp(argv[i], "-n") == 0) {
-            config->no_window_manager = 1;
+            no_wm_overwrite = 1;
         } else if (strcmp(argv[i], "--setup") == 0 || strcmp(argv[i], "-n") == 0) {
             launch_setup = 1;
         } else if (strcmp(argv[i], "--window-manager") == 0 || strcmp(argv[i], "-w") == 0) {
