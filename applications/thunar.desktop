@@ -4,3 +4,4 @@ Comment=Modern file manager for Xfce
 Categories=FileManager
 Exec=/usr/bin/thunar
 TryExec=/usr/bin/thunar
+X-Pademelon-Settings=/usr/bin/thunar-settings
