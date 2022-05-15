@@ -168,7 +168,7 @@ void loop(void) {
             tl_load_wallpaper();
         }
 
-        if (notifications_show()) {
+        if (end || notifications_show()) {
             continue;
         }
 
