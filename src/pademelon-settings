@@ -573,10 +573,18 @@ def read_desktop_application_files(paths):
         if ('X-Pademelon-Settings' in config[DESKTOP_ENTRY_SECTION]):
             application.settings = config[DESKTOP_ENTRY_SECTION]['X-Pademelon-Settings']
 
+        if application.id_name == "mate-power-manager":
+            print(application.id_name, filename)
+
         # add application to the right category
         if (application.category not in categories):
             categories[application.category] = []
-        categories[application.category].append(application)
+        # check if application is already in list
+        for i, item in enumerate(categories[application.category]):
+            if item.id_name == application.id_name:
+                categories[application.category][i] = application
+        if not application in categories[application.category]:
+            categories[application.category].append(application)
 
     return categories
 
